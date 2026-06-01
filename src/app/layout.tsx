@@ -12,6 +12,9 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "CE Officina",
   },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
   icons: {
     icon: "/icon-192.png",
     apple: "/icon-192.png",
