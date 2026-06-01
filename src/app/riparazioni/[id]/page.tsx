@@ -1,26 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import StatusControl from "@/components/StatusControl";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 import { stadioCliente, type StatoRiparazione } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const stadioColore: Record<string, string> = {
-  "Ricevuta": "bg-coffee-100 text-coffee-700",
-  "In analisi": "bg-amber-100 text-amber-800",
-  "Preventivo": "bg-blue-100 text-blue-800",
-  "In lavorazione": "bg-indigo-100 text-indigo-800",
-  "Pronta per il ritiro": "bg-green-100 text-green-800",
-  "Ritirata": "bg-stone-200 text-stone-600",
-  "Chiusa": "bg-stone-200 text-stone-600",
-};
-
 function field(label: string, value?: string | number | null) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-coffee-700">{value || "—"}</p>
+      <p className="mt-1 text-sm font-semibold text-coffee-900">{value || "—"}</p>
     </div>
   );
 }
@@ -62,20 +55,24 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
   return (
     <main className="mx-auto max-w-4xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
       <header className="mb-4 flex items-center gap-3">
-        <Link href="/" className="flex h-10 w-10 items-center justify-center rounded-full text-coffee-400">←</Link>
+        <Link
+          href="/"
+          aria-label="Indietro"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-coffee-200 bg-white text-coffee-700 active:scale-95"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
         <div>
-          <p className="font-mono text-sm font-bold text-coffee-600">{data.numero_scheda}</p>
-          <h1 className="font-display text-xl font-bold text-coffee-700">Dettaglio assistenza</h1>
+          <p className="font-mono text-sm font-bold text-arancio-dark">{data.numero_scheda}</p>
+          <h1 className="font-display text-xl font-bold text-coffee-900">Dettaglio assistenza</h1>
         </div>
-        <span className={`ml-auto rounded-full px-2.5 py-1 text-xs font-semibold ${stadioColore[stadio]}`}>
-          {stadio}
-        </span>
+        <Badge stadio={stadio} className="ml-auto" />
       </header>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <div className="space-y-4">
-          <section className="rounded-xl border border-coffee-100 bg-white p-4 shadow-sm sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-700">Cliente</h2>
+          <Card className="sm:p-5">
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Cliente</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {field("Nome / Ragione sociale", cliente?.ragione_sociale)}
               {field("Tipo", cliente?.tipo)}
@@ -85,10 +82,10 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
               {field("Canale", cliente?.canale_preferito)}
               <div className="sm:col-span-2">{field("Indirizzo", cliente?.indirizzo)}</div>
             </div>
-          </section>
+          </Card>
 
-          <section className="rounded-xl border border-coffee-100 bg-white p-4 shadow-sm sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-700">Macchina</h2>
+          <Card className="sm:p-5">
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Macchina</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {field("Marca", macchina?.marca)}
               {field("Modello", macchina?.modello)}
@@ -98,10 +95,10 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
               {field("Regime", macchina?.regime_possesso === "comodato_uso" ? "Comodato d'uso" : "Proprietà cliente")}
               {field("Stato estetico", data.stato_estetico)}
             </div>
-          </section>
+          </Card>
 
-          <section className="rounded-xl border border-coffee-100 bg-white p-4 shadow-sm sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-700">Intervento</h2>
+          <Card className="sm:p-5">
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Intervento</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {field("Ingresso", new Date(data.data_ingresso).toLocaleDateString("it-IT"))}
               {field("Riparazione", data.data_riparazione ? new Date(data.data_riparazione).toLocaleDateString("it-IT") : null)}
@@ -123,10 +120,10 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
                 <p className="mt-1 rounded-lg bg-coffee-50 p-3 text-sm text-coffee-700">{data.diagnosi_tecnico || "—"}</p>
               </div>
             </div>
-          </section>
+          </Card>
 
-          <section className="rounded-xl border border-coffee-100 bg-white p-4 shadow-sm sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-700">Storico stessa macchina</h2>
+          <Card className="sm:p-5">
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Storico stessa macchina</h2>
             {(storico ?? []).length === 0 ? (
               <p className="text-sm text-coffee-400">Nessun altro intervento registrato.</p>
             ) : (
@@ -143,12 +140,12 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
                 ))}
               </ul>
             )}
-          </section>
+          </Card>
         </div>
 
         <aside className="space-y-4">
-          <section className="rounded-xl border border-coffee-100 bg-white p-4 shadow-sm sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-700">Azioni</h2>
+          <Card className="sm:p-5">
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Azioni</h2>
             <StatusControl id={data.id} stato={data.stato as StatoRiparazione} />
             <div className="mt-4 grid gap-2 text-sm">
               <a href={`/api/ricevuta/${data.id}`} target="_blank" className="rounded-lg border border-coffee-200 px-3 py-2 font-semibold text-coffee-700">
@@ -158,10 +155,10 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
                 Apri pagina cliente
               </a>
             </div>
-          </section>
+          </Card>
 
-          <section className="rounded-xl border border-coffee-100 bg-white p-4 shadow-sm sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-700">Notifiche</h2>
+          <Card className="sm:p-5">
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Notifiche</h2>
             {(notifiche ?? []).length === 0 ? (
               <p className="text-sm text-coffee-400">Nessuna notifica registrata.</p>
             ) : (
@@ -181,7 +178,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
                 ))}
               </ul>
             )}
-          </section>
+          </Card>
         </aside>
       </div>
     </main>
