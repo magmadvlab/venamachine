@@ -18,6 +18,12 @@ const STATI: StatoRiparazione[] = [
   "abbandonata",
 ];
 
+const STATI_DA_NOTIFICARE: StatoRiparazione[] = [
+  "attesa_preventivo",
+  "cliente_avvisato",
+  "non_riparabile",
+];
+
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   if (!hasServiceConfig()) {
     return NextResponse.json({ error: "Configurazione Supabase incompleta" }, { status: 503 });
@@ -53,7 +59,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const macchina: any = Array.isArray(data.macchina) ? data.macchina[0] : data.macchina;
   let emailInviata = false;
 
-  if (cliente?.email) {
+  if (cliente?.email && STATI_DA_NOTIFICARE.includes(body.stato)) {
     const trackingUrl = `${getPublicAppUrl()}/r/${data.token_pubblico}`;
     const macchinaLabel = [macchina?.marca, macchina?.modello, macchina?.matricola].filter(Boolean).join(" ");
 

@@ -60,6 +60,7 @@ export function stadioCliente(s: StatoRiparazione): string {
     case "riparata":
     case "cliente_avvisato": return "Pronta per il ritiro";
     case "ritirata": return "Ritirata";
+    case "non_riparabile": return "Non riparabile";
     default: return "Chiusa";
   }
 }
