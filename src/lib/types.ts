@@ -42,7 +42,7 @@ export interface RiparazioneRow {
   difetto_cliente: string | null;
   stato_estetico: StatoEstetico | null;
   importo_preventivo: number | null;
-  cliente: { ragione_sociale: string; email: string | null; telefono: string | null } | null;
+  cliente: { ragione_sociale: string; email: string | null; telefono: string | null; piva_cf?: string | null } | null;
   macchina: { marca: string | null; modello: string | null; matricola: string | null; tipologia: TipoMacchina | null; colore: string | null } | null;
 }
 
