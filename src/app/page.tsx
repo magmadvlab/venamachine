@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
+import { createServiceClient, missingServerEnv } from "@/lib/supabase/server";
 import { stadioCliente, type RiparazioneRow } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,9 @@ const stadioColore: Record<string, string> = {
 };
 
 export default async function Dashboard() {
-  if (!hasServiceConfig()) {
+  const missingEnv = missingServerEnv();
+
+  if (missingEnv.length > 0) {
     return (
       <main className="mx-auto max-w-3xl px-4 pb-24 pt-6">
         <header className="mb-6 rounded-2xl bg-coffee-900 px-5 py-4">
@@ -24,16 +26,16 @@ export default async function Dashboard() {
         <section className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
           <h1 className="font-display text-xl font-bold">Configura Supabase su Vercel</h1>
           <p className="mt-2 text-sm">
-            L'app è stata deployata, ma mancano le variabili d'ambiente per collegare il database Supabase.
+            L'app è stata deployata, ma questa deployment non vede ancora queste variabili d'ambiente.
           </p>
           <ul className="mt-4 space-y-1 text-sm">
-            <li>NEXT_PUBLIC_SUPABASE_URL</li>
-            <li>NEXT_PUBLIC_SUPABASE_ANON_KEY</li>
-            <li>SUPABASE_SERVICE_ROLE_KEY</li>
-            <li>RESEND_API_KEY</li>
-            <li>MAIL_FROM</li>
-            <li>NEXT_PUBLIC_APP_URL</li>
+            {missingEnv.map((key) => (
+              <li key={key}>{key}</li>
+            ))}
           </ul>
+          <p className="mt-4 text-sm">
+            Dopo averle aggiunte in Vercel, esegui un Redeploy della produzione.
+          </p>
         </section>
       </main>
     );

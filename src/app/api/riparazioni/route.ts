@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   if (!hasServiceConfig()) {
-    return NextResponse.json({ error: "Supabase non configurato su Vercel" }, { status: 503 });
+    return NextResponse.json({ error: "Configurazione Vercel incompleta" }, { status: 503 });
   }
 
   const body = (await req.json()) as NuovaAccettazione;

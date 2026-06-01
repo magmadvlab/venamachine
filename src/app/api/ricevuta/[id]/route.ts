@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   if (!hasServiceConfig()) {
-    return NextResponse.json({ error: "Supabase non configurato su Vercel" }, { status: 503 });
+    return NextResponse.json({ error: "Configurazione Vercel incompleta" }, { status: 503 });
   }
 
   const db = createServiceClient();
