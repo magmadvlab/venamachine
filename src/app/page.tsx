@@ -26,9 +26,11 @@ function NuovaSchedaButton() {
   return (
     <Link
       href="/nuova"
-      className="inline-flex items-center gap-1.5 rounded-full bg-arancio px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-arancio-dark active:scale-95"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-arancio px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-arancio-dark active:scale-95"
     >
-      <Plus className="h-4 w-4" /> Nuova scheda
+      <Plus className="h-4 w-4 shrink-0" />
+      <span className="hidden sm:inline">Nuova scheda</span>
+      <span className="sm:hidden">Nuova</span>
     </Link>
   );
 }
@@ -166,20 +168,20 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
                   </div>
                   <Badge stadio={stadio} />
                 </div>
-                <div className="mt-3 flex items-center gap-4 text-xs">
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
                   <a href={`/api/ricevuta/${r.id}`} target="_blank"
-                     className="inline-flex items-center gap-1.5 font-medium text-coffee-600">
-                    <FileText className="h-3.5 w-3.5" /> Ricevuta
+                     className="inline-flex items-center gap-1.5 whitespace-nowrap font-medium text-coffee-600">
+                    <FileText className="h-3.5 w-3.5 shrink-0" /> Ricevuta
                   </a>
                   <a href={`/r/${r.token_pubblico}`} target="_blank"
-                     className="inline-flex items-center gap-1.5 font-medium text-coffee-600">
-                    <ExternalLink className="h-3.5 w-3.5" /> Pagina cliente
+                     className="inline-flex items-center gap-1.5 whitespace-nowrap font-medium text-coffee-600">
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0" /> Pagina cliente
                   </a>
                   <Link href={`/riparazioni/${r.id}`}
-                    className="inline-flex items-center gap-1.5 font-medium text-arancio-dark">
-                    <ArrowRight className="h-3.5 w-3.5" /> Dettagli
+                    className="inline-flex items-center gap-1.5 whitespace-nowrap font-medium text-arancio-dark">
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0" /> Dettagli
                   </Link>
-                  <span className="ml-auto text-coffee-400">
+                  <span className="ml-auto whitespace-nowrap text-coffee-400">
                     {new Date(r.data_ingresso).toLocaleDateString("it-IT")}
                   </span>
                 </div>
