@@ -1,13 +1,18 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function inviaRicevuta(opts: {
   to: string;
   numeroScheda: string;
   pdf: Buffer;
   trackingUrl: string;
 }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY non configurata");
+  }
+
+  const resend = new Resend(apiKey);
+
   return resend.emails.send({
     from: process.env.MAIL_FROM || "Coffee Express <onboarding@resend.dev>",
     to: opts.to,
