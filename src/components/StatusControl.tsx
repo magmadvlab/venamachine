@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { StatoRiparazione } from "@/lib/types";
-import { getStoredOperatorName } from "@/components/OperatorName";
+import { getStoredOperator, OperatorName } from "@/components/OperatorName";
 
 const STATI: { value: StatoRiparazione; label: string }[] = [
   { value: "ingresso", label: "Ricevuta" },
@@ -28,13 +28,19 @@ export default function StatusControl({ id, stato }: { id: string; stato: StatoR
     const previous = value;
     setValue(next);
     setError(null);
+    const operatore = getStoredOperator();
+    if (!operatore.id) {
+      setValue(previous);
+      setError("Seleziona l'operatore.");
+      return;
+    }
     setSaving(true);
 
     try {
       const res = await fetch(`/api/riparazioni/${id}/stato`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stato: next, operatore_nome: getStoredOperatorName() }),
+        body: JSON.stringify({ stato: next, operatore_id: operatore.id, operatore_nome: operatore.nome }),
       });
       const out = await res.json();
       if (!res.ok) throw new Error(out.error || "Aggiornamento stato non riuscito");
@@ -50,6 +56,9 @@ export default function StatusControl({ id, stato }: { id: string; stato: StatoR
 
   return (
     <div className="mt-3">
+      <div className="mb-3">
+        <OperatorName compact />
+      </div>
       <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-coffee-400">
         Stato lavorazione
       </label>

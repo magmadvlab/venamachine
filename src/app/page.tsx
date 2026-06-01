@@ -5,8 +5,7 @@ import StatusControl from "@/components/StatusControl";
 import { BrandHeader } from "@/components/BrandHeader";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { OperatorName } from "@/components/OperatorName";
-import { FileText, ExternalLink, Plus, Coffee, Search, ArrowRight, Building2, BadgeCheck, Bell } from "lucide-react";
+import { FileText, ExternalLink, Plus, Coffee, Search, ArrowRight, Building2, BadgeCheck, Bell, UserRound, Users } from "lucide-react";
 
 function RegimeChip({ regime }: { regime?: string | null }) {
   if (!regime) return null;
@@ -44,6 +43,30 @@ function SollecitiButton() {
     >
       <Bell className="h-4 w-4 shrink-0" />
       <span className="hidden sm:inline">Solleciti</span>
+    </Link>
+  );
+}
+
+function OperatoriButton() {
+  return (
+    <Link
+      href="/admin/operatori"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-coffee-200 bg-white px-3.5 py-2 text-sm font-semibold text-coffee-700 active:scale-95"
+    >
+      <UserRound className="h-4 w-4 shrink-0" />
+      <span className="hidden sm:inline">Operatori</span>
+    </Link>
+  );
+}
+
+function ClientiButton() {
+  return (
+    <Link
+      href="/clienti"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-coffee-200 bg-white px-3.5 py-2 text-sm font-semibold text-coffee-700 active:scale-95"
+    >
+      <Users className="h-4 w-4 shrink-0" />
+      <span className="hidden sm:inline">Clienti</span>
     </Link>
   );
 }
@@ -119,15 +142,13 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
       <BrandHeader
         action={
           <div className="flex items-center gap-2">
+            <OperatoriButton />
+            <ClientiButton />
             <SollecitiButton />
             <NuovaSchedaButton />
           </div>
         }
       />
-
-      <div className="mb-4">
-        <OperatorName />
-      </div>
 
       <form className="mb-4" action="/">
         <label className="sr-only" htmlFor="q">Cerca</label>

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { inviaAggiornamentoStato } from "@/lib/email";
-import { getOrCreateOperatore } from "@/lib/operator-server";
+import { findOperatore } from "@/lib/operator-server";
 import type { StatoRiparazione } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -30,7 +30,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: "Configurazione Supabase incompleta" }, { status: 503 });
   }
 
-  const body = (await req.json()) as { stato?: StatoRiparazione; operatore_nome?: string };
+  const body = (await req.json()) as { stato?: StatoRiparazione; operatore_id?: string; operatore_nome?: string };
   if (!body.stato || !STATI.includes(body.stato)) {
     return NextResponse.json({ error: "Stato non valido" }, { status: 400 });
   }
@@ -45,9 +45,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const db = createServiceClient();
   let operatore = null;
   try {
-    operatore = await getOrCreateOperatore(db, body.operatore_nome);
+    operatore = await findOperatore(db, body.operatore_id, body.operatore_nome);
   } catch (e: any) {
     return NextResponse.json({ error: `Operatore: ${e.message}` }, { status: 400 });
+  }
+  if (!operatore) {
+    return NextResponse.json({ error: "Seleziona un operatore creato dall'admin" }, { status: 400 });
   }
 
   if (operatore && ["riparata", "cliente_avvisato", "non_riparabile"].includes(body.stato)) {

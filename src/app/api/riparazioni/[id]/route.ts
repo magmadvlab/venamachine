@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
-import { getOrCreateOperatore } from "@/lib/operator-server";
+import { findOperatore } from "@/lib/operator-server";
 
 export const runtime = "nodejs";
 
@@ -20,9 +20,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   let operatore = null;
   try {
-    operatore = await getOrCreateOperatore(db, body.operatore_nome);
+    operatore = await findOperatore(db, body.operatore_id, body.operatore_nome);
   } catch (e: any) {
     return NextResponse.json({ error: `Operatore: ${e.message}` }, { status: 400 });
+  }
+  if (!operatore) {
+    return NextResponse.json({ error: "Seleziona un operatore creato dall'admin" }, { status: 400 });
   }
 
   const patch: Record<string, string | number | null> = {

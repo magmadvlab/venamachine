@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import StatusControl from "@/components/StatusControl";
-import { OperatorName } from "@/components/OperatorName";
 import { PhotoUploadForm } from "@/components/PhotoUploadForm";
 import { RepairWorkForm } from "@/components/RepairWorkForm";
 import { Card } from "@/components/ui/Card";
@@ -89,8 +88,6 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <div className="space-y-4">
-          <OperatorName />
-
           <Card className="sm:p-5">
             <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Cliente</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

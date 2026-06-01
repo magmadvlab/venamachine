@@ -1,16 +1,32 @@
-export async function getOrCreateOperatore(db: any, nome?: string | null) {
+export async function findOperatore(db: any, id?: string | null, nome?: string | null) {
+  const cleanId = id?.trim();
   const cleanName = nome?.trim();
-  if (!cleanName) return null;
+  if (!cleanId && !cleanName) return null;
 
-  const { data: existing, error: findError } = await db
+  let query = db
     .from("operatori")
     .select("id, nome")
-    .ilike("nome", cleanName)
     .eq("attivo", true)
     .limit(1);
 
-  if (findError) throw findError;
-  if (existing?.[0]) return existing[0];
+  if (cleanId) {
+    query = query.eq("id", cleanId);
+  } else {
+    query = query.ilike("nome", cleanName ?? "");
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return data?.[0] ?? null;
+}
+
+export async function createOperatore(db: any, nome?: string | null) {
+  const cleanName = nome?.trim();
+  if (!cleanName) throw new Error("Nome operatore obbligatorio");
+
+  const existing = await findOperatore(db, null, cleanName);
+  if (existing) return existing;
 
   const { data, error } = await db
     .from("operatori")

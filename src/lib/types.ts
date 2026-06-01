@@ -9,6 +9,7 @@ export type StatoRiparazione =
   | "riparata" | "cliente_avvisato" | "ritirata" | "non_riparabile" | "abbandonata";
 
 export interface NuovaAccettazione {
+  operatore_id?: string;
   operatore_nome?: string;
   cliente: {
     tipo: TipoCliente;

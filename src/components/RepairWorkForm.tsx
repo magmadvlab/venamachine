@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { getStoredOperatorName } from "@/components/OperatorName";
+import { getStoredOperator, OperatorName } from "@/components/OperatorName";
 
 export function RepairWorkForm({
   id,
@@ -27,6 +27,11 @@ export function RepairWorkForm({
   async function save() {
     setError(null);
     setSaved(false);
+    const operatore = getStoredOperator();
+    if (!operatore.id) {
+      setError("Seleziona l'operatore.");
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch(`/api/riparazioni/${id}`, {
@@ -36,7 +41,8 @@ export function RepairWorkForm({
           diagnosi_tecnico: diagnosiTecnico,
           importo_preventivo: preventivo,
           importo_finale: finale,
-          operatore_nome: getStoredOperatorName(),
+          operatore_id: operatore.id,
+          operatore_nome: operatore.nome,
         }),
       });
       const out = await res.json();
@@ -52,6 +58,7 @@ export function RepairWorkForm({
 
   return (
     <div className="mt-4 space-y-3 border-t border-coffee-100 pt-4">
+      <OperatorName compact />
       <div>
         <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-coffee-400">
           Diagnosi / lavoro svolto

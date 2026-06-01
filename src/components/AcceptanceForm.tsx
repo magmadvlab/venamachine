@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { NuovaAccettazione, RegimePossessoMacchina, TipoMacchina } from "@/lib/types";
-import { getStoredOperatorName } from "@/components/OperatorName";
+import { getStoredOperator, OperatorName } from "@/components/OperatorName";
 import { User, Coffee, ClipboardList } from "lucide-react";
 
 const ACCESSORI = ["Serbatoio", "Vassoio", "Cavo alim.", "Portacialde"];
@@ -118,11 +118,14 @@ export default function AcceptanceForm() {
     setErrore(null);
     if (!f.cliente.ragione_sociale.trim()) { setErrore("Inserisci nome o ragione sociale."); return; }
     if (!f.cliente.consenso_gdpr) { setErrore("Manca il consenso al trattamento dati (GDPR)."); return; }
+    const operatore = getStoredOperator();
+    if (!operatore.id) { setErrore("Seleziona l'operatore della scheda."); return; }
     setSaving(true);
     try {
       const payload: NuovaAccettazione = {
         ...f,
-        operatore_nome: getStoredOperatorName(),
+        operatore_id: operatore.id,
+        operatore_nome: operatore.nome,
         scheda: { ...f.scheda },
       };
       const res = await fetch("/api/riparazioni", {
@@ -160,6 +163,9 @@ export default function AcceptanceForm() {
         <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
           <User className="h-5 w-5 text-arancio" /> Cliente
         </h2>
+        <div className="mb-3">
+          <OperatorName compact />
+        </div>
         <div className="mb-3 grid grid-cols-2 gap-2">
           {(["privato", "azienda"] as const).map((t) => (
             <button key={t} type="button" onClick={() => set("cliente.tipo", t)}
