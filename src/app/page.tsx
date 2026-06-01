@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 import { stadioCliente, type RiparazioneRow } from "@/lib/types";
+import StatusControl from "@/components/StatusControl";
 
 export const dynamic = "force-dynamic";
 
@@ -97,6 +98,7 @@ export default async function Dashboard() {
                     {new Date(r.data_ingresso).toLocaleDateString("it-IT")}
                   </span>
                 </div>
+                <StatusControl id={r.id} stato={r.stato} />
               </li>
             );
           })}
