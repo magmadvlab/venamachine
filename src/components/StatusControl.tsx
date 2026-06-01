@@ -56,7 +56,7 @@ export default function StatusControl({ id, stato }: { id: string; stato: StatoR
         value={value}
         disabled={saving || isPending}
         onChange={(e) => aggiornaStato(e.target.value as StatoRiparazione)}
-        className="w-full rounded-lg border border-coffee-200 bg-white px-3 py-2.5 text-sm font-semibold text-coffee-700 outline-none focus:border-coffee-600 disabled:opacity-60"
+        className="w-full rounded-xl border border-coffee-200 bg-white px-3 py-2.5 text-sm font-semibold text-coffee-700 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20 disabled:opacity-60"
       >
         {STATI.map((s) => (
           <option key={s.value} value={s.value}>{s.label}</option>
