@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 import { buildRicevutaPDF } from "@/lib/pdf/build";
 import { inviaRicevuta } from "@/lib/email";
+import { getPublicAppUrl } from "@/lib/app-url";
 import type { NuovaAccettazione } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
   }
 
   // 5) PDF + email (solo se c'e una email e il canale lo prevede)
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://coffeexpress.it";
+  const appUrl = getPublicAppUrl();
   const trackingUrl = `${appUrl}/r/${rip!.token_pubblico}`;
   let emailInviata = false;
 

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
+import { getPublicAppUrl } from "@/lib/app-url";
+import { inviaAggiornamentoStato } from "@/lib/email";
 import type { StatoRiparazione } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -38,12 +40,53 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     .from("riparazioni")
     .update(patch)
     .eq("id", params.id)
-    .select("id, stato")
+    .select(`id, numero_scheda, token_pubblico, stato,
+      cliente:clienti(email),
+      macchina:macchine(marca, modello, matricola)`)
     .single();
 
   if (error) {
     return NextResponse.json({ error: error.message, details: error.details, hint: error.hint }, { status: 400 });
   }
 
-  return NextResponse.json({ riparazione: data });
+  const cliente: any = Array.isArray(data.cliente) ? data.cliente[0] : data.cliente;
+  const macchina: any = Array.isArray(data.macchina) ? data.macchina[0] : data.macchina;
+  let emailInviata = false;
+
+  if (cliente?.email) {
+    const trackingUrl = `${getPublicAppUrl()}/r/${data.token_pubblico}`;
+    const macchinaLabel = [macchina?.marca, macchina?.modello, macchina?.matricola].filter(Boolean).join(" ");
+
+    try {
+      await inviaAggiornamentoStato({
+        to: cliente.email,
+        numeroScheda: data.numero_scheda,
+        stato: body.stato,
+        trackingUrl,
+        macchina: macchinaLabel || undefined,
+      });
+      emailInviata = true;
+      await db.from("notifiche").insert({
+        riparazione_id: data.id,
+        tipo: "aggiornamento_stato",
+        canale: "email",
+        destinatario: cliente.email,
+        stato_invio: "inviata",
+        inviata_at: new Date().toISOString(),
+        payload: { stato: body.stato, trackingUrl },
+      });
+    } catch (err: any) {
+      await db.from("notifiche").insert({
+        riparazione_id: data.id,
+        tipo: "aggiornamento_stato",
+        canale: "email",
+        destinatario: cliente.email,
+        stato_invio: "errore",
+        errore: String(err?.message || err),
+        payload: { stato: body.stato, trackingUrl },
+      });
+    }
+  }
+
+  return NextResponse.json({ riparazione: data, emailInviata });
 }
