@@ -1,14 +1,18 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft, UserRound } from "lucide-react";
 import { AdminOperatorsForm } from "@/components/AdminOperatorsForm";
 import { Card } from "@/components/ui/Card";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
+import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminOperatoriPage() {
+  const user = await getCurrentUser();
+  if (!isAdminEmail(user?.email)) redirect("/");
+
   const missingEnv = missingSupabaseEnv();
-  const adminConfigured = Boolean(process.env.ADMIN_PIN);
   const db = missingEnv.length === 0 ? createServiceClient() : null;
   const { data } = db
     ? await db.from("operatori").select("id, nome, attivo, created_at").order("created_at", { ascending: false })
@@ -30,11 +34,10 @@ export default async function AdminOperatoriPage() {
         </div>
       </header>
 
-      {!adminConfigured && (
-        <Card className="mb-4 border-amber-200 bg-amber-50 text-sm text-amber-950">
-          Configura <strong>ADMIN_PIN</strong> su Vercel per creare operatori da questa pagina.
-        </Card>
-      )}
+      <Card className="mb-4 border-coffee-100 bg-coffee-50 text-sm text-coffee-600">
+        Crea qui gli account operatore. Riceveranno email e password per accedere; non è
+        possibile registrarsi dall'esterno.
+      </Card>
 
       <Card className="mb-4 sm:p-5">
         <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Nuovo operatore</h2>

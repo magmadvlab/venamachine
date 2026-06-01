@@ -6,6 +6,9 @@ import { BrandHeader } from "@/components/BrandHeader";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { FileText, ExternalLink, Plus, Coffee, Search, ArrowRight, Building2, BadgeCheck, Bell, UserRound, Users } from "lucide-react";
+import { LogoutButton } from "@/components/LogoutButton";
+import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
+import { getSessionOperatore } from "@/lib/operator-server";
 
 function RegimeChip({ regime }: { regime?: string | null }) {
   if (!regime) return null;
@@ -137,18 +140,28 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
 
   const righe = normalizeRows(data).filter((r) => !q || rowMatchesSearch(r, q));
 
+  const user = await getCurrentUser();
+  const admin = isAdminEmail(user?.email);
+  const operatore = await getSessionOperatore(db);
+  const operatoreLabel = operatore?.nome || user?.email || "Operatore";
+
   return (
     <main className="mx-auto max-w-3xl px-4 pb-28 pt-6">
       <BrandHeader
         action={
-          <div className="flex items-center gap-2">
-            <OperatoriButton />
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {admin && <OperatoriButton />}
             <ClientiButton />
             <SollecitiButton />
             <NuovaSchedaButton />
+            <LogoutButton />
           </div>
         }
       />
+
+      <p className="mb-4 text-sm text-coffee-400">
+        Operatore: <span className="font-semibold text-coffee-900">{operatoreLabel}</span>
+      </p>
 
       <form className="mb-4" action="/">
         <label className="sr-only" htmlFor="q">Cerca</label>

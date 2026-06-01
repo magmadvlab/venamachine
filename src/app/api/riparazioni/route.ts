@@ -3,7 +3,7 @@ import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 import { buildRicevutaPDF } from "@/lib/pdf/build";
 import { inviaRicevuta } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/app-url";
-import { findOperatore } from "@/lib/operator-server";
+import { getSessionOperatore } from "@/lib/operator-server";
 import type { NuovaAccettazione } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -31,12 +31,12 @@ export async function POST(req: Request) {
   const db = createServiceClient();
   let operatore = null;
   try {
-    operatore = await findOperatore(db, body.operatore_id, body.operatore_nome);
+    operatore = await getSessionOperatore(db);
   } catch (e: any) {
     return dbError("Operatore", e);
   }
   if (!operatore) {
-    return NextResponse.json({ error: "Seleziona un operatore creato dall'admin" }, { status: 400 });
+    return NextResponse.json({ error: "Operatore non collegato all'utente. Contatta l'amministratore." }, { status: 403 });
   }
   const clienteInput = {
     tipo: body.cliente.tipo,
