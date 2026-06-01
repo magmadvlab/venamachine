@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { NuovaAccettazione, TipoMacchina } from "@/lib/types";
+import type { NuovaAccettazione, RegimePossessoMacchina, TipoMacchina } from "@/lib/types";
 
 const ACCESSORI = ["Serbatoio", "Vassoio", "Cavo alim.", "Portacialde"];
 
@@ -23,6 +23,7 @@ type StoricoMacchina = {
     modello: string | null;
     matricola: string | null;
     tipologia: TipoMacchina | null;
+    regime_possesso: RegimePossessoMacchina | null;
     colore: string | null;
     cliente?: { ragione_sociale?: string | null; telefono?: string | null; email?: string | null } | null;
   } | null;
@@ -40,8 +41,8 @@ export default function AcceptanceForm() {
   const [f, setF] = useState<NuovaAccettazione>({
     cliente: { tipo: "privato", ragione_sociale: "", telefono: "", email: "",
       consenso_gdpr: false, canale_preferito: "email" },
-    macchina: { tipologia: "capsule" },
-    scheda: { accessori: [] },
+    macchina: { tipologia: "capsule", regime_possesso: "proprieta_cliente" },
+    scheda: { accessori: [], preventivo_richiesto: false },
   });
 
   const set = (path: string, val: any) =>
@@ -105,6 +106,7 @@ export default function AcceptanceForm() {
         modello: storico.macchina?.modello ?? prev.macchina.modello,
         colore: storico.macchina?.colore ?? prev.macchina.colore,
         tipologia: storico.macchina?.tipologia ?? prev.macchina.tipologia,
+        regime_possesso: storico.macchina?.regime_possesso ?? prev.macchina.regime_possesso,
       },
     }));
   };
@@ -248,6 +250,22 @@ export default function AcceptanceForm() {
             <option value="macinato">Macinato</option><option value="altro">Altro</option>
           </select>
         </div>
+
+        <div className="mt-3">
+          <label className={labelCls}>Regime macchina</label>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {([
+              ["proprieta_cliente", "Proprietà cliente"],
+              ["comodato_uso", "Comodato d'uso"],
+            ] as const).map(([value, label]) => (
+              <button key={value} type="button" onClick={() => set("macchina.regime_possesso", value)}
+                className={`rounded-lg border px-3 py-3 text-sm font-medium sm:py-2 ${
+                  f.macchina.regime_possesso === value ? "border-coffee-600 bg-coffee-50 text-coffee-700" : "border-coffee-200 text-coffee-400"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* STATO + GUASTO */}
@@ -289,6 +307,31 @@ export default function AcceptanceForm() {
         <label className={labelCls}>Difetto segnalato dal cliente</label>
         <textarea className={`${inputCls} min-h-[80px]`}
           onChange={(e) => set("scheda.difetto_cliente", e.target.value)} />
+
+        <div className="mt-3">
+          <label className={labelCls}>Preventivo previsto?</label>
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              [false, "No"],
+              [true, "Sì"],
+            ] as const).map(([value, label]) => (
+              <button key={label} type="button" onClick={() => set("scheda.preventivo_richiesto", value)}
+                className={`rounded-lg border px-3 py-3 text-sm font-medium sm:py-2 ${
+                  f.scheda.preventivo_richiesto === value ? "border-coffee-600 bg-coffee-50 text-coffee-700" : "border-coffee-200 text-coffee-400"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {f.scheda.preventivo_richiesto && (
+          <div className="mt-3">
+            <label className={labelCls}>Spesa massima autorizzata</label>
+            <input className={inputCls} inputMode="decimal" type="number" min="0" step="0.01"
+              value={f.scheda.spesa_max_autorizzata ?? ""}
+              onChange={(e) => set("scheda.spesa_max_autorizzata", e.target.value ? Number(e.target.value) : undefined)} />
+          </div>
+        )}
       </section>
 
       {/* GDPR */}

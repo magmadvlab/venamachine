@@ -15,6 +15,7 @@ Esegui in ordine, nello SQL editor di Supabase:
 - `supabase/01_schema.sql` — tabelle, enum, vista solleciti 90 giorni
 - `supabase/02_notifiche.sql` — numero scheda automatico, token, log notifiche, stadio cliente
 - `supabase/03_storage.sql` — bucket privato `riparazioni-foto` + policy
+- `supabase/04_possesso_preventivo.sql` — regime macchina (proprietà/comodato) e campi preventivo
 
 ## 2. Variabili d'ambiente
 Copia `.env.local.example` in `.env.local` e compila:

@@ -1,5 +1,6 @@
 export type TipoCliente = "privato" | "azienda";
 export type TipoMacchina = "cialde" | "capsule" | "macinato" | "altro";
+export type RegimePossessoMacchina = "proprieta_cliente" | "comodato_uso";
 export type StatoEstetico = "buono" | "graffi" | "danni";
 export type Canale = "whatsapp" | "sms" | "email";
 
@@ -24,11 +25,14 @@ export interface NuovaAccettazione {
     colore?: string;
     matricola?: string;
     tipologia?: TipoMacchina;
+    regime_possesso?: RegimePossessoMacchina;
   };
   scheda: {
     stato_estetico?: StatoEstetico;
     accessori: string[];
     difetto_cliente?: string;
+    preventivo_richiesto?: boolean;
+    spesa_max_autorizzata?: number;
     foto_path?: string; // path nel bucket Storage (caricata lato client)
   };
 }
@@ -43,7 +47,7 @@ export interface RiparazioneRow {
   stato_estetico: StatoEstetico | null;
   importo_preventivo: number | null;
   cliente: { ragione_sociale: string; email: string | null; telefono: string | null; piva_cf?: string | null } | null;
-  macchina: { marca: string | null; modello: string | null; matricola: string | null; tipologia: TipoMacchina | null; colore: string | null } | null;
+  macchina: { marca: string | null; modello: string | null; matricola: string | null; tipologia: TipoMacchina | null; colore: string | null; regime_possesso?: RegimePossessoMacchina | null } | null;
 }
 
 // stato interno -> stadio mostrato al cliente

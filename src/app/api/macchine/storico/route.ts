@@ -18,7 +18,7 @@ export async function GET(req: Request) {
   const db = createServiceClient();
   const { data: macchine, error: macchinaError } = await db
     .from("macchine")
-    .select("id, marca, modello, matricola, tipologia, colore, cliente:clienti(ragione_sociale, telefono, email)")
+    .select("id, marca, modello, matricola, tipologia, colore, regime_possesso, cliente:clienti(ragione_sociale, telefono, email)")
     .ilike("matricola", `%${matricola}%`)
     .limit(5);
 

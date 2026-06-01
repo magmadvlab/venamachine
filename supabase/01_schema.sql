@@ -67,6 +67,7 @@ create table macchine (
   colore     text,
   matricola  text,                          -- seriale, può essere null
   tipologia  tipo_macchina,
+  regime_possesso text check (regime_possesso in ('proprieta_cliente', 'comodato_uso')) default 'proprieta_cliente',
   created_at timestamptz not null default now()
 );
 create index idx_macchine_matricola on macchine (matricola);

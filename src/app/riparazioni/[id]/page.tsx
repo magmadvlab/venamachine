@@ -33,9 +33,9 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
   const { data } = await db
     .from("riparazioni")
     .select(`id, numero_scheda, token_pubblico, stato, data_ingresso, data_riparazione, data_avviso_cliente, data_ritiro,
-      difetto_cliente, diagnosi_tecnico, stato_estetico, accessori, importo_preventivo, importo_finale,
+      difetto_cliente, diagnosi_tecnico, stato_estetico, accessori, preventivo_richiesto, spesa_max_autorizzata, importo_preventivo, importo_finale,
       cliente:clienti(ragione_sociale, tipo, piva_cf, indirizzo, telefono, email, canale_preferito),
-      macchina:macchine(id, marca, modello, matricola, tipologia, colore)`)
+      macchina:macchine(id, marca, modello, matricola, tipologia, colore, regime_possesso)`)
     .eq("id", params.id)
     .single();
 
@@ -95,6 +95,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
               {field("Matricola", macchina?.matricola)}
               {field("Colore", macchina?.colore)}
               {field("Tipologia", macchina?.tipologia)}
+              {field("Regime", macchina?.regime_possesso === "comodato_uso" ? "Comodato d'uso" : "Proprietà cliente")}
               {field("Stato estetico", data.stato_estetico)}
             </div>
           </section>
@@ -107,6 +108,8 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
               {field("Avviso cliente", data.data_avviso_cliente ? new Date(data.data_avviso_cliente).toLocaleDateString("it-IT") : null)}
               {field("Ritiro", data.data_ritiro ? new Date(data.data_ritiro).toLocaleDateString("it-IT") : null)}
               {field("Accessori", (data.accessori ?? []).join(", "))}
+              {field("Preventivo previsto", data.preventivo_richiesto ? "Sì" : "No")}
+              {field("Spesa max autorizzata", data.spesa_max_autorizzata != null ? `€ ${Number(data.spesa_max_autorizzata).toFixed(2)}` : null)}
               {field("Preventivo", data.importo_preventivo != null ? `€ ${Number(data.importo_preventivo).toFixed(2)}` : null)}
               {field("Finale", data.importo_finale != null ? `€ ${Number(data.importo_finale).toFixed(2)}` : null)}
             </div>

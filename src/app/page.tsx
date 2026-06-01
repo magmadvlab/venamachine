@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 const RIPARAZIONI_SELECT = `id, numero_scheda, token_pubblico, stato, data_ingresso, difetto_cliente, stato_estetico, importo_preventivo,
   cliente:clienti(ragione_sociale, email, telefono, piva_cf),
-  macchina:macchine(marca, modello, matricola, tipologia, colore)`;
+  macchina:macchine(marca, modello, matricola, tipologia, colore, regime_possesso)`;
 
 const stadioColore: Record<string, string> = {
   "Ricevuta": "bg-coffee-100 text-coffee-700",

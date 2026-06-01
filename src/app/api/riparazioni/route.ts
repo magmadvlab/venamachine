@@ -59,6 +59,8 @@ export async function POST(req: Request) {
       stato_estetico: body.scheda.stato_estetico,
       accessori: body.scheda.accessori,
       difetto_cliente: body.scheda.difetto_cliente,
+      preventivo_richiesto: body.scheda.preventivo_richiesto ?? false,
+      spesa_max_autorizzata: body.scheda.preventivo_richiesto ? body.scheda.spesa_max_autorizzata : null,
     })
     .select("id, numero_scheda, token_pubblico, data_ingresso")
     .single();
