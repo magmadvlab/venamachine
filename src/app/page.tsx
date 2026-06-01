@@ -5,8 +5,18 @@ import StatusControl from "@/components/StatusControl";
 import { BrandHeader } from "@/components/BrandHeader";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Fab } from "@/components/ui/Fab";
 import { FileText, ExternalLink, Plus, Coffee, Search, ArrowRight } from "lucide-react";
+
+function NuovaSchedaButton() {
+  return (
+    <Link
+      href="/nuova"
+      className="inline-flex items-center gap-1.5 rounded-full bg-arancio px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-arancio-dark active:scale-95"
+    >
+      <Plus className="h-4 w-4" /> Nuova scheda
+    </Link>
+  );
+}
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +86,7 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-28 pt-6">
-      <BrandHeader />
+      <BrandHeader action={<NuovaSchedaButton />} />
 
       <form className="mb-4" action="/">
         <label className="sr-only" htmlFor="q">Cerca</label>
@@ -115,15 +125,13 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
         <div className="rounded-2xl border border-dashed border-coffee-200 bg-white px-6 py-16 text-center">
           <Coffee className="mx-auto h-10 w-10 text-coffee-200" />
           <p className="mt-3 text-coffee-400">
-            {q ? (
-              "Nessuna scheda trovata."
-            ) : (
-              <>
-                Nessuna scheda ancora. Tocca il pulsante{" "}
-                <span className="font-semibold text-arancio">+</span> per crearne una.
-              </>
-            )}
+            {q ? "Nessuna scheda trovata." : "Nessuna scheda ancora."}
           </p>
+          {!q && (
+            <div className="mt-4 flex justify-center">
+              <NuovaSchedaButton />
+            </div>
+          )}
         </div>
       ) : (
         <ul className="space-y-3">
@@ -165,10 +173,6 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
           })}
         </ul>
       )}
-
-      <Fab href="/nuova" label="Nuova scheda">
-        <Plus className="h-6 w-6" />
-      </Fab>
     </main>
   );
 }
