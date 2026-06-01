@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { NuovaAccettazione, RegimePossessoMacchina, TipoMacchina } from "@/lib/types";
+import { User, Coffee, ClipboardList } from "lucide-react";
 
 const ACCESSORI = ["Serbatoio", "Vassoio", "Cavo alim.", "Portacialde"];
 
@@ -141,19 +142,21 @@ export default function AcceptanceForm() {
     }
   }
 
-  const inputCls = "w-full rounded-lg border border-coffee-200 bg-white px-3 py-3 text-base text-coffee-900 outline-none focus:border-coffee-600 sm:py-2.5 sm:text-sm";
+  const inputCls = "w-full rounded-xl border border-coffee-200 bg-white px-3 py-3 text-base text-coffee-900 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20 sm:py-2.5 sm:text-sm";
   const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-coffee-400";
 
   return (
     <div className="space-y-5 sm:space-y-6">
       {/* CLIENTE */}
-      <section className="rounded-xl border border-coffee-100 bg-white p-4 sm:p-5">
-        <h2 className="mb-3 font-display text-lg font-semibold text-coffee-700">Cliente</h2>
+      <section className="rounded-2xl border border-coffee-100 bg-white p-4 shadow-sm shadow-coffee-900/5 sm:p-5">
+        <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+          <User className="h-5 w-5 text-arancio" /> Cliente
+        </h2>
         <div className="mb-3 grid grid-cols-2 gap-2">
           {(["privato", "azienda"] as const).map((t) => (
             <button key={t} type="button" onClick={() => set("cliente.tipo", t)}
               className={`rounded-lg border px-3 py-3 text-sm font-medium capitalize sm:py-2 ${
-                f.cliente.tipo === t ? "border-coffee-600 bg-coffee-50 text-coffee-700" : "border-coffee-200 text-coffee-400"}`}>
+                f.cliente.tipo === t ? "border-arancio bg-arancio/10 text-arancio-dark" : "border-coffee-200 text-coffee-400"}`}>
               {t}
             </button>
           ))}
@@ -176,8 +179,10 @@ export default function AcceptanceForm() {
       </section>
 
       {/* MACCHINA */}
-      <section className="rounded-xl border border-coffee-100 bg-white p-4 sm:p-5">
-        <h2 className="mb-3 font-display text-lg font-semibold text-coffee-700">Macchina</h2>
+      <section className="rounded-2xl border border-coffee-100 bg-white p-4 shadow-sm shadow-coffee-900/5 sm:p-5">
+        <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+          <Coffee className="h-5 w-5 text-arancio" /> Macchina
+        </h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div><label className={labelCls}>Marca</label>
             <input className={inputCls} value={f.macchina.marca ?? ""}
@@ -209,7 +214,7 @@ export default function AcceptanceForm() {
               </div>
               {storico?.macchina && (
                 <button type="button" onClick={usaDatiStorico}
-                  className="shrink-0 rounded-lg border border-coffee-200 px-3 py-2 text-xs font-semibold text-coffee-700">
+                  className="shrink-0 rounded-lg border border-arancio/40 px-3 py-2 text-xs font-semibold text-arancio-dark">
                   Usa dati
                 </button>
               )}
@@ -260,7 +265,7 @@ export default function AcceptanceForm() {
             ] as const).map(([value, label]) => (
               <button key={value} type="button" onClick={() => set("macchina.regime_possesso", value)}
                 className={`rounded-lg border px-3 py-3 text-sm font-medium sm:py-2 ${
-                  f.macchina.regime_possesso === value ? "border-coffee-600 bg-coffee-50 text-coffee-700" : "border-coffee-200 text-coffee-400"}`}>
+                  f.macchina.regime_possesso === value ? "border-arancio bg-arancio/10 text-arancio-dark" : "border-coffee-200 text-coffee-400"}`}>
                 {label}
               </button>
             ))}
@@ -269,14 +274,16 @@ export default function AcceptanceForm() {
       </section>
 
       {/* STATO + GUASTO */}
-      <section className="rounded-xl border border-coffee-100 bg-white p-4 sm:p-5">
-        <h2 className="mb-3 font-display text-lg font-semibold text-coffee-700">Stato e guasto</h2>
+      <section className="rounded-2xl border border-coffee-100 bg-white p-4 shadow-sm shadow-coffee-900/5 sm:p-5">
+        <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+          <ClipboardList className="h-5 w-5 text-arancio" /> Stato e guasto
+        </h2>
         <label className={labelCls}>Stato estetico all'ingresso</label>
         <div className="mb-3 grid grid-cols-3 gap-2">
           {(["buono", "graffi", "danni"] as const).map((t) => (
             <button key={t} type="button" onClick={() => set("scheda.stato_estetico", t)}
               className={`rounded-lg border px-2 py-3 text-sm font-medium capitalize sm:py-2 ${
-                f.scheda.stato_estetico === t ? "border-coffee-600 bg-coffee-50 text-coffee-700" : "border-coffee-200 text-coffee-400"}`}>
+                f.scheda.stato_estetico === t ? "border-arancio bg-arancio/10 text-arancio-dark" : "border-coffee-200 text-coffee-400"}`}>
               {t}
             </button>
           ))}
@@ -298,7 +305,7 @@ export default function AcceptanceForm() {
           {ACCESSORI.map((acc) => (
             <button key={acc} type="button" onClick={() => toggleAccessorio(acc)}
               className={`rounded-full border px-3 py-1.5 text-sm ${
-                f.scheda.accessori.includes(acc) ? "border-coffee-600 bg-coffee-50 text-coffee-700" : "border-coffee-200 text-coffee-400"}`}>
+                f.scheda.accessori.includes(acc) ? "border-arancio bg-arancio/10 text-arancio-dark" : "border-coffee-200 text-coffee-400"}`}>
               {acc}
             </button>
           ))}
@@ -317,7 +324,7 @@ export default function AcceptanceForm() {
             ] as const).map(([value, label]) => (
               <button key={label} type="button" onClick={() => set("scheda.preventivo_richiesto", value)}
                 className={`rounded-lg border px-3 py-3 text-sm font-medium sm:py-2 ${
-                  f.scheda.preventivo_richiesto === value ? "border-coffee-600 bg-coffee-50 text-coffee-700" : "border-coffee-200 text-coffee-400"}`}>
+                  f.scheda.preventivo_richiesto === value ? "border-arancio bg-arancio/10 text-arancio-dark" : "border-coffee-200 text-coffee-400"}`}>
                 {label}
               </button>
             ))}
@@ -336,7 +343,7 @@ export default function AcceptanceForm() {
 
       {/* GDPR */}
       <label className="flex items-start gap-3 rounded-xl border border-coffee-100 bg-white p-4 text-sm sm:p-5">
-        <input type="checkbox" checked={f.cliente.consenso_gdpr} className="mt-0.5 h-5 w-5 accent-coffee-700"
+        <input type="checkbox" checked={f.cliente.consenso_gdpr} className="mt-0.5 h-5 w-5 accent-arancio"
           onChange={(e) => set("cliente.consenso_gdpr", e.target.checked)} />
         <span className="text-coffee-600">
           Il cliente acconsente al trattamento dei dati (Reg. UE 2016/679) per la gestione della riparazione
@@ -348,7 +355,7 @@ export default function AcceptanceForm() {
 
       <div className="sticky bottom-0 -mx-4 bg-coffee-50/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:p-0">
         <button onClick={submit} disabled={saving}
-          className="w-full rounded-full bg-coffee-700 py-3.5 text-base font-semibold text-white shadow active:scale-[0.99] disabled:opacity-60">
+          className="w-full rounded-full bg-arancio py-3.5 text-base font-semibold text-white shadow-sm hover:bg-arancio-dark active:scale-[0.99] disabled:opacity-60">
           {saving ? "Salvataggio…" : "Crea scheda e invia ricevuta"}
         </button>
       </div>
