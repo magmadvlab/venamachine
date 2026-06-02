@@ -63,6 +63,16 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
 
   const db = createServiceClient();
 
+  const { data: riparazione, error: lookupError } = await db
+    .from("riparazioni")
+    .select("id, numero_scheda")
+    .eq("id", params.id)
+    .maybeSingle();
+
+  if (lookupError) {
+    return NextResponse.json({ error: lookupError.message, details: lookupError.details, hint: lookupError.hint }, { status: 400 });
+  }
+
   const { data: fotoRows, error: fotoError } = await db
     .from("foto_riparazione")
     .select("storage_path")
@@ -80,16 +90,14 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     await db.storage.from("riparazioni-foto").remove(storagePaths);
   }
 
-  const { data, error } = await db
+  const { error } = await db
     .from("riparazioni")
     .delete()
-    .eq("id", params.id)
-    .select("id, numero_scheda")
-    .single();
+    .eq("id", params.id);
 
   if (error) {
     return NextResponse.json({ error: error.message, details: error.details, hint: error.hint }, { status: 400 });
   }
 
-  return NextResponse.json({ riparazione: data });
+  return NextResponse.json({ riparazione: riparazione ?? { id: params.id } });
 }
