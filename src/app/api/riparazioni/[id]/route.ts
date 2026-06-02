@@ -90,6 +90,32 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     await db.storage.from("riparazioni-foto").remove(storagePaths);
   }
 
+  const { error: notificheError } = await db
+    .from("notifiche")
+    .delete()
+    .eq("riparazione_id", params.id);
+
+  if (notificheError) {
+    return NextResponse.json({
+      error: `Notifiche: ${notificheError.message}`,
+      details: notificheError.details,
+      hint: notificheError.hint,
+    }, { status: 400 });
+  }
+
+  const { error: fotoDeleteError } = await db
+    .from("foto_riparazione")
+    .delete()
+    .eq("riparazione_id", params.id);
+
+  if (fotoDeleteError) {
+    return NextResponse.json({
+      error: `Foto: ${fotoDeleteError.message}`,
+      details: fotoDeleteError.details,
+      hint: fotoDeleteError.hint,
+    }, { status: 400 });
+  }
+
   const { error } = await db
     .from("riparazioni")
     .delete()

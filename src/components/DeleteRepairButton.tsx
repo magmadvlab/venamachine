@@ -32,7 +32,10 @@ export function DeleteRepairButton({
     try {
       const res = await fetch(`/api/riparazioni/${id}`, { method: "DELETE" });
       const out = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(out.error || "Eliminazione non riuscita");
+      if (!res.ok) {
+        const extra = [out.details, out.hint].filter(Boolean).join(" ");
+        throw new Error([out.error || "Eliminazione non riuscita", extra].filter(Boolean).join(" - "));
+      }
 
       startTransition(() => {
         if (redirectTo) {
