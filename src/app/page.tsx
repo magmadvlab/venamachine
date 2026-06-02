@@ -147,7 +147,7 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
   const user = await getCurrentUser();
   const admin = isAdminEmail(user?.email);
   const operatore = await getSessionOperatore(db);
-  const operatoreLabel = operatore?.nome || user?.email || "Operatore";
+  const operatoreLabel = operatore?.nome || "Operatore";
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-28 pt-6">
@@ -164,7 +164,11 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
       />
 
       <p className="mb-4 text-sm text-coffee-400">
-        Operatore: <span className="font-semibold text-coffee-900">{operatoreLabel}</span>
+        {admin ? (
+          <span className="font-semibold text-coffee-900">Amministratore</span>
+        ) : (
+          <>Operatore: <span className="font-semibold text-coffee-900">{operatoreLabel}</span></>
+        )}
       </p>
 
       <form className="mb-4" action="/">
