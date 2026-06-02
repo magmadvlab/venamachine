@@ -2,9 +2,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { NuovaAccettazione, RegimePossessoMacchina, TipoMacchina } from "@/lib/types";
-import { User, Coffee, ClipboardList } from "lucide-react";
+import { AlertTriangle, Coffee, ClipboardList, Clock, User } from "lucide-react";
 
 const ACCESSORI = ["Serbatoio", "Vassoio", "Cavo alim.", "Portacialde"];
+const RIENTRO_RAVVICINATO_DAYS = 90;
+const STOP_WORDS = new Set([
+  "alla", "allo", "dalla", "dello", "della", "delle", "degli", "con", "che",
+  "non", "una", "uno", "per", "del", "dal", "dei", "gli", "nel", "nella",
+  "macchina", "caffe", "caffè", "problema", "difetto",
+]);
 
 type StoricoRiparazione = {
   id: string;
@@ -31,6 +37,42 @@ type StoricoMacchina = {
   } | null;
   riparazioni: StoricoRiparazione[];
 };
+
+function dataIntervento(r: StoricoRiparazione) {
+  return r.data_riparazione ?? r.data_ingresso;
+}
+
+function giorniDa(date: string) {
+  const time = new Date(date).getTime();
+  if (!Number.isFinite(time)) return null;
+  return Math.max(0, Math.floor((Date.now() - time) / 86400000));
+}
+
+function paroleSignificative(value?: string | null) {
+  return new Set(
+    (value ?? "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((word) => word.length >= 4 && !STOP_WORDS.has(word)),
+  );
+}
+
+function trovaDifettoSimile(current?: string | null, storico: StoricoRiparazione[] = []) {
+  const currentWords = paroleSignificative(current);
+  if (currentWords.size < 2) return null;
+
+  return storico.find((r) => {
+    const previousWords = paroleSignificative(r.difetto_cliente);
+    let matches = 0;
+    currentWords.forEach((word) => {
+      if (previousWords.has(word)) matches += 1;
+    });
+    return matches >= 2;
+  }) ?? null;
+}
 
 export default function AcceptanceForm() {
   const router = useRouter();
@@ -64,6 +106,12 @@ export default function AcceptanceForm() {
 
   const mostraFoto = f.scheda.stato_estetico === "graffi" || f.scheda.stato_estetico === "danni";
   const matricola = f.macchina.matricola?.trim() ?? "";
+  const storicoRiparazioni = storico?.riparazioni ?? [];
+  const ultimoIntervento = storicoRiparazioni[0] ?? null;
+  const giorniUltimoIntervento = ultimoIntervento ? giorniDa(dataIntervento(ultimoIntervento)) : null;
+  const rientroRavvicinato =
+    giorniUltimoIntervento != null && giorniUltimoIntervento <= RIENTRO_RAVVICINATO_DAYS;
+  const difettoSimile = trovaDifettoSimile(f.scheda.difetto_cliente, storicoRiparazioni);
 
   useEffect(() => {
     if (matricola.length < 3) {
@@ -227,7 +275,40 @@ export default function AcceptanceForm() {
             </div>
 
             {storicoStatus === "done" && storico && (
-              <ul className="mt-3 divide-y divide-coffee-100 text-sm">
+              <>
+                {ultimoIntervento && (
+                  <div className={`mt-3 rounded-xl border p-3 text-sm ${
+                    rientroRavvicinato
+                      ? "border-amber-200 bg-amber-50 text-amber-950"
+                      : "border-coffee-100 bg-coffee-50 text-coffee-700"
+                  }`}>
+                    <div className="flex items-start gap-2">
+                      {rientroRavvicinato ? (
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                      ) : (
+                        <Clock className="mt-0.5 h-4 w-4 shrink-0 text-coffee-500" />
+                      )}
+                      <div>
+                        <p className="font-semibold">
+                          {rientroRavvicinato
+                            ? `Rientro ravvicinato: ultimo intervento ${giorniUltimoIntervento} giorni fa`
+                            : "Ultimo intervento registrato"}
+                        </p>
+                        <p className="mt-1">
+                          {new Date(dataIntervento(ultimoIntervento)).toLocaleDateString("it-IT")}
+                          {ultimoIntervento.diagnosi_tecnico ? ` - ${ultimoIntervento.diagnosi_tecnico}` : ""}
+                        </p>
+                        {rientroRavvicinato && (
+                          <p className="mt-1 text-xs font-semibold">
+                            Verifica se è un ricontrollo o un possibile rientro in garanzia.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <ul className="mt-3 divide-y divide-coffee-100 text-sm">
                 {storico.riparazioni.map((r) => {
                   const operatore = Array.isArray(r.operatore) ? r.operatore[0] : r.operatore;
                   return (
@@ -257,7 +338,8 @@ export default function AcceptanceForm() {
                     </li>
                   );
                 })}
-              </ul>
+                </ul>
+              </>
             )}
           </div>
         )}
@@ -328,7 +410,25 @@ export default function AcceptanceForm() {
 
         <label className={labelCls}>Difetto segnalato dal cliente</label>
         <textarea className={`${inputCls} min-h-[80px]`}
+          value={f.scheda.difetto_cliente ?? ""}
           onChange={(e) => set("scheda.difetto_cliente", e.target.value)} />
+        {difettoSimile && (
+          <div className="mt-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <p className="font-semibold">Possibile difetto ricorrente</p>
+                <p className="mt-1">
+                  Problema simile già segnalato nella scheda {difettoSimile.numero_scheda ?? "precedente"} del{" "}
+                  {new Date(difettoSimile.data_ingresso).toLocaleDateString("it-IT")}.
+                </p>
+                {difettoSimile.diagnosi_tecnico && (
+                  <p className="mt-1 text-xs font-semibold">Fatto prima: {difettoSimile.diagnosi_tecnico}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-3">
           <label className={labelCls}>Preventivo previsto?</label>
