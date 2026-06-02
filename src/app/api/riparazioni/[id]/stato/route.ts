@@ -4,6 +4,7 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { inviaAggiornamentoStato } from "@/lib/email";
 import { getSessionOperatore } from "@/lib/operator-server";
 import type { StatoRiparazione } from "@/lib/types";
+import { isLegacyRepairResidue } from "@/lib/legacy-repairs";
 
 export const runtime = "nodejs";
 
@@ -28,6 +29,9 @@ const STATI_DA_NOTIFICARE: StatoRiparazione[] = [
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   if (!hasServiceConfig()) {
     return NextResponse.json({ error: "Configurazione Supabase incompleta" }, { status: 503 });
+  }
+  if (isLegacyRepairResidue(params.id)) {
+    return NextResponse.json({ error: "Scheda non trovata" }, { status: 404 });
   }
 
   const body = (await req.json()) as { stato?: StatoRiparazione };

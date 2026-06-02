@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 import { getSessionOperatore } from "@/lib/operator-server";
+import { isLegacyRepairResidue } from "@/lib/legacy-repairs";
 
 export const runtime = "nodejs";
 
@@ -11,6 +12,9 @@ export const runtime = "nodejs";
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   if (!hasServiceConfig()) {
     return NextResponse.json({ error: "Configurazione Supabase incompleta" }, { status: 503 });
+  }
+  if (isLegacyRepairResidue(params.id)) {
+    return NextResponse.json({ error: "Scheda non trovata" }, { status: 404 });
   }
 
   const body = await req.json();

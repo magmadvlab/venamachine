@@ -2,12 +2,16 @@ import { NextResponse } from "next/server";
 import { getPublicAppUrl } from "@/lib/app-url";
 import { inviaSollecitoRitiro } from "@/lib/email";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
+import { isLegacyRepairResidue } from "@/lib/legacy-repairs";
 
 export const runtime = "nodejs";
 
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
   if (!hasServiceConfig()) {
     return NextResponse.json({ error: "Configurazione Supabase incompleta" }, { status: 503 });
+  }
+  if (isLegacyRepairResidue(params.id)) {
+    return NextResponse.json({ error: "Scheda non trovata" }, { status: 404 });
   }
 
   const db = createServiceClient();
