@@ -11,6 +11,7 @@ import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { stadioCliente, type StatoRiparazione } from "@/lib/types";
 import { DeleteRepairButton } from "@/components/DeleteRepairButton";
+import { isLegacyRepairResidue } from "@/lib/legacy-repairs";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ function field(label: string, value?: string | number | null) {
 export default async function DettaglioRiparazione({ params }: { params: { id: string } }) {
   const missingEnv = missingSupabaseEnv();
   if (missingEnv.length > 0) notFound();
+  if (isLegacyRepairResidue(params.id)) notFound();
 
   const db = createServiceClient();
   const { data } = await db

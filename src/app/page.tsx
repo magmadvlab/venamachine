@@ -10,6 +10,7 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { getSessionOperatore } from "@/lib/operator-server";
 import { DeleteRepairButton } from "@/components/DeleteRepairButton";
+import { isLegacyRepairResidue } from "@/lib/legacy-repairs";
 
 function RegimeChip({ regime }: { regime?: string | null }) {
   if (!regime) return null;
@@ -139,7 +140,9 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
     .order("data_ingresso", { ascending: false })
     .limit(q ? 1000 : 100);
 
-  const righe = normalizeRows(data).filter((r) => !q || rowMatchesSearch(r, q));
+  const righe = normalizeRows(data)
+    .filter((r) => !isLegacyRepairResidue(r.id))
+    .filter((r) => !q || rowMatchesSearch(r, q));
 
   const user = await getCurrentUser();
   const admin = isAdminEmail(user?.email);

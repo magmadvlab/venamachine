@@ -2,6 +2,7 @@ import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 import { stadioCliente } from "@/lib/types";
 import { notFound } from "next/navigation";
 import { Check } from "lucide-react";
+import { isLegacyRepairResidue } from "@/lib/legacy-repairs";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,7 @@ export default async function Tracking({ params }: { params: { token: string } }
     .eq("token_pubblico", params.token)
     .single();
   if (!data) notFound();
+  if (isLegacyRepairResidue(data.id)) notFound();
 
   const cliente: any = Array.isArray(data.cliente) ? data.cliente[0] : data.cliente;
   const macchina: any = Array.isArray(data.macchina) ? data.macchina[0] : data.macchina;
