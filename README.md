@@ -1,4 +1,4 @@
-# Coffee Express · Officina
+# Venamachine · Officina
 
 PWA per l'accettazione e il tracking delle riparazioni di macchine da caffè.
 Stack: **Next.js (App Router) + Supabase (PostgreSQL + Storage) + Resend (email)**.
