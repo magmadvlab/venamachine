@@ -60,6 +60,9 @@ export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
   const [dataOrdine, setDataOrdine] = useState(() => new Date().toISOString().slice(0, 10));
   const [numeroDocumento, setNumeroDocumento] = useState("");
   const [note, setNote] = useState("");
+  const [pagato, setPagato] = useState(false);
+  const [dataPagamento, setDataPagamento] = useState(() => new Date().toISOString().slice(0, 10));
+  const [metodoPagamento, setMetodoPagamento] = useState("");
 
   const macchineCliente = useMemo(
     () => macchine.filter((m) => m.cliente_id === clienteId),
@@ -106,6 +109,9 @@ export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
           data_ordine: dataOrdine,
           numero_documento: numeroDocumento || undefined,
           note: note || undefined,
+          pagato,
+          data_pagamento: pagato ? dataPagamento : undefined,
+          metodo_pagamento: pagato ? metodoPagamento || undefined : undefined,
           prodotto_id: prodottoId || undefined,
           prodotto: prodottoId ? undefined : {
             nome: nomeProdotto,
@@ -128,6 +134,9 @@ export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
       setPrezzoUnitario(undefined);
       setNumeroDocumento("");
       setNote("");
+      setPagato(false);
+      setMetodoPagamento("");
+      setDataPagamento(new Date().toISOString().slice(0, 10));
     } catch (e: any) {
       setErrore(e.message);
     } finally {
@@ -174,7 +183,7 @@ export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
           </select>
         </div>
         <div>
-          <label className={labelCls}>Data</label>
+          <label className={labelCls}>Data vendita</label>
           <input className={inputCls} type="date" value={dataOrdine} onChange={(e) => setDataOrdine(e.target.value)} />
         </div>
       </div>
@@ -245,6 +254,35 @@ export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
             <input className={inputCls} value={note} placeholder="Note" onChange={(e) => setNote(e.target.value)} />
           </div>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-coffee-100 bg-coffee-50 p-3">
+        <label className="flex items-center gap-3 text-sm font-semibold text-coffee-800">
+          <input
+            type="checkbox"
+            checked={pagato}
+            onChange={(e) => setPagato(e.target.checked)}
+            className="h-5 w-5 accent-arancio"
+          />
+          Pagato
+        </label>
+        {pagato && (
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className={labelCls}>Data pagamento</label>
+              <input className={inputCls} type="date" value={dataPagamento} onChange={(e) => setDataPagamento(e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>Metodo pagamento</label>
+              <input
+                className={inputCls}
+                value={metodoPagamento}
+                placeholder="Contanti, POS, bonifico..."
+                onChange={(e) => setMetodoPagamento(e.target.value)}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm text-coffee-700">
