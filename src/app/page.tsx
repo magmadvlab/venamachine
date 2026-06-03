@@ -5,7 +5,7 @@ import StatusControl from "@/components/StatusControl";
 import { BrandHeader } from "@/components/BrandHeader";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { FileText, ExternalLink, Plus, Coffee, Search, ArrowRight, Building2, BadgeCheck, Bell, UserRound, Users } from "lucide-react";
+import { FileText, ExternalLink, Plus, Coffee, Search, ArrowRight, Building2, BadgeCheck, Bell, UserRound, Users, ShoppingBag } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { getSessionOperatore } from "@/lib/operator-server";
@@ -72,6 +72,18 @@ function ClientiButton() {
     >
       <Users className="h-4 w-4 shrink-0" />
       <span className="hidden sm:inline">Clienti</span>
+    </Link>
+  );
+}
+
+function VenditeButton() {
+  return (
+    <Link
+      href="/vendite"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-coffee-200 bg-white px-3.5 py-2 text-sm font-semibold text-coffee-700 active:scale-95"
+    >
+      <ShoppingBag className="h-4 w-4 shrink-0" />
+      <span className="hidden sm:inline">Vendite</span>
     </Link>
   );
 }
@@ -156,6 +168,7 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
           <div className="flex flex-wrap items-center justify-end gap-2">
             {admin && <OperatoriButton />}
             <ClientiButton />
+            <VenditeButton />
             <SollecitiButton />
             <NuovaSchedaButton />
             <LogoutButton />
