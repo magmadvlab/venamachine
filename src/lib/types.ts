@@ -8,6 +8,14 @@ export type StatoRiparazione =
   | "ingresso" | "in_diagnosi" | "attesa_preventivo" | "in_riparazione"
   | "riparata" | "cliente_avvisato" | "ritirata" | "non_riparabile" | "abbandonata";
 
+export interface ProfiloAttivita {
+  id: string;
+  codice: string;
+  nome: string;
+  caffe_giornalieri_min: number;
+  caffe_giornalieri_max: number;
+}
+
 export interface NuovaAccettazione {
   operatore_id?: string;
   operatore_nome?: string;
@@ -20,6 +28,9 @@ export interface NuovaAccettazione {
     email?: string;
     consenso_gdpr: boolean;
     canale_preferito: Canale;
+    profilo_attivita_id?: string;
+    caffe_giornalieri_attesi_override?: number;
+    note_fedelta?: string;
   };
   macchina: {
     marca?: string;

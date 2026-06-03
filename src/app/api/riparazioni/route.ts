@@ -22,6 +22,10 @@ function clean(value?: string) {
   return trimmed || undefined;
 }
 
+function cleanNumber(value?: number) {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
 export async function POST(req: Request) {
   if (!hasServiceConfig()) {
     return NextResponse.json({ error: "Configurazione Vercel incompleta" }, { status: 503 });
@@ -48,6 +52,9 @@ export async function POST(req: Request) {
     consenso_gdpr: body.cliente.consenso_gdpr,
     consenso_data: body.cliente.consenso_gdpr ? new Date().toISOString() : null,
     canale_preferito: body.cliente.canale_preferito,
+    profilo_attivita_id: clean(body.cliente.profilo_attivita_id),
+    caffe_giornalieri_attesi_override: cleanNumber(body.cliente.caffe_giornalieri_attesi_override),
+    note_fedelta: clean(body.cliente.note_fedelta),
   };
 
   async function cercaCliente() {
@@ -92,6 +99,11 @@ export async function POST(req: Request) {
         consenso_data: clienteInput.consenso_data,
       } : {}),
       canale_preferito: clienteInput.canale_preferito,
+      ...(clienteInput.profilo_attivita_id ? { profilo_attivita_id: clienteInput.profilo_attivita_id } : {}),
+      ...(clienteInput.caffe_giornalieri_attesi_override != null ? {
+        caffe_giornalieri_attesi_override: clienteInput.caffe_giornalieri_attesi_override,
+      } : {}),
+      ...(clienteInput.note_fedelta ? { note_fedelta: clienteInput.note_fedelta } : {}),
     };
     const { data, error } = await db
       .from("clienti")

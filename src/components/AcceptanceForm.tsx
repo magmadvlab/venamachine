@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { NuovaAccettazione, RegimePossessoMacchina, TipoMacchina } from "@/lib/types";
-import { AlertTriangle, Coffee, ClipboardList, Clock, User } from "lucide-react";
+import type { NuovaAccettazione, ProfiloAttivita, RegimePossessoMacchina, TipoMacchina } from "@/lib/types";
+import { AlertTriangle, Coffee, ClipboardList, Clock, LineChart, User } from "lucide-react";
 
 const ACCESSORI = ["Serbatoio", "Vassoio", "Cavo alim.", "Portacialde"];
 const RIENTRO_RAVVICINATO_DAYS = 90;
@@ -36,6 +36,10 @@ type StoricoMacchina = {
     cliente?: { ragione_sociale?: string | null; telefono?: string | null; email?: string | null } | null;
   } | null;
   riparazioni: StoricoRiparazione[];
+};
+
+type AcceptanceFormProps = {
+  profiliAttivita?: ProfiloAttivita[];
 };
 
 function dataIntervento(r: StoricoRiparazione) {
@@ -74,7 +78,7 @@ function trovaDifettoSimile(current?: string | null, storico: StoricoRiparazione
   }) ?? null;
 }
 
-export default function AcceptanceForm() {
+export default function AcceptanceForm({ profiliAttivita = [] }: AcceptanceFormProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
@@ -112,6 +116,7 @@ export default function AcceptanceForm() {
   const rientroRavvicinato =
     giorniUltimoIntervento != null && giorniUltimoIntervento <= RIENTRO_RAVVICINATO_DAYS;
   const difettoSimile = trovaDifettoSimile(f.scheda.difetto_cliente, storicoRiparazioni);
+  const profiloSelezionato = profiliAttivita.find((profilo) => profilo.id === f.cliente.profilo_attivita_id);
 
   useEffect(() => {
     if (matricola.length < 3) {
@@ -228,6 +233,47 @@ export default function AcceptanceForm() {
             <div><label className={labelCls}>Email</label>
               <input className={inputCls} type="email" value={f.cliente.email}
                 onChange={(e) => set("cliente.email", e.target.value)} /></div>
+          </div>
+          <div className="rounded-xl border border-coffee-100 bg-coffee-50 p-3">
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-coffee-800">
+              <LineChart className="h-4 w-4 text-arancio" /> Profilo fedeltà
+            </h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_160px]">
+              <div>
+                <label className={labelCls}>Tipo attività</label>
+                <select
+                  className={inputCls}
+                  value={f.cliente.profilo_attivita_id ?? ""}
+                  onChange={(e) => set("cliente.profilo_attivita_id", e.target.value || undefined)}
+                >
+                  <option value="">Da definire</option>
+                  {profiliAttivita.map((profilo) => (
+                    <option key={profilo.id} value={profilo.id}>
+                      {profilo.nome}
+                    </option>
+                  ))}
+                </select>
+                {profiloSelezionato && (
+                  <p className="mt-1 text-xs font-semibold text-coffee-500">
+                    Atteso: {profiloSelezionato.caffe_giornalieri_min}-{profiloSelezionato.caffe_giornalieri_max} caffè/giorno
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className={labelCls}>Stima/giorno</label>
+                <input
+                  className={inputCls}
+                  inputMode="numeric"
+                  min="0"
+                  type="number"
+                  value={f.cliente.caffe_giornalieri_attesi_override ?? ""}
+                  onChange={(e) => set(
+                    "cliente.caffe_giornalieri_attesi_override",
+                    e.target.value ? Number(e.target.value) : undefined,
+                  )}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
