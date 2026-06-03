@@ -44,8 +44,10 @@ export default async function Tracking({ params }: { params: { token: string } }
     <main className="mx-auto max-w-md px-4 pb-16 pt-10">
       <div className="overflow-hidden rounded-2xl border border-coffee-100 bg-white shadow-sm shadow-coffee-900/5">
         <div className="flex items-center gap-2.5 bg-coffee-900 px-6 py-4">
-          <img src="/symbol.png" alt="" className="h-8 w-auto" />
-          <p className="font-display text-xl font-bold text-white">Coffee Express</p>
+          <div className="leading-tight text-white">
+            <p className="font-display text-xl font-bold">Vena Coffee Machine</p>
+            <p className="text-xs font-semibold text-white/60">Officina</p>
+          </div>
         </div>
 
         <div className="p-6">
@@ -115,7 +117,7 @@ export default async function Tracking({ params }: { params: { token: string } }
         </div>
       </div>
       <p className="mt-4 text-center text-xs text-coffee-400">
-        Coffee Express s.r.l · S.P. Pisticci San Basilio · Tel. 0835 411386
+        Vena Coffee Machine
       </p>
     </main>
   );

@@ -1,7 +1,7 @@
 // Mappatura nome operatore -> email tecnica (Supabase Auth richiede un'email).
 // L'operatore accede col proprio NOME; l'admin con la propria email reale.
 
-const OPERATOR_EMAIL_DOMAIN = "operatori.coffeexpress.it";
+const OPERATOR_EMAIL_DOMAIN = "operatori.venamachine.local";
 
 export function operatoreSlug(nome: string): string {
   return nome

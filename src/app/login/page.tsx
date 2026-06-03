@@ -8,7 +8,10 @@ export default function LoginPage() {
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-10">
       <div className="overflow-hidden rounded-2xl border border-coffee-100 bg-white shadow-sm shadow-coffee-900/5">
         <div className="flex items-center gap-2.5 bg-coffee-900 px-6 py-5">
-          <img src="/logo-white.png" alt="Coffee Express" className="h-10 w-auto" />
+          <div className="leading-tight text-white">
+            <p className="font-display text-xl font-bold">Vena Coffee Machine</p>
+            <p className="text-xs font-semibold text-white/60">Officina</p>
+          </div>
         </div>
         <div className="p-6">
           <h1 className="font-display text-xl font-bold text-coffee-900">Accesso officina</h1>

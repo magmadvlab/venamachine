@@ -15,7 +15,10 @@ export function BrandHeader({
       )}
       style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
     >
-      <img src="/logo-white.png" alt="Coffee Express" className="h-10 w-auto" />
+      <div className="leading-tight text-white">
+        <p className="font-display text-lg font-bold">Vena Coffee Machine</p>
+        <p className="text-xs font-semibold text-white/60">Officina</p>
+      </div>
       {action}
     </header>
   );

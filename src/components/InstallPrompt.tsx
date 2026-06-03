@@ -61,7 +61,7 @@ export function InstallPrompt() {
       <div className="flex items-start gap-3">
         <img src="/icon-192.png" alt="" className="h-10 w-10 rounded-lg" />
         <div className="min-w-0 flex-1">
-          <p className="font-display font-bold text-coffee-900">Installa Coffee Express</p>
+          <p className="font-display font-bold text-coffee-900">Installa Vena Coffee Machine</p>
           {showIosHint ? (
             <p className="mt-1 text-sm text-coffee-600">
               Tocca <Share className="inline h-4 w-4 align-text-bottom text-arancio" /> Condividi, poi{" "}

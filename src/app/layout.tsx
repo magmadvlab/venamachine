@@ -3,20 +3,23 @@ import "./globals.css";
 import { InstallPrompt } from "@/components/InstallPrompt";
 
 export const metadata: Metadata = {
-  title: "Coffee Express · Officina",
+  title: "Vena Coffee Machine · Officina",
   description: "Accettazione e tracking riparazioni macchine da caffè",
   manifest: "/manifest.webmanifest",
-  applicationName: "CE Officina",
+  applicationName: "Vena Coffee Machine",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "CE Officina",
+    title: "Vena Coffee Machine",
   },
   other: {
     "mobile-web-app-capable": "yes",
   },
   icons: {
-    icon: "/icon-192.png",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
     apple: "/icon-192.png",
   },
 };

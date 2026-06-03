@@ -1,4 +1,4 @@
-# Venamachine · Officina
+# Vena Coffee Machine · Officina
 
 PWA per l'accettazione e il tracking delle riparazioni di macchine da caffè.
 Stack: **Next.js (App Router) + Supabase (PostgreSQL + Storage) + Resend (email)**.
@@ -44,8 +44,8 @@ npm run build    # build di produzione
    link/QR di tracking puntano all'URL giusto.
 
 ## Brand
-Asset in `public/`: `logo-white.png` (header su fondo scuro), `symbol.png`
-(marchio per fondo chiaro e PDF), `icon-192.png` / `icon-512.png` (icone PWA).
+Il brand visibile dell'app e delle comunicazioni e `Vena Coffee Machine`.
+Le icone PWA sono in `public/icon-192.png` e `public/icon-512.png`.
 
 ## Struttura
 ```

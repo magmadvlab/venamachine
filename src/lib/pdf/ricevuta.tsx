@@ -2,7 +2,6 @@ import React from "react";
 import {
   Document, Page, View, Text, Image, StyleSheet,
 } from "@react-pdf/renderer";
-import { SYMBOL_DATA_URL } from "./symbol";
 
 export interface RicevutaData {
   numeroScheda: string;
@@ -56,10 +55,9 @@ export function Ricevuta(d: RicevutaData) {
       <Page size="A5" style={s.page}>
         <View style={s.brandRow}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Image src={SYMBOL_DATA_URL} style={{ width: 26, height: 34 }} />
             <View>
-              <Text style={s.name}>Coffee Express  s.r.l</Text>
-              <Text style={s.sub}>S.P. Pisticci San Basilio · Matera · Tel. 0835 411386</Text>
+              <Text style={s.name}>Vena Coffee Machine</Text>
+              <Text style={s.sub}>Officina macchine da caffe</Text>
             </View>
           </View>
           <View>

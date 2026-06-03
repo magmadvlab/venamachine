@@ -27,7 +27,6 @@ export default async function NuovaScheda() {
           <ArrowLeft className="h-4 w-4" />
           <span>Schede</span>
         </Link>
-        <img src="/symbol.png" alt="" className="h-7 w-auto" />
         <h1 className="font-display text-lg font-bold text-coffee-900 sm:text-xl">Nuova accettazione</h1>
       </header>
       <AcceptanceForm profiliAttivita={profiliAttivita} />

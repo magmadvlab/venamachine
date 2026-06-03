@@ -25,7 +25,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
   const cliente: any = Array.isArray(data.cliente) ? data.cliente[0] : data.cliente;
   const macchina: any = Array.isArray(data.macchina) ? data.macchina[0] : data.macchina;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://coffeexpress.it";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://venamachine.vercel.app";
   const statoEsteticoMap: Record<string, string> = {
     buono: "Buono", graffi: "Graffi / segni", danni: "Danni",
   };
