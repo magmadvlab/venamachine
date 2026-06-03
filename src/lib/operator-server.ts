@@ -5,10 +5,14 @@ import { createServerSupabase, isAdminEmail } from "@/lib/supabase/auth-server";
  * Ritorna null se non c'è sessione o l'utente non è collegato a un operatore.
  */
 export async function getSessionOperatore(db: any) {
-  const sb = createServerSupabase();
-  const {
-    data: { user },
-  } = await sb.auth.getUser();
+  let user = null;
+  try {
+    const sb = createServerSupabase();
+    const result = await sb.auth.getUser();
+    user = result.data.user;
+  } catch {
+    return null;
+  }
   if (!user) return null;
 
   // L'admin è solo gestione: non è un operatore, non va collegato né elencato.

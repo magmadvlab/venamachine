@@ -1,16 +1,26 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+function isConfigured(value?: string) {
+  return Boolean(value && !value.startsWith("la-tua-"));
+}
+
 /**
  * Client Supabase server-side basato sui cookie (anon key), per leggere la
  * sessione dell'operatore loggato in server component, route handler e azioni.
  * In un server component i cookie sono in sola lettura: il setAll è protetto.
  */
 export function createServerSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!isConfigured(supabaseUrl) || !isConfigured(supabaseAnonKey)) {
+    throw new Error("Configurazione Supabase Auth incompleta");
+  }
+
   const cookieStore = cookies();
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl!,
+    supabaseAnonKey!,
     {
       cookies: {
         getAll() {
@@ -33,11 +43,15 @@ export function createServerSupabase() {
 
 /** Utente loggato (o null) dalla sessione corrente. */
 export async function getCurrentUser() {
-  const supabase = createServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user;
+  try {
+    const supabase = createServerSupabase();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user;
+  } catch {
+    return null;
+  }
 }
 
 /** Email considerate admin (variabile ADMIN_EMAILS, separate da virgola). */

@@ -5,8 +5,12 @@ const REQUIRED_SUPABASE_ENV = [
   "SUPABASE_SERVICE_ROLE_KEY",
 ] as const;
 
+function isConfigured(value?: string) {
+  return Boolean(value && !value.startsWith("la-tua-"));
+}
+
 export function missingSupabaseEnv() {
-  return REQUIRED_SUPABASE_ENV.filter((key) => !process.env[key]);
+  return REQUIRED_SUPABASE_ENV.filter((key) => !isConfigured(process.env[key]));
 }
 
 export function hasServiceConfig() {
