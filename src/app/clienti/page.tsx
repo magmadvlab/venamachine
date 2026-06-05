@@ -15,8 +15,12 @@ function one<T>(value: T | T[] | null | undefined): T | null {
 
 const RISCHIO_LABELS: Record<string, string> = {
   coerente: "Coerente",
+  categoria_macchina_da_definire: "Categoria macchina da definire",
   rischio_comodato_alto: "Rischio comodato alto",
+  horeca_sotto_consumo: "Ho.Re.Ca. sotto consumo",
   anomalia_tecnica_caffe: "Anomalia tecnica caffè",
+  upgrade_macchina: "Upgrade macchina",
+  macchina_sovradimensionata: "Macchina sovradimensionata",
   uso_intenso_non_coperto: "Uso intenso non coperto",
   nessun_acquisto_recente: "Nessun acquisto recente",
   sotto_consumo_atteso: "Sotto consumo atteso",
@@ -84,7 +88,8 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
   const { data: scoreRows } = macchineIds.length
     ? await db
       .from("v_score_fedelta_macchine")
-      .select(`macchina_id, caffe_acquistati_90gg, caffe_attesi_90gg, interventi_90gg,
+      .select(`macchina_id, categoria_utilizzo, categoria_utilizzo_nome, caffe_acquistati_90gg, caffe_attesi_90gg,
+        rapporto_copertura_acquisti, machine_fit_90gg, interventi_90gg,
         ultimo_acquisto, ultimo_intervento, score_fedelta, classe_rischio`)
       .in("macchina_id", macchineIds)
     : { data: [] };
@@ -189,6 +194,7 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
                   const analisi = m.analisi;
                   const scoreValue = score?.score_fedelta == null ? null : Number(score.score_fedelta);
                   const risk = score?.classe_rischio ?? null;
+                  const categoriaScore = score?.categoria_utilizzo ?? analisi?.categoria_utilizzo ?? null;
                   return (
                     <div key={m.id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm">
                       <div className="flex items-start justify-between gap-2">
@@ -209,7 +215,7 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
                       </div>
                       <p className="mt-1 text-xs font-semibold text-coffee-500">
                         {m.regime_possesso === "comodato_uso" ? "Comodato d'uso" : "Proprietà cliente"}
-                        {analisi?.categoria_utilizzo ? ` · ${analisi.categoria_utilizzo === "horeca" ? "Ho.Re.Ca." : analisi.categoria_utilizzo}` : ""}
+                        {categoriaScore ? ` · ${categoriaScore === "horeca" ? "Ho.Re.Ca." : categoriaScore}` : ""}
                       </p>
                       {analisi && (
                         <div className="mt-3 rounded-lg border border-white bg-white/75 p-2">
@@ -239,6 +245,11 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
                             <span>
                               <ShoppingBag className="mr-1 inline h-3.5 w-3.5" />
                               {score.caffe_acquistati_90gg ?? 0}/{score.caffe_attesi_90gg ?? 0} caffè 90gg
+                            </span>
+                            <span>
+                              Copertura: {score.rapporto_copertura_acquisti == null
+                                ? "—"
+                                : `${Math.round(Number(score.rapporto_copertura_acquisti) * 100)}%`}
                             </span>
                             <span>
                               <Wrench className="mr-1 inline h-3.5 w-3.5" />

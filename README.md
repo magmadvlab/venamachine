@@ -19,6 +19,7 @@ Esegui in ordine, nello SQL editor di Supabase:
 - `supabase/05_auth_operatori.sql` — collega operatori agli utenti Supabase Auth
 - `supabase/06_reset_operational_data.sql` — funzione admin per ripartire pulito senza cancellare operatori/Auth
 - `supabase/10_macchine_consumi_opportunita.sql` — categorie macchina, fit commerciale e opportunità vendita
+- `supabase/11_score_fedelta_categorie_macchina.sql` — score fedeltà legato a categoria macchina
 
 ## 2. Variabili d'ambiente
 Copia `.env.local.example` in `.env.local` e compila:
