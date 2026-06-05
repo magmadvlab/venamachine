@@ -15,6 +15,42 @@ Obiettivo: trasformare l'app da gestionale di riparazioni/vendite a sistema proa
 - Analisi commerciale annuale per macchina: fit macchina, copertura vendite, azione consigliata e priorità.
 - Pagina `/opportunita` per leggere opportunità commerciali.
 
+## Registro implementazioni dalla chat
+
+Questo registro serve per non perdere le decisioni gia prese e distinguere cosa e pronto da cosa va ancora completato.
+
+| Area | Richiesta emersa in chat | Stato | Note / prossimo passo |
+| --- | --- | --- | --- |
+| Repository | Coffee Express deve restare invariato; Vena Machine deve essere una copia autonoma su cui lavorare. | Implementato | Repo separato `venamachine` creato e collegato a GitHub. |
+| Brand | Togliere nome/logo Coffee Express e usare `Vena Coffee Machine`. | Implementato | Rebrand applicato in UI, metadata, email/PDF e asset principali. |
+| Database | Usare un nuovo database dedicato, non quello di Coffee Express. | Parziale | Schema e migrazioni preparati; verificare che Supabase remoto abbia tutte le migrazioni applicate. |
+| Supabase remoto | Collegare il progetto a `https://sykxuautgcczsxhfossj.supabase.co`. | Parziale | L'app e configurata, ma le migrazioni 10 e 11 vanno applicate su remoto. Serve login/token Supabase CLI. |
+| Admin | Creare un admin per entrare nell'app. | Da verificare | Verificare utente admin, variabile `ADMIN_PIN` e flusso operatori in produzione. |
+| Email | Continuare con Resend per i test, usando `onboarding@resend.dev`. | Da completare | Aggiungere/verificare `RESEND_API_KEY` e `MAIL_FROM` negli env Vercel. |
+| Vendite | Registrare acquisti reali come dati certi per lo score. | Implementato | Esiste flusso vendite con cliente/macchina associabili. |
+| Dettaglio vendita | Salvare descrizione, quantita, prezzo unitario, data e stato pagamento. | Implementato | Dati presenti nel form e nella tabella vendite. |
+| Riordino | Stimare quando il cliente dovrebbe ricomprare e generare avvisi. | Implementato base | Avvisi basati su ultimo acquisto e caffe stimati; da trasformare in azioni operative. |
+| Fedelta comodato | Capire se chi ha macchina in comodato compra caffe da noi o da concorrenti. | Parziale | Score e viste presenti; serve agenda operativa e soglie configurabili. |
+| Manutenzione + vendite | Se la macchina torna dopo pochi mesi e il cliente ha comprato poco caffe, segnalare rischio uso concorrente. | Parziale | Logica presente nello score/opportunita; manca azione commerciale generata e storico contatto. |
+| Tipo cliente | Valutare consumi in base al tipo attivita: lido, ufficio piccolo, casa, Ho.Re.Ca. | Parziale | Profili attivita presenti; vanno affinati e resi configurabili. |
+| Categoria macchina | Legare consumi e score al tipo macchina: casa, ufficio, Ho.Re.Ca. | Parziale | Migrazione e form pronti; serve applicazione migrazioni remote e modifica su macchine esistenti. |
+| Score non casuale | Lo score deve dipendere da categoria macchina, profilo cliente, vendite e manutenzioni. | Parziale | Migrazione 11 aggiorna la vista; serve verificare in produzione dopo applicazione migrazione. |
+| Opportunita | Mostrare clienti/macchine con rischio o opportunita commerciale. | Implementato base | Pagina `/opportunita` disponibile; dati dipendono dalle viste aggiornate. |
+| Prodotti | Gestire kit, cartoni, buste, caffe in grani, capsule/cialde e compatibilita macchina. | Da fare | Aggiungere catalogo prodotto piu preciso e compatibilita con categorie/modelli. |
+| Manutenzioni programmate | Non solo storico riparazioni, ma programmazione manutenzione preventiva. | Da fare | Creare tabella, generatore e pagina `/manutenzioni`. |
+| Agenda commerciale | L'app deve diventare proattiva e dire chi chiamare, perche e quando. | Da fare | Primo blocco da sviluppare: `azioni_commerciali` + `/agenda`. |
+| Follow-up | Salvare esiti chiamate, note, rimandi e prossimi contatti. | Da fare | Creare `contatti_commerciali` collegata ad azioni/clienti/macchine. |
+| Ciclo vita macchina | Gestire upgrade, rigenerazione, riallocazione e dismissione. | Da fare | Creare scheda macchina completa e stati ciclo vita. |
+| Automazioni | Reminder, email/WhatsApp, report opportunita. | Da fare | Da fare dopo agenda, azioni e storico contatti. |
+| Configurazione | Rendere modificabili soglie, categorie, regole e prodotti senza cambiare codice. | Da fare | Pagina `/configurazione` in fase successiva. |
+
+Legenda:
+- `Implementato`: codice gia presente nel repository.
+- `Implementato base`: funziona, ma va trasformato in processo operativo piu completo.
+- `Parziale`: logica o schema presenti, ma manca un pezzo operativo, UI o applicazione su remoto.
+- `Da verificare`: esiste una parte tecnica, ma serve controllo su produzione/env.
+- `Da completare` / `Da fare`: non ancora sviluppato end-to-end.
+
 ## Passaggi da non dimenticare
 
 Questi punti sono emersi nella chat e non vanno saltati:
@@ -31,6 +67,65 @@ Questi punti sono emersi nella chat e non vanno saltati:
 - Distinguere bene comodato, macchina venduta e macchina del cliente.
 - Gestire ciclo vita macchina: assegnata, venduta, manutenzione, rigenerata, riallocabile, dismessa.
 - Aggiungere automazioni/reminder, ma solo dopo avere dati e azioni solide.
+
+## Sequenza immediata di implementazione
+
+Prima di aggiungere nuove funzioni operative conviene chiudere questi passaggi in ordine:
+
+1. **Allineamento produzione**
+   - Applicare le migrazioni 10 e 11 su Supabase remoto.
+   - Verificare admin e variabili env Vercel: `ADMIN_PIN`, `RESEND_API_KEY`, `MAIL_FROM`.
+   - Controllare che `/clienti`, `/vendite` e `/opportunita` leggano dati coerenti in produzione.
+
+2. **Agenda proattiva**
+   - Creare `azioni_commerciali`.
+   - Generare azioni da score, riordino, manutenzione recente e opportunita.
+   - Creare pagina `/agenda` con priorita, scadenza, motivo e stato.
+
+3. **Manutenzioni programmate**
+   - Creare `manutenzioni_programmate`.
+   - Generare manutenzioni preventive da uso stimato, tempo e storico guasti.
+   - Collegare manutenzione programmata a nuova scheda riparazione.
+
+4. **Scheda macchina completa**
+   - Creare `/macchine/[id]`.
+   - Unire vendite, riparazioni, score, categoria, regime possesso e ciclo vita.
+   - Aggiungere azioni upgrade, rigenerazione e riallocazione.
+
+5. **Configurazione e tuning**
+   - Rendere modificabili soglie per categoria macchina e profilo cliente.
+   - Gestire prodotti, formati, compatibilita e caffe stimati per unita.
+   - Rendere configurabili le regole che generano azioni.
+
+6. **Automazioni**
+   - Reminder giornalieri.
+   - Follow-up post manutenzione.
+   - Report settimanale opportunita.
+   - Email/WhatsApp solo quando i dati e gli stati azione sono affidabili.
+
+## Checklist operativa
+
+- [x] Creare repo separato `venamachine`.
+- [x] Rebrand da Coffee Express a Vena Coffee Machine.
+- [x] Registrare vendite con cliente/macchina, descrizione, quantita, prezzo, data e pagamento.
+- [x] Aggiungere consumo atteso cliente e profilo attivita.
+- [x] Aggiungere categorie macchina `casa`, `ufficio`, `horeca` nello schema.
+- [x] Aggiornare score per usare categorie macchina e profilo cliente.
+- [x] Creare pagina opportunita commerciale.
+- [ ] Applicare migrazioni 10 e 11 su Supabase remoto.
+- [ ] Verificare admin produzione.
+- [ ] Verificare env Resend produzione.
+- [ ] Rendere modificabile categoria macchina su macchine gia esistenti.
+- [ ] Creare tabella `azioni_commerciali`.
+- [ ] Creare generatore azioni da viste commerciali e vendite.
+- [ ] Creare pagina `/agenda`.
+- [ ] Salvare esiti chiamate e follow-up.
+- [ ] Creare manutenzioni programmate.
+- [ ] Creare scheda macchina `/macchine/[id]`.
+- [ ] Gestire ciclo vita macchina.
+- [ ] Gestire catalogo prodotti e compatibilita macchina.
+- [ ] Creare configurazione soglie/regole.
+- [ ] Aggiungere automazioni e report.
 
 ## Modello dati da aggiungere
 
@@ -269,9 +364,11 @@ Risultato: l'app lavora in modo proattivo anche senza controllo manuale costante
 
 Il prossimo blocco pratico dovrebbe essere:
 
+0. allineamento Supabase remoto con migrazioni 10 e 11
 1. `azioni_commerciali`
 2. generatore manuale/server-side da `v_analisi_commerciale_macchine`
 3. pagina `/agenda`
 4. azione: completare/rimandare/annotare
+5. storico contatti collegato all'azione
 
 Questo è il passaggio più importante perché trasforma gli score in lavoro quotidiano.
