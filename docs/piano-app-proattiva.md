@@ -38,8 +38,8 @@ Questo registro serve per non perdere le decisioni gia prese e distinguere cosa 
 | Opportunita | Mostrare clienti/macchine con rischio o opportunita commerciale. | Implementato base | Pagina `/opportunita` disponibile; dati dipendono dalle viste aggiornate. |
 | Prodotti | Gestire kit, cartoni, buste, caffe in grani, capsule/cialde e compatibilita macchina. | Da fare | Aggiungere catalogo prodotto piu preciso e compatibilita con categorie/modelli. |
 | Manutenzioni programmate | Non solo storico riparazioni, ma programmazione manutenzione preventiva. | Da fare | Creare tabella, generatore e pagina `/manutenzioni`. |
-| Agenda commerciale | L'app deve diventare proattiva e dire chi chiamare, perche e quando. | Da fare | Primo blocco da sviluppare: `azioni_commerciali` + `/agenda`. |
-| Follow-up | Salvare esiti chiamate, note, rimandi e prossimi contatti. | Da fare | Creare `contatti_commerciali` collegata ad azioni/clienti/macchine. |
+| Agenda commerciale | L'app deve diventare proattiva e dire chi chiamare, perche e quando. | Implementato base | `azioni_commerciali`, generatore e pagina `/agenda` presenti; da verificare su Supabase remoto. |
+| Follow-up | Salvare esiti chiamate, note, rimandi e prossimi contatti. | Implementato base | `contatti_commerciali` presente e collegata agli aggiornamenti azione; da raffinare con report storico. |
 | Ciclo vita macchina | Gestire upgrade, rigenerazione, riallocazione e dismissione. | Da fare | Creare scheda macchina completa e stati ciclo vita. |
 | Automazioni | Reminder, email/WhatsApp, report opportunita. | Da fare | Da fare dopo agenda, azioni e storico contatti. |
 | Configurazione | Rendere modificabili soglie, categorie, regole e prodotti senza cambiare codice. | Da fare | Pagina `/configurazione` in fase successiva. |
@@ -116,10 +116,10 @@ Prima di aggiungere nuove funzioni operative conviene chiudere questi passaggi i
 - [ ] Verificare admin produzione.
 - [ ] Verificare env Resend produzione.
 - [ ] Rendere modificabile categoria macchina su macchine gia esistenti.
-- [ ] Creare tabella `azioni_commerciali`.
-- [ ] Creare generatore azioni da viste commerciali e vendite.
-- [ ] Creare pagina `/agenda`.
-- [ ] Salvare esiti chiamate e follow-up.
+- [x] Creare tabella `azioni_commerciali`.
+- [x] Creare generatore azioni da viste commerciali e vendite.
+- [x] Creare pagina `/agenda`.
+- [x] Salvare esiti chiamate e follow-up.
 - [ ] Creare manutenzioni programmate.
 - [ ] Creare scheda macchina `/macchine/[id]`.
 - [ ] Gestire ciclo vita macchina.
