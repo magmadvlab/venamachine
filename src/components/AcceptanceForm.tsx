@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { NuovaAccettazione, ProfiloAttivita, RegimePossessoMacchina, TipoMacchina } from "@/lib/types";
+import type { CategoriaUtilizzoMacchina, NuovaAccettazione, ProfiloAttivita, RegimePossessoMacchina, TipoMacchina } from "@/lib/types";
 import { AlertTriangle, Coffee, ClipboardList, Clock, LineChart, User } from "lucide-react";
 
 const ACCESSORI = ["Serbatoio", "Vassoio", "Cavo alim.", "Portacialde"];
@@ -31,6 +31,7 @@ type StoricoMacchina = {
     modello: string | null;
     matricola: string | null;
     tipologia: TipoMacchina | null;
+    categoria_utilizzo?: CategoriaUtilizzoMacchina | null;
     regime_possesso: RegimePossessoMacchina | null;
     colore: string | null;
     cliente?: { ragione_sociale?: string | null; telefono?: string | null; email?: string | null } | null;
@@ -89,7 +90,7 @@ export default function AcceptanceForm({ profiliAttivita = [] }: AcceptanceFormP
   const [f, setF] = useState<NuovaAccettazione>({
     cliente: { tipo: "privato", ragione_sociale: "", telefono: "", email: "",
       consenso_gdpr: false, canale_preferito: "email" },
-    macchina: { tipologia: "capsule", regime_possesso: "proprieta_cliente" },
+    macchina: { tipologia: "capsule", categoria_utilizzo: "ufficio", regime_possesso: "proprieta_cliente" },
     scheda: { accessori: [], preventivo_richiesto: false },
   });
 
@@ -161,6 +162,7 @@ export default function AcceptanceForm({ profiliAttivita = [] }: AcceptanceFormP
         modello: storico.macchina?.modello ?? prev.macchina.modello,
         colore: storico.macchina?.colore ?? prev.macchina.colore,
         tipologia: storico.macchina?.tipologia ?? prev.macchina.tipologia,
+        categoria_utilizzo: storico.macchina?.categoria_utilizzo ?? prev.macchina.categoria_utilizzo,
         regime_possesso: storico.macchina?.regime_possesso ?? prev.macchina.regime_possesso,
       },
     }));
@@ -391,12 +393,39 @@ export default function AcceptanceForm({ profiliAttivita = [] }: AcceptanceFormP
         )}
 
         <div className="mt-3">
-          <label className={labelCls}>Tipologia</label>
+          <label className={labelCls}>Tecnologia prodotto</label>
           <select className={inputCls} value={f.macchina.tipologia}
             onChange={(e) => set("macchina.tipologia", e.target.value as TipoMacchina)}>
             <option value="cialde">Cialde</option><option value="capsule">Capsule</option>
             <option value="macinato">Macinato</option><option value="altro">Altro</option>
           </select>
+        </div>
+
+        <div className="mt-3">
+          <label className={labelCls}>Categoria uso macchina</label>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              ["casa", "Casa"],
+              ["ufficio", "Ufficio"],
+              ["horeca", "Ho.Re.Ca."],
+            ] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => set("macchina.categoria_utilizzo", value)}
+                className={`rounded-lg border px-2 py-3 text-sm font-medium sm:py-2 ${
+                  f.macchina.categoria_utilizzo === value
+                    ? "border-arancio bg-arancio/10 text-arancio-dark"
+                    : "border-coffee-200 text-coffee-400"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-xs font-semibold text-coffee-500">
+            Serve per confrontare vendite e manutenzioni con il consumo atteso della macchina.
+          </p>
         </div>
 
         <div className="mt-3">

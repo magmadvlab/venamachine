@@ -22,6 +22,25 @@ const RISCHIO_LABELS: Record<string, string> = {
   sotto_consumo_atteso: "Sotto consumo atteso",
 };
 
+const FIT_LABELS: Record<string, string> = {
+  coerente: "Macchina coerente",
+  sovradimensionata: "Sovradimensionata",
+  sottodimensionata: "Da upgrade",
+  senza_dati_vendita: "Senza vendite",
+  categoria_da_definire: "Categoria da definire",
+};
+
+const AZIONE_LABELS: Record<string, string> = {
+  proteggi_comodato: "Proteggi comodato",
+  recupero_horeca: "Recupero Ho.Re.Ca.",
+  vendi_prodotti_post_assistenza: "Vendi post assistenza",
+  proponi_upgrade: "Proponi upgrade",
+  valuta_riallocazione: "Valuta riallocazione",
+  primo_ordine: "Primo ordine",
+  verifica_miscela: "Verifica miscela",
+  monitora: "Monitora",
+};
+
 function scoreTone(score?: number | null, rischio?: string | null) {
   if (rischio === "rischio_comodato_alto" || rischio === "anomalia_tecnica_caffe" || (score ?? 100) < 45) {
     return "border-red-200 bg-red-50 text-red-800";
@@ -72,14 +91,23 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
   const { data: riparazioni } = clientiIds.length
     ? await db.from("riparazioni").select("id, cliente_id, numero_scheda, stato, data_ingresso, difetto_cliente").in("cliente_id", clientiIds).order("data_ingresso", { ascending: false })
     : { data: [] };
+  const { data: analisiRows } = macchineIds.length
+    ? await db
+      .from("v_analisi_commerciale_macchine")
+      .select(`macchina_id, categoria_utilizzo, categoria_utilizzo_nome, segmento_consumo, machine_fit,
+        azione_consigliata, priorita_commerciale, caffe_acquistati_365gg, caffe_target_365gg,
+        rapporto_copertura_365gg, valore_acquisti_365gg, interventi_365gg`)
+      .in("macchina_id", macchineIds)
+    : { data: [] };
 
   const scoresByMacchina = new Map((scoreRows ?? []).map((row: any) => [row.macchina_id, row]));
+  const analisiByMacchina = new Map((analisiRows ?? []).map((row: any) => [row.macchina_id, row]));
 
   const rows = (clienti ?? []).map((cliente: any) => {
     const profilo = one(cliente.profilo);
     const clienteMacchine = (macchine ?? [])
       .filter((m: any) => m.cliente_id === cliente.id)
-      .map((m: any) => ({ ...m, score: scoresByMacchina.get(m.id) ?? null }));
+      .map((m: any) => ({ ...m, score: scoresByMacchina.get(m.id) ?? null, analisi: analisiByMacchina.get(m.id) ?? null }));
     const clienteRiparazioni = (riparazioni ?? []).filter((r: any) => r.cliente_id === cliente.id);
     return { ...cliente, profilo, macchine: clienteMacchine, riparazioni: clienteRiparazioni };
   }).filter((cliente: any) => {
@@ -158,6 +186,7 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
                   <p className="text-sm text-coffee-400">Nessuna macchina associata.</p>
                 ) : cliente.macchine.map((m: any) => {
                   const score = m.score;
+                  const analisi = m.analisi;
                   const scoreValue = score?.score_fedelta == null ? null : Number(score.score_fedelta);
                   const risk = score?.classe_rischio ?? null;
                   return (
@@ -180,7 +209,26 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
                       </div>
                       <p className="mt-1 text-xs font-semibold text-coffee-500">
                         {m.regime_possesso === "comodato_uso" ? "Comodato d'uso" : "Proprietà cliente"}
+                        {analisi?.categoria_utilizzo ? ` · ${analisi.categoria_utilizzo === "horeca" ? "Ho.Re.Ca." : analisi.categoria_utilizzo}` : ""}
                       </p>
+                      {analisi && (
+                        <div className="mt-3 rounded-lg border border-white bg-white/75 p-2">
+                          <div className="flex flex-wrap gap-1.5">
+                            <span className="rounded-full border border-coffee-200 bg-white px-2 py-0.5 text-xs font-bold text-coffee-700">
+                              {FIT_LABELS[analisi.machine_fit] ?? analisi.machine_fit}
+                            </span>
+                            <span className="rounded-full border border-arancio/25 bg-arancio/10 px-2 py-0.5 text-xs font-bold text-arancio-dark">
+                              {AZIONE_LABELS[analisi.azione_consigliata] ?? analisi.azione_consigliata}
+                            </span>
+                          </div>
+                          <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-coffee-600">
+                            <span>{analisi.caffe_acquistati_365gg ?? 0}/{analisi.caffe_target_365gg ?? 0} caffè anno</span>
+                            <span>Segmento: {analisi.segmento_consumo ?? "—"}</span>
+                            <span>Priorità: {analisi.priorita_commerciale ?? "—"}</span>
+                            <span>Valore: € {Number(analisi.valore_acquisti_365gg ?? 0).toFixed(2)}</span>
+                          </div>
+                        </div>
+                      )}
                       {score && (
                         <div className="mt-3 rounded-lg border border-white bg-white/75 p-2">
                           <p className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-bold ${scoreTone(scoreValue, risk)}`}>

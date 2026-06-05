@@ -26,6 +26,11 @@ function cleanNumber(value?: number) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
+function missingCategoriaUtilizzo(error: { message: string; code?: string; details?: string | null; hint?: string | null }) {
+  const text = [error.message, error.details, error.hint].filter(Boolean).join(" ").toLowerCase();
+  return error.code === "42703" || text.includes("categoria_utilizzo");
+}
+
 export async function POST(req: Request) {
   if (!hasServiceConfig()) {
     return NextResponse.json({ error: "Configurazione Vercel incompleta" }, { status: 503 });
@@ -131,6 +136,7 @@ export async function POST(req: Request) {
     colore: clean(body.macchina.colore),
     matricola: clean(body.macchina.matricola),
     tipologia: body.macchina.tipologia,
+    categoria_utilizzo: body.macchina.categoria_utilizzo,
     regime_possesso: body.macchina.regime_possesso,
   };
   let macchina;
@@ -147,26 +153,47 @@ export async function POST(req: Request) {
   }
 
   if (macchina) {
-    const { data, error } = await db
+    const updateMacchina = {
+      ...(macchinaInput.marca ? { marca: macchinaInput.marca } : {}),
+      ...(macchinaInput.modello ? { modello: macchinaInput.modello } : {}),
+      ...(macchinaInput.colore ? { colore: macchinaInput.colore } : {}),
+      ...(macchinaInput.tipologia ? { tipologia: macchinaInput.tipologia } : {}),
+      ...(macchinaInput.categoria_utilizzo ? { categoria_utilizzo: macchinaInput.categoria_utilizzo } : {}),
+      ...(macchinaInput.regime_possesso ? { regime_possesso: macchinaInput.regime_possesso } : {}),
+    };
+    let result = await db
       .from("macchine")
-      .update({
-        ...(macchinaInput.marca ? { marca: macchinaInput.marca } : {}),
-        ...(macchinaInput.modello ? { modello: macchinaInput.modello } : {}),
-        ...(macchinaInput.colore ? { colore: macchinaInput.colore } : {}),
-        ...(macchinaInput.tipologia ? { tipologia: macchinaInput.tipologia } : {}),
-        ...(macchinaInput.regime_possesso ? { regime_possesso: macchinaInput.regime_possesso } : {}),
-      })
+      .update(updateMacchina)
       .eq("id", macchina.id)
       .select("id")
       .single();
+    if (result.error && macchinaInput.categoria_utilizzo && missingCategoriaUtilizzo(result.error)) {
+      const { categoria_utilizzo: _categoria, ...withoutCategoria } = updateMacchina as any;
+      result = await db
+        .from("macchine")
+        .update(withoutCategoria)
+        .eq("id", macchina.id)
+        .select("id")
+        .single();
+    }
+    const { data, error } = result;
     if (error) return dbError("Macchina", error);
     macchina = data;
   } else {
-    const { data, error } = await db
+    let result = await db
       .from("macchine")
       .insert(macchinaInput)
       .select("id")
       .single();
+    if (result.error && macchinaInput.categoria_utilizzo && missingCategoriaUtilizzo(result.error)) {
+      const { categoria_utilizzo: _categoria, ...withoutCategoria } = macchinaInput;
+      result = await db
+        .from("macchine")
+        .insert(withoutCategoria)
+        .select("id")
+        .single();
+    }
+    const { data, error } = result;
     if (error) return dbError("Macchina", error);
     macchina = data;
   }

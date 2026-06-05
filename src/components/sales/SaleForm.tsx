@@ -15,6 +15,7 @@ type MacchinaOption = {
   marca: string | null;
   modello: string | null;
   matricola: string | null;
+  categoria_utilizzo: string | null;
   regime_possesso: string | null;
 };
 
@@ -39,8 +40,9 @@ const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-
 function macchinaLabel(m: MacchinaOption) {
   const nome = [m.marca, m.modello].filter(Boolean).join(" ") || "Macchina";
   const matricola = m.matricola ? ` · ${m.matricola}` : "";
+  const categoria = m.categoria_utilizzo ? ` · ${m.categoria_utilizzo === "horeca" ? "Ho.Re.Ca." : m.categoria_utilizzo}` : "";
   const regime = m.regime_possesso === "comodato_uso" ? " · comodato" : "";
-  return `${nome}${matricola}${regime}`;
+  return `${nome}${matricola}${categoria}${regime}`;
 }
 
 export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
