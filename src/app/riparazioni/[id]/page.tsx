@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import StatusControl from "@/components/StatusControl";
 import { PhotoUploadForm } from "@/components/PhotoUploadForm";
+import { RepairEditForm } from "@/components/RepairEditForm";
 import { RepairWorkForm } from "@/components/RepairWorkForm";
 import { QuoteOutcome } from "@/components/QuoteOutcome";
 import { Card } from "@/components/ui/Card";
@@ -35,7 +36,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
     .select(`id, numero_scheda, token_pubblico, stato, data_ingresso, data_riparazione, data_avviso_cliente, data_ritiro,
       difetto_cliente, diagnosi_tecnico, stato_estetico, accessori, preventivo_richiesto, spesa_max_autorizzata, importo_preventivo, importo_finale,
       cliente:clienti(ragione_sociale, tipo, piva_cf, indirizzo, telefono, email, canale_preferito),
-      macchina:macchine(id, marca, modello, matricola, tipologia, colore, regime_possesso),
+      macchina:macchine(id, marca, modello, matricola, tipologia, categoria_utilizzo, colore, regime_possesso),
       operatore:operatori(nome)`)
     .eq("id", params.id)
     .single();
@@ -95,6 +96,19 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <div className="space-y-4">
+          <RepairEditForm
+            id={data.id}
+            cliente={cliente}
+            macchina={macchina}
+            scheda={{
+              stato_estetico: data.stato_estetico,
+              accessori: data.accessori,
+              difetto_cliente: data.difetto_cliente,
+              preventivo_richiesto: data.preventivo_richiesto,
+              spesa_max_autorizzata: data.spesa_max_autorizzata,
+            }}
+          />
+
           <Card className="sm:p-5">
             <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Cliente</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -116,6 +130,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
               {field("Matricola", macchina?.matricola)}
               {field("Colore", macchina?.colore)}
               {field("Tipologia", macchina?.tipologia)}
+              {field("Categoria uso", macchina?.categoria_utilizzo === "horeca" ? "Ho.Re.Ca." : macchina?.categoria_utilizzo)}
               {field("Regime", macchina?.regime_possesso === "comodato_uso" ? "Comodato d'uso" : "Proprietà cliente")}
               {field("Stato estetico", data.stato_estetico)}
             </div>

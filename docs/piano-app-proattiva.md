@@ -29,6 +29,7 @@ Questo registro serve per non perdere le decisioni gia prese e distinguere cosa 
 | Email | Continuare con Resend per i test, usando `onboarding@resend.dev`. | Da completare | Aggiungere/verificare `RESEND_API_KEY` e `MAIL_FROM` negli env Vercel. |
 | Vendite | Registrare acquisti reali come dati certi per lo score. | Implementato | Esiste flusso vendite con cliente/macchina associabili. |
 | Dettaglio vendita | Salvare descrizione, quantita, prezzo unitario, data e stato pagamento. | Implementato | Dati presenti nel form e nella tabella vendite. |
+| Modifica schede | Permettere correzione di schede, clienti e macchine in caso di errori involontari. | Implementato | Pannello `Correggi scheda` nel dettaglio assistenza. |
 | Riordino | Stimare quando il cliente dovrebbe ricomprare e generare avvisi. | Implementato base | Avvisi basati su ultimo acquisto e caffe stimati; da trasformare in azioni operative. |
 | Fedelta comodato | Capire se chi ha macchina in comodato compra caffe da noi o da concorrenti. | Parziale | Score e viste presenti; serve agenda operativa e soglie configurabili. |
 | Manutenzione + vendite | Se la macchina torna dopo pochi mesi e il cliente ha comprato poco caffe, segnalare rischio uso concorrente. | Parziale | Logica presente nello score/opportunita; manca azione commerciale generata e storico contatto. |
@@ -108,6 +109,7 @@ Prima di aggiungere nuove funzioni operative conviene chiudere questi passaggi i
 - [x] Creare repo separato `venamachine`.
 - [x] Rebrand da Coffee Express a Vena Coffee Machine.
 - [x] Registrare vendite con cliente/macchina, descrizione, quantita, prezzo, data e pagamento.
+- [x] Rendere modificabili le schede per correggere dati cliente, macchina e difetto.
 - [x] Aggiungere consumo atteso cliente e profilo attivita.
 - [x] Aggiungere categorie macchina `casa`, `ufficio`, `horeca` nello schema.
 - [x] Aggiornare score per usare categorie macchina e profilo cliente.
