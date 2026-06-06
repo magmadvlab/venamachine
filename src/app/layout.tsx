@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { AppChrome } from "@/components/AppChrome";
 import { InstallPrompt } from "@/components/InstallPrompt";
 
 export const metadata: Metadata = {
@@ -36,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="it">
       <body className="font-sans text-coffee-900 antialiased">
-        {children}
+        <AppChrome>{children}</AppChrome>
         <InstallPrompt />
       </body>
     </html>

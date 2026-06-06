@@ -6,7 +6,6 @@ import { BrandHeader } from "@/components/BrandHeader";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { FileText, ExternalLink, Plus, Coffee, Search, ArrowRight, Building2, BadgeCheck, Bell, UserRound, Users, ShoppingBag, Target, CalendarDays, Wrench, PackageSearch, BarChart3, SlidersHorizontal } from "lucide-react";
-import { LogoutButton } from "@/components/LogoutButton";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { getSessionOperatore } from "@/lib/operator-server";
 import { DeleteRepairButton } from "@/components/DeleteRepairButton";
@@ -235,24 +234,7 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-28 pt-6">
-      <BrandHeader
-        action={
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            {admin && <OperatoriButton />}
-            <DashboardCommercialeButton />
-            <AgendaButton />
-            <ManutenzioniButton />
-            <OpportunitaButton />
-            <ClientiButton />
-            <VenditeButton />
-            <ProdottiButton />
-            {admin && <ConfigurazioneButton />}
-            <SollecitiButton />
-            <NuovaSchedaButton />
-            <LogoutButton />
-          </div>
-        }
-      />
+      <BrandHeader />
 
       <p className="mb-4 text-sm text-coffee-400">
         {admin ? (
