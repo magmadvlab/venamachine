@@ -5,7 +5,7 @@ import StatusControl from "@/components/StatusControl";
 import { BrandHeader } from "@/components/BrandHeader";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { FileText, ExternalLink, Plus, Coffee, Search, ArrowRight, Building2, BadgeCheck, Bell, UserRound, Users, ShoppingBag, Target, CalendarDays } from "lucide-react";
+import { FileText, ExternalLink, Plus, Coffee, Search, ArrowRight, Building2, BadgeCheck, Bell, UserRound, Users, ShoppingBag, Target, CalendarDays, Wrench, PackageSearch, BarChart3, SlidersHorizontal } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { getSessionOperatore } from "@/lib/operator-server";
@@ -112,6 +112,54 @@ function AgendaButton() {
   );
 }
 
+function ManutenzioniButton() {
+  return (
+    <Link
+      href="/manutenzioni"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-coffee-200 bg-white px-3.5 py-2 text-sm font-semibold text-coffee-700 active:scale-95"
+    >
+      <Wrench className="h-4 w-4 shrink-0" />
+      <span className="hidden sm:inline">Manutenzioni</span>
+    </Link>
+  );
+}
+
+function ProdottiButton() {
+  return (
+    <Link
+      href="/prodotti"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-coffee-200 bg-white px-3.5 py-2 text-sm font-semibold text-coffee-700 active:scale-95"
+    >
+      <PackageSearch className="h-4 w-4 shrink-0" />
+      <span className="hidden sm:inline">Prodotti</span>
+    </Link>
+  );
+}
+
+function DashboardCommercialeButton() {
+  return (
+    <Link
+      href="/dashboard-commerciale"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-coffee-200 bg-white px-3.5 py-2 text-sm font-semibold text-coffee-700 active:scale-95"
+    >
+      <BarChart3 className="h-4 w-4 shrink-0" />
+      <span className="hidden sm:inline">Dashboard</span>
+    </Link>
+  );
+}
+
+function ConfigurazioneButton() {
+  return (
+    <Link
+      href="/configurazione"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-coffee-200 bg-white px-3.5 py-2 text-sm font-semibold text-coffee-700 active:scale-95"
+    >
+      <SlidersHorizontal className="h-4 w-4 shrink-0" />
+      <span className="hidden sm:inline">Config</span>
+    </Link>
+  );
+}
+
 export const dynamic = "force-dynamic";
 
 const RIPARAZIONI_SELECT = `id, numero_scheda, token_pubblico, stato, data_ingresso, difetto_cliente, stato_estetico, importo_preventivo,
@@ -191,10 +239,14 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
         action={
           <div className="flex flex-wrap items-center justify-end gap-2">
             {admin && <OperatoriButton />}
+            <DashboardCommercialeButton />
             <AgendaButton />
+            <ManutenzioniButton />
             <OpportunitaButton />
             <ClientiButton />
             <VenditeButton />
+            <ProdottiButton />
+            {admin && <ConfigurazioneButton />}
             <SollecitiButton />
             <NuovaSchedaButton />
             <LogoutButton />

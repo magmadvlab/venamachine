@@ -168,7 +168,9 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
             <Card key={cliente.id} className="p-4 sm:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h2 className="font-display text-lg font-bold text-coffee-900">{cliente.ragione_sociale}</h2>
+                  <Link href={`/clienti/${cliente.id}`} className="font-display text-lg font-bold text-coffee-900 underline-offset-2 hover:underline">
+                    {cliente.ragione_sociale}
+                  </Link>
                   <p className="text-sm text-coffee-400">
                     {[cliente.telefono, cliente.email, cliente.piva_cf].filter(Boolean).join(" · ") || "Recapiti mancanti"}
                   </p>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Bell, CalendarClock, PackagePlus, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Bell, CalendarClock, PackagePlus, PackageSearch, ShoppingBag } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 import { SaleForm } from "@/components/sales/SaleForm";
@@ -47,8 +47,8 @@ export default async function VenditePage() {
     { data: riordini },
   ] = await Promise.all([
     db.from("clienti").select("id, ragione_sociale").order("ragione_sociale", { ascending: true }).limit(500),
-    db.from("macchine").select("id, cliente_id, marca, modello, matricola, regime_possesso").order("created_at", { ascending: false }).limit(1000),
-    db.from("prodotti_caffe").select("id, nome, descrizione, categoria, formato, caffe_stimati_per_unita").eq("attivo", true).order("nome", { ascending: true }),
+    db.from("macchine").select("id, cliente_id, marca, modello, matricola, tipologia, categoria_utilizzo, regime_possesso").order("created_at", { ascending: false }).limit(1000),
+    db.from("prodotti_caffe").select("id, nome, descrizione, categoria, formato, caffe_stimati_per_unita, sku, prezzo_standard, costo_standard, margine_standard, compatibilita_tipologie, compatibilita_categorie_uso, note_commerciali").eq("attivo", true).order("nome", { ascending: true }),
     db.from("ordini_caffe")
       .select(`id, data_ordine, numero_documento, note, pagato, data_pagamento, metodo_pagamento,
         cliente:clienti(ragione_sociale),
@@ -73,10 +73,17 @@ export default async function VenditePage() {
           <ArrowLeft className="h-4 w-4" />
           <span>Schede</span>
         </Link>
-        <div>
+        <div className="flex-1">
           <p className="text-sm font-semibold text-arancio-dark">Commerciale</p>
           <h1 className="font-display text-xl font-bold text-coffee-900">Vendite e riordini</h1>
         </div>
+        <Link
+          href="/prodotti"
+          className="ml-auto inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-coffee-200 bg-white px-3 text-sm font-semibold text-coffee-700 active:scale-95"
+        >
+          <PackageSearch className="h-4 w-4" />
+          <span>Prodotti</span>
+        </Link>
       </header>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">

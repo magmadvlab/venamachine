@@ -15,6 +15,7 @@ const TYPE_BY_ACTION: Record<string, string> = {
   valuta_riallocazione: "riallocazione",
   primo_ordine: "primo_ordine",
   verifica_miscela: "verifica_miscela",
+  recupero_calo_vendite: "calo_vendite",
   monitora: "monitoraggio",
 };
 
@@ -26,6 +27,7 @@ const ACTION_LABELS: Record<string, string> = {
   valuta_riallocazione: "Valutare riallocazione: macchina sopra fascia rispetto al consumo reale.",
   primo_ordine: "Primo ordine: cliente/macchina senza vendite registrate.",
   verifica_miscela: "Verificare miscela: segnali tecnici compatibili con caffe non idoneo.",
+  recupero_calo_vendite: "Recupero vendite: acquisti in calo rispetto al periodo precedente.",
 };
 
 type GeneratePayload = {
@@ -65,6 +67,12 @@ function todayPlus(days: number) {
   return date.toISOString().slice(0, 10);
 }
 
+function dateMinus(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date.toISOString().slice(0, 10);
+}
+
 function dueDays(priority: number) {
   if (priority >= 95) return 1;
   if (priority >= 85) return 2;
@@ -86,9 +94,71 @@ function buildMotivo(row: any) {
 
   if (row.interventi_365gg) parts.push(`${row.interventi_365gg} interventi negli ultimi 365 giorni`);
   if (row.regime_possesso === "comodato_uso") parts.push("macchina in comodato");
+  if (row.categoria_utilizzo) parts.push(`categoria macchina: ${row.categoria_utilizzo}`);
   if (row.machine_fit) parts.push(`fit macchina: ${row.machine_fit}`);
+  if (row.ultimo_acquisto) parts.push(`ultimo acquisto: ${new Date(row.ultimo_acquisto).toLocaleDateString("it-IT")}`);
+  if (row.ultimo_intervento) parts.push(`ultimo intervento: ${new Date(row.ultimo_intervento).toLocaleDateString("it-IT")}`);
 
   return parts.join(" · ");
+}
+
+function ruleFor(row: any, rules: any[]) {
+  return rules.find((rule: any) => {
+    if (!rule.attiva) return false;
+    if (rule.azione_generata && rule.azione_generata !== row.azione_consigliata) return false;
+    if (rule.categoria_utilizzo && rule.categoria_utilizzo !== row.categoria_utilizzo) return false;
+    if (rule.regime_possesso && rule.regime_possesso !== row.regime_possesso) return false;
+    return true;
+  });
+}
+
+async function loadRules(db: any) {
+  const { data, error } = await db
+    .from("regole_azioni")
+    .select("codice, nome, attiva, priorita_base, categoria_utilizzo, regime_possesso, azione_generata, giorni_scadenza");
+  if (error) return [];
+  return data ?? [];
+}
+
+async function buildDeclineOpportunities(db: any, baseRows: any[]) {
+  const since = dateMinus(360);
+  const { data: ordini, error } = await db
+    .from("ordini_caffe")
+    .select("macchina_id, data_ordine, righe:righe_ordine_caffe(caffe_stimati)")
+    .not("macchina_id", "is", null)
+    .gte("data_ordine", since)
+    .limit(5000);
+  if (error) return [];
+
+  const now = Date.now();
+  const byMachine = new Map<string, { current: number; previous: number }>();
+  for (const ordine of ordini ?? []) {
+    const machineId = (ordine as any).macchina_id;
+    if (!machineId) continue;
+    const ageDays = Math.floor((now - new Date((ordine as any).data_ordine).getTime()) / 86400000);
+    const coffee = ((ordine as any).righe ?? []).reduce((sum: number, row: any) => sum + Number(row.caffe_stimati ?? 0), 0);
+    const bucket = byMachine.get(machineId) ?? { current: 0, previous: 0 };
+    if (ageDays <= 180) bucket.current += coffee;
+    else if (ageDays <= 360) bucket.previous += coffee;
+    byMachine.set(machineId, bucket);
+  }
+
+  return baseRows.flatMap((row: any) => {
+    const totals = byMachine.get(row.macchina_id);
+    if (!totals || totals.previous < 300) return [];
+    if (totals.current >= totals.previous * 0.7) return [];
+    return [{
+      ...row,
+      azione_consigliata: "recupero_calo_vendite",
+      priorita_commerciale: Math.max(Number(row.priorita_commerciale ?? 60), 78),
+      motivo_override: [
+        ACTION_LABELS.recupero_calo_vendite,
+        `${totals.current} caffè ultimi 180 giorni contro ${totals.previous} nei 180 precedenti`,
+        row.regime_possesso === "comodato_uso" ? "macchina in comodato" : null,
+        row.categoria_utilizzo ? `categoria macchina: ${row.categoria_utilizzo}` : null,
+      ].filter(Boolean).join(" · "),
+    }];
+  });
 }
 
 async function getOperatore(db: any) {
@@ -130,13 +200,17 @@ export async function POST(req: Request) {
       categoria_utilizzo, machine_fit, azione_consigliata, priorita_commerciale,
       caffe_acquistati_365gg, caffe_target_365gg, rapporto_copertura_365gg,
       interventi_365gg, ultimo_intervento, ultimo_acquisto`)
-    .not("azione_consigliata", "eq", "monitora")
     .order("priorita_commerciale", { ascending: false })
     .limit(200);
 
   if (error) return dbError("Lettura opportunità", error);
 
-  const opportunita = (rows ?? []).filter((row: any) => row.macchina_id && row.cliente_id && row.azione_consigliata);
+  const baseRows = (rows ?? []).filter((row: any) => row.macchina_id && row.cliente_id && row.azione_consigliata && row.azione_consigliata !== "monitora");
+  const [rules, declineRows] = await Promise.all([
+    loadRules(db),
+    buildDeclineOpportunities(db, rows ?? []),
+  ]);
+  const opportunita = [...baseRows, ...declineRows].filter((row: any) => row.macchina_id && row.cliente_id && row.azione_consigliata);
   const sourceKeys = opportunita.map((row: any) => `analisi:${row.macchina_id}:${row.azione_consigliata}`);
   const { data: existing, error: existingError } = sourceKeys.length
     ? await db
@@ -154,7 +228,8 @@ export async function POST(req: Request) {
 
   for (const row of opportunita) {
     const sourceKey = `analisi:${row.macchina_id}:${row.azione_consigliata}`;
-    const priority = Number(row.priorita_commerciale ?? 50);
+    const rule = ruleFor(row, rules);
+    const priority = Math.max(Number(row.priorita_commerciale ?? 50), Number(rule?.priorita_base ?? 0));
     const payload = {
       cliente_id: row.cliente_id,
       macchina_id: row.macchina_id,
@@ -163,9 +238,9 @@ export async function POST(req: Request) {
       tipo: TYPE_BY_ACTION[row.azione_consigliata] ?? "monitoraggio",
       priorita: priority,
       stato: "aperta",
-      motivo: buildMotivo(row),
+      motivo: row.motivo_override ?? buildMotivo(row),
       azione_consigliata: ACTION_LABELS[row.azione_consigliata] ?? row.azione_consigliata,
-      data_scadenza: todayPlus(dueDays(priority)),
+      data_scadenza: todayPlus(Number(rule?.giorni_scadenza ?? dueDays(priority))),
       created_by_operatore_id: operatore.id,
     };
 

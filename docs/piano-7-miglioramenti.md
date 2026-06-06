@@ -79,8 +79,8 @@ Passare da manutenzione reattiva a manutenzione preventiva.
 
 - Nuova migrazione: `13_manutenzioni_programmate.sql`
 - API:
-  - `POST /api/manutenzioni/genera`
-  - `PATCH /api/manutenzioni/[id]`
+  - `POST /api/manutenzioni`
+  - `PATCH /api/manutenzioni`
 - Vista: `v_manutenzioni_programmate_agenda`
 
 ### Criterio completamento
@@ -278,38 +278,50 @@ Le soglie principali devono poter essere modificate dall'app senza cambiare codi
 
 ### Fase 2 - Prevenzione tecnica
 
-- [ ] Creare `manutenzioni_programmate`
-- [ ] Creare generatore manutenzioni
-- [ ] Creare `/manutenzioni`
-- [ ] Collegare manutenzione programmata a scheda riparazione
+- [x] Creare `manutenzioni_programmate`
+- [x] Creare generatore manutenzioni
+- [x] Creare `/manutenzioni`
+- [x] Collegare manutenzione programmata a scheda riparazione
 
 ### Fase 3 - Vendite piu intelligenti
 
-- [ ] Raffinare catalogo prodotti
-- [ ] Aggiungere compatibilita prodotto/macchina
-- [ ] Aggiungere margine stimato
-- [ ] Migliorare form vendite con suggerimenti
+- [x] Raffinare catalogo prodotti
+- [x] Aggiungere compatibilita prodotto/macchina
+- [x] Aggiungere margine stimato
+- [x] Migliorare form vendite con suggerimenti
 
 ### Fase 4 - Proattivita commerciale
 
-- [ ] Raffinare generatore azioni
-- [ ] Aggiungere confronti periodo corrente/precedente
-- [ ] Aggiungere regole `regole_azioni`
-- [ ] Migliorare priorita agenda
+- [x] Raffinare generatore azioni
+- [x] Aggiungere confronti periodo corrente/precedente
+- [x] Aggiungere regole `regole_azioni`
+- [x] Migliorare priorita agenda
 
 ### Fase 5 - Visione cliente e direzionale
 
-- [ ] Creare `/clienti/[id]` con timeline
-- [ ] Creare dashboard direzionale
-- [ ] Aggiungere metriche commerciali
-- [ ] Aggiungere report settimanale
+- [x] Creare `/clienti/[id]` con timeline
+- [x] Creare dashboard direzionale
+- [x] Aggiungere metriche commerciali
+- [x] Aggiungere report operativo in dashboard
 
 ### Fase 6 - Configurazione
 
-- [ ] Creare `/configurazione`
-- [ ] Rendere modificabili soglie macchina
-- [ ] Rendere modificabili profili attivita
-- [ ] Rendere modificabili regole score/azioni
+- [x] Creare `/configurazione`
+- [x] Rendere modificabili soglie macchina
+- [x] Rendere modificabili profili attivita
+- [x] Rendere modificabili regole score/azioni
+
+## Stato implementazione 2026-06-06
+
+I 7 miglioramenti applicativi sono stati implementati nel repository:
+
+- `/macchine/[id]`: scheda macchina completa con vendite, riparazioni, score, azioni e ciclo vita.
+- `/manutenzioni`: manutenzioni programmate con generazione automatica e stati operativi.
+- `/prodotti`: catalogo prodotti con prezzi, margini, caffe stimati e compatibilita.
+- `POST /api/azioni-commerciali`: generatore piu raffinato con regole configurabili e confronto vendite 180/180 giorni.
+- `/clienti/[id]`: timeline commerciale cliente con vendite, riparazioni, azioni, contatti e note.
+- `/dashboard-commerciale`: vista direzionale su vendite, rischi, azioni e manutenzioni.
+- `/configurazione`: tuning di soglie macchina, profili attivita, regole azione e impostazioni score.
 
 ## Prossimo blocco consigliato
 

@@ -24,6 +24,7 @@ const TYPE_LABELS: Record<string, string> = {
   verifica_miscela: "Verifica miscela",
   primo_ordine: "Primo ordine",
   recupero_horeca: "Recupero Ho.Re.Ca.",
+  calo_vendite: "Calo vendite",
   monitoraggio: "Monitoraggio",
 };
 

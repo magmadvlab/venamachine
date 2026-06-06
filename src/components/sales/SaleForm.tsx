@@ -15,6 +15,7 @@ type MacchinaOption = {
   marca: string | null;
   modello: string | null;
   matricola: string | null;
+  tipologia: string | null;
   categoria_utilizzo: string | null;
   regime_possesso: string | null;
 };
@@ -26,6 +27,13 @@ type ProdottoOption = {
   categoria: string;
   formato: string;
   caffe_stimati_per_unita: number;
+  sku: string | null;
+  prezzo_standard: number | null;
+  costo_standard: number | null;
+  margine_standard: number | null;
+  compatibilita_tipologie: string[] | null;
+  compatibilita_categorie_uso: string[] | null;
+  note_commerciali: string | null;
 };
 
 type SaleFormProps = {
@@ -72,7 +80,20 @@ export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
   );
 
   const prodottoSelezionato = prodotti.find((p) => p.id === prodottoId);
+  const macchinaSelezionata = macchine.find((m) => m.id === macchinaId);
   const caffeStimati = Math.max(0, Math.round(quantita * (prodottoSelezionato?.caffe_stimati_per_unita ?? caffeStimatiPerUnita)));
+  const compatibilityWarning = useMemo(() => {
+    if (!prodottoSelezionato || !macchinaSelezionata) return null;
+    const categorie = prodottoSelezionato.compatibilita_categorie_uso ?? [];
+    const tipologie = prodottoSelezionato.compatibilita_tipologie ?? [];
+    const categoriaOk = categorie.length === 0 || Boolean(macchinaSelezionata.categoria_utilizzo && categorie.includes(macchinaSelezionata.categoria_utilizzo));
+    const tipologiaOk = tipologie.length === 0 || Boolean(macchinaSelezionata.tipologia && tipologie.includes(macchinaSelezionata.tipologia));
+    if (categoriaOk && tipologiaOk) return null;
+    const parts = [];
+    if (!categoriaOk) parts.push(`categoria ${macchinaSelezionata.categoria_utilizzo ?? "non definita"}`);
+    if (!tipologiaOk) parts.push(`tipologia ${macchinaSelezionata.tipologia ?? "non definita"}`);
+    return `Prodotto non coerente con ${parts.join(" e ")} della macchina selezionata.`;
+  }, [macchinaSelezionata, prodottoSelezionato]);
 
   function selezionaProdotto(id: string) {
     setProdottoId(id);
@@ -83,6 +104,7 @@ export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
     setCategoria(prodotto.categoria);
     setFormato(prodotto.formato);
     setCaffeStimatiPerUnita(prodotto.caffe_stimati_per_unita);
+    if (prodotto.prezzo_standard != null) setPrezzoUnitario(Number(prodotto.prezzo_standard));
   }
 
   async function submit() {
@@ -179,7 +201,7 @@ export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
             <option value="">Nuovo prodotto / descrizione libera</option>
             {prodotti.map((prodotto) => (
               <option key={prodotto.id} value={prodotto.id}>
-                {prodotto.nome} · {prodotto.caffe_stimati_per_unita} caffè/unità
+                {prodotto.nome} · {prodotto.caffe_stimati_per_unita} caffè/unità{prodotto.prezzo_standard != null ? ` · € ${Number(prodotto.prezzo_standard).toFixed(2)}` : ""}
               </option>
             ))}
           </select>
@@ -289,7 +311,24 @@ export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
 
       <div className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm text-coffee-700">
         Stima per score: <span className="font-bold text-coffee-900">{caffeStimati}</span> caffè coperti da questo acquisto.
+        {prodottoSelezionato?.margine_standard != null && (
+          <span className="ml-2">
+            Margine stimato: <span className="font-bold text-coffee-900">€ {(Number(prodottoSelezionato.margine_standard) * quantita).toFixed(2)}</span>.
+          </span>
+        )}
       </div>
+
+      {prodottoSelezionato?.note_commerciali && (
+        <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800">
+          {prodottoSelezionato.note_commerciali}
+        </div>
+      )}
+
+      {compatibilityWarning && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">
+          {compatibilityWarning}
+        </div>
+      )}
 
       {errore && <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{errore}</p>}
       <Button type="button" onClick={submit} disabled={saving} className="w-full">

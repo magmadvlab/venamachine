@@ -440,7 +440,11 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
                 <CalendarDays className="h-4 w-4" />
                 Apri agenda cliente
               </Link>
-              <Link href={`/clienti?q=${encodeURIComponent(cliente?.ragione_sociale ?? "")}`} className="inline-flex items-center gap-2 rounded-lg border border-coffee-200 px-3 py-2 font-semibold text-coffee-700">
+              <Link href="/manutenzioni" className="inline-flex items-center gap-2 rounded-lg border border-coffee-200 px-3 py-2 font-semibold text-coffee-700">
+                <Wrench className="h-4 w-4" />
+                Programma manutenzione
+              </Link>
+              <Link href={cliente?.id ? `/clienti/${cliente.id}` : `/clienti?q=${encodeURIComponent(cliente?.ragione_sociale ?? "")}`} className="inline-flex items-center gap-2 rounded-lg border border-coffee-200 px-3 py-2 font-semibold text-coffee-700">
                 <History className="h-4 w-4" />
                 Storico cliente
               </Link>

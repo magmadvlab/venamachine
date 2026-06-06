@@ -23,27 +23,27 @@ Questo registro serve per non perdere le decisioni gia prese e distinguere cosa 
 | --- | --- | --- | --- |
 | Repository | Coffee Express deve restare invariato; Vena Machine deve essere una copia autonoma su cui lavorare. | Implementato | Repo separato `venamachine` creato e collegato a GitHub. |
 | Brand | Togliere nome/logo Coffee Express e usare `Vena Coffee Machine`. | Implementato | Rebrand applicato in UI, metadata, email/PDF e asset principali. |
-| Database | Usare un nuovo database dedicato, non quello di Coffee Express. | Parziale | Schema e migrazioni preparati; verificare che Supabase remoto abbia tutte le migrazioni applicate. |
-| Supabase remoto | Collegare il progetto a `https://sykxuautgcczsxhfossj.supabase.co`. | Parziale | L'app e configurata, ma le migrazioni 10 e 11 vanno applicate su remoto. Serve login/token Supabase CLI. |
+| Database | Usare un nuovo database dedicato, non quello di Coffee Express. | Implementato | Schema dedicato e migrazione 13 applicata su Supabase remoto. |
+| Supabase remoto | Collegare il progetto a `https://sykxuautgcczsxhfossj.supabase.co`. | Implementato | Progetto collegato e migrazioni applicate fino alla 13. |
 | Admin | Creare un admin per entrare nell'app. | Da verificare | Verificare utente admin, variabile `ADMIN_PIN` e flusso operatori in produzione. |
 | Email | Continuare con Resend per i test, usando `onboarding@resend.dev`. | Da completare | Aggiungere/verificare `RESEND_API_KEY` e `MAIL_FROM` negli env Vercel. |
 | Vendite | Registrare acquisti reali come dati certi per lo score. | Implementato | Esiste flusso vendite con cliente/macchina associabili. |
 | Dettaglio vendita | Salvare descrizione, quantita, prezzo unitario, data e stato pagamento. | Implementato | Dati presenti nel form e nella tabella vendite. |
 | Modifica schede | Permettere correzione di schede, clienti e macchine in caso di errori involontari. | Implementato | Pannello `Correggi scheda` nel dettaglio assistenza. |
 | Riordino | Stimare quando il cliente dovrebbe ricomprare e generare avvisi. | Implementato base | Avvisi basati su ultimo acquisto e caffe stimati; da trasformare in azioni operative. |
-| Fedelta comodato | Capire se chi ha macchina in comodato compra caffe da noi o da concorrenti. | Parziale | Score e viste presenti; serve agenda operativa e soglie configurabili. |
-| Manutenzione + vendite | Se la macchina torna dopo pochi mesi e il cliente ha comprato poco caffe, segnalare rischio uso concorrente. | Parziale | Logica presente nello score/opportunita; manca azione commerciale generata e storico contatto. |
-| Tipo cliente | Valutare consumi in base al tipo attivita: lido, ufficio piccolo, casa, Ho.Re.Ca. | Parziale | Profili attivita presenti; vanno affinati e resi configurabili. |
-| Categoria macchina | Legare consumi e score al tipo macchina: casa, ufficio, Ho.Re.Ca. | Parziale | Migrazione e form pronti; serve applicazione migrazioni remote e modifica su macchine esistenti. |
-| Score non casuale | Lo score deve dipendere da categoria macchina, profilo cliente, vendite e manutenzioni. | Parziale | Migrazione 11 aggiorna la vista; serve verificare in produzione dopo applicazione migrazione. |
+| Fedelta comodato | Capire se chi ha macchina in comodato compra caffe da noi o da concorrenti. | Implementato | Score, opportunita, agenda e regole configurabili lavorano su vendite, manutenzioni e regime possesso. |
+| Manutenzione + vendite | Se la macchina torna dopo pochi mesi e il cliente ha comprato poco caffe, segnalare rischio uso concorrente. | Implementato | Generatore azioni e manutenzioni programmate creano priorita e motivazioni operative. |
+| Tipo cliente | Valutare consumi in base al tipo attivita: lido, ufficio piccolo, casa, Ho.Re.Ca. | Implementato | Profili attivita presenti e modificabili da `/configurazione`. |
+| Categoria macchina | Legare consumi e score al tipo macchina: casa, ufficio, Ho.Re.Ca. | Implementato | Categorie macchina usate da score, opportunita, manutenzioni e compatibilita vendite. |
+| Score non casuale | Lo score deve dipendere da categoria macchina, profilo cliente, vendite e manutenzioni. | Implementato | Viste score/opportunita e UI sono collegate a categorie, profili e storico. |
 | Opportunita | Mostrare clienti/macchine con rischio o opportunita commerciale. | Implementato base | Pagina `/opportunita` disponibile; dati dipendono dalle viste aggiornate. |
-| Prodotti | Gestire kit, cartoni, buste, caffe in grani, capsule/cialde e compatibilita macchina. | Da fare | Aggiungere catalogo prodotto piu preciso e compatibilita con categorie/modelli. |
-| Manutenzioni programmate | Non solo storico riparazioni, ma programmazione manutenzione preventiva. | Da fare | Creare tabella, generatore e pagina `/manutenzioni`. |
+| Prodotti | Gestire kit, cartoni, buste, caffe in grani, capsule/cialde e compatibilita macchina. | Implementato | Pagina `/prodotti`, API e warning compatibilita nel form vendite. |
+| Manutenzioni programmate | Non solo storico riparazioni, ma programmazione manutenzione preventiva. | Implementato | Tabella, API, generatore e pagina `/manutenzioni`. |
 | Agenda commerciale | L'app deve diventare proattiva e dire chi chiamare, perche e quando. | Implementato base | `azioni_commerciali`, generatore e pagina `/agenda` presenti; da verificare su Supabase remoto. |
 | Follow-up | Salvare esiti chiamate, note, rimandi e prossimi contatti. | Implementato base | `contatti_commerciali` presente e collegata agli aggiornamenti azione; da raffinare con report storico. |
 | Ciclo vita macchina | Gestire upgrade, rigenerazione, riallocazione e dismissione. | Implementato base | Scheda macchina completa e modifica stato ciclo vita presenti; da aggiungere automazioni di rigenerazione/riallocazione. |
-| Automazioni | Reminder, email/WhatsApp, report opportunita. | Da fare | Da fare dopo agenda, azioni e storico contatti. |
-| Configurazione | Rendere modificabili soglie, categorie, regole e prodotti senza cambiare codice. | Da fare | Pagina `/configurazione` in fase successiva. |
+| Automazioni | Reminder, email/WhatsApp, report opportunita. | Implementato base | Agenda, manutenzioni e dashboard/report interno presenti; email/WhatsApp restano fase successiva dopo dominio/env. |
+| Configurazione | Rendere modificabili soglie, categorie, regole e prodotti senza cambiare codice. | Implementato | `/configurazione` e `/prodotti` permettono tuning operativo. |
 
 Legenda:
 - `Implementato`: codice gia presente nel repository.
@@ -56,18 +56,17 @@ Legenda:
 
 Questi punti sono emersi nella chat e non vanno saltati:
 
-- Applicare su Supabase remoto le migrazioni:
-  - `supabase/10_macchine_consumi_opportunita.sql`
-  - `supabase/11_score_fedelta_categorie_macchina.sql`
-- Rendere modificabile da UI la categoria macchina anche su macchine già esistenti.
-- Rendere modificabili da UI le soglie per categoria/modello macchina.
-- Collegare meglio prodotto venduto e compatibilità macchina: grani, capsule, cialde, kit.
-- Creare un sistema di azioni commerciali, non solo viste e score.
-- Creare una vera programmazione manutenzioni, non solo storico riparazioni.
-- Salvare esito chiamate/follow-up commerciali.
+- Applicare su Supabase remoto la migrazione:
+  - `supabase/13_piani_operativi_completi.sql` **Fatto**
+- Rendere modificabile da UI la categoria macchina anche su macchine già esistenti. **Fatto**
+- Rendere modificabili da UI le soglie per categoria/modello macchina. **Fatto**
+- Collegare meglio prodotto venduto e compatibilità macchina: grani, capsule, cialde, kit. **Fatto**
+- Creare un sistema di azioni commerciali, non solo viste e score. **Fatto**
+- Creare una vera programmazione manutenzioni, non solo storico riparazioni. **Fatto**
+- Salvare esito chiamate/follow-up commerciali. **Fatto**
 - Distinguere bene comodato, macchina venduta e macchina del cliente.
 - Gestire ciclo vita macchina: assegnata, venduta, manutenzione, rigenerata, riallocabile, dismessa.
-- Aggiungere automazioni/reminder, ma solo dopo avere dati e azioni solide.
+- Aggiungere automazioni email/WhatsApp solo dopo dominio/env Resend definitivi.
 
 ## Sequenza immediata di implementazione
 
@@ -114,20 +113,21 @@ Prima di aggiungere nuove funzioni operative conviene chiudere questi passaggi i
 - [x] Aggiungere categorie macchina `casa`, `ufficio`, `horeca` nello schema.
 - [x] Aggiornare score per usare categorie macchina e profilo cliente.
 - [x] Creare pagina opportunita commerciale.
-- [ ] Applicare migrazioni 10 e 11 su Supabase remoto.
+- [x] Preparare migrazioni 10 e 11.
+- [x] Applicare/verificare migrazione 13 su Supabase remoto.
 - [ ] Verificare admin produzione.
 - [ ] Verificare env Resend produzione.
-- [ ] Rendere modificabile categoria macchina su macchine gia esistenti.
+- [x] Rendere modificabile categoria macchina su macchine gia esistenti.
 - [x] Creare tabella `azioni_commerciali`.
 - [x] Creare generatore azioni da viste commerciali e vendite.
 - [x] Creare pagina `/agenda`.
 - [x] Salvare esiti chiamate e follow-up.
-- [ ] Creare manutenzioni programmate.
+- [x] Creare manutenzioni programmate.
 - [x] Creare scheda macchina `/macchine/[id]`.
 - [x] Gestire ciclo vita macchina.
-- [ ] Gestire catalogo prodotti e compatibilita macchina.
-- [ ] Creare configurazione soglie/regole.
-- [ ] Aggiungere automazioni e report.
+- [x] Gestire catalogo prodotti e compatibilita macchina.
+- [x] Creare configurazione soglie/regole.
+- [x] Aggiungere automazioni operative interne e report dashboard.
 
 ## Modello dati da aggiungere
 
