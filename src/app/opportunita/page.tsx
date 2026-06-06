@@ -170,6 +170,13 @@ export default async function OpportunitaPage() {
                     Storico cliente
                   </Link>
                   <Link
+                    href={`/macchine/${row.macchina_id}`}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-coffee-200 bg-white px-3 py-2 text-sm font-semibold text-coffee-700 active:scale-95"
+                  >
+                    <Gauge className="h-4 w-4" />
+                    Scheda macchina
+                  </Link>
+                  <Link
                     href="/vendite"
                     className="inline-flex items-center gap-1.5 rounded-full bg-arancio px-3 py-2 text-sm font-semibold text-white active:scale-95"
                   >

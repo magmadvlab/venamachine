@@ -41,7 +41,7 @@ Questo registro serve per non perdere le decisioni gia prese e distinguere cosa 
 | Manutenzioni programmate | Non solo storico riparazioni, ma programmazione manutenzione preventiva. | Da fare | Creare tabella, generatore e pagina `/manutenzioni`. |
 | Agenda commerciale | L'app deve diventare proattiva e dire chi chiamare, perche e quando. | Implementato base | `azioni_commerciali`, generatore e pagina `/agenda` presenti; da verificare su Supabase remoto. |
 | Follow-up | Salvare esiti chiamate, note, rimandi e prossimi contatti. | Implementato base | `contatti_commerciali` presente e collegata agli aggiornamenti azione; da raffinare con report storico. |
-| Ciclo vita macchina | Gestire upgrade, rigenerazione, riallocazione e dismissione. | Da fare | Creare scheda macchina completa e stati ciclo vita. |
+| Ciclo vita macchina | Gestire upgrade, rigenerazione, riallocazione e dismissione. | Implementato base | Scheda macchina completa e modifica stato ciclo vita presenti; da aggiungere automazioni di rigenerazione/riallocazione. |
 | Automazioni | Reminder, email/WhatsApp, report opportunita. | Da fare | Da fare dopo agenda, azioni e storico contatti. |
 | Configurazione | Rendere modificabili soglie, categorie, regole e prodotti senza cambiare codice. | Da fare | Pagina `/configurazione` in fase successiva. |
 
@@ -123,8 +123,8 @@ Prima di aggiungere nuove funzioni operative conviene chiudere questi passaggi i
 - [x] Creare pagina `/agenda`.
 - [x] Salvare esiti chiamate e follow-up.
 - [ ] Creare manutenzioni programmate.
-- [ ] Creare scheda macchina `/macchine/[id]`.
-- [ ] Gestire ciclo vita macchina.
+- [x] Creare scheda macchina `/macchine/[id]`.
+- [x] Gestire ciclo vita macchina.
 - [ ] Gestire catalogo prodotti e compatibilita macchina.
 - [ ] Creare configurazione soglie/regole.
 - [ ] Aggiungere automazioni e report.

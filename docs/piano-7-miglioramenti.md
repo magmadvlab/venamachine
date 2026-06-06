@@ -11,6 +11,7 @@ Gia presenti nel repository:
 - categorie uso macchina: `casa`, `ufficio`, `horeca`
 - score fedelta e opportunita commerciali
 - agenda commerciale con azioni e follow-up
+- scheda macchina completa su `/macchine/[id]`
 
 ## Ordine consigliato
 
@@ -270,10 +271,10 @@ Le soglie principali devono poter essere modificate dall'app senza cambiare codi
 
 ### Fase 1 - Fondamenta operative
 
-- [ ] Creare `/macchine/[id]`
-- [ ] Aggiungere API modifica macchina
-- [ ] Mostrare vendite/riparazioni/score nella scheda macchina
-- [ ] Aggiungere stato ciclo vita modificabile
+- [x] Creare `/macchine/[id]`
+- [x] Aggiungere API modifica macchina
+- [x] Mostrare vendite/riparazioni/score nella scheda macchina
+- [x] Aggiungere stato ciclo vita modificabile
 
 ### Fase 2 - Prevenzione tecnica
 
@@ -312,6 +313,6 @@ Le soglie principali devono poter essere modificate dall'app senza cambiare codi
 
 ## Prossimo blocco consigliato
 
-Il prossimo sviluppo da fare e la **scheda macchina completa**.
+Il prossimo sviluppo da fare e la **manutenzione programmata**.
 
-Motivo: e il nodo centrale che unisce vendite, riparazioni, score, ciclo vita e azioni. Senza questa pagina, manutenzioni programmate e dashboard direzionale sarebbero meno leggibili.
+Motivo: ora la scheda macchina unisce vendite, riparazioni, score, ciclo vita e azioni. Il passo successivo naturale e generare manutenzioni preventive partendo da questi dati.

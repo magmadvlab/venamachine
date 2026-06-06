@@ -260,6 +260,15 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
                           </div>
                         </div>
                       )}
+                      <div className="mt-3">
+                        <Link
+                          href={`/macchine/${m.id}`}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-coffee-900 px-3 py-2 text-xs font-semibold text-white active:scale-95"
+                        >
+                          <Gauge className="h-3.5 w-3.5" />
+                          Scheda macchina
+                        </Link>
+                      </div>
                     </div>
                   );
                 })}

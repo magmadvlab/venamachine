@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, History, Phone, ShoppingBag, Target, TimerReset } from "lucide-react";
+import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Gauge, History, Phone, ShoppingBag, Target, TimerReset } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 import { AgendaActionControls, GenerateAgendaButton } from "@/components/commercial/AgendaActions";
@@ -285,6 +285,13 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
                         Chiama
                       </a>
                     )}
+                    <Link
+                      href={`/macchine/${row.macchina_id}`}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-coffee-200 bg-white px-3 py-2 text-sm font-semibold text-coffee-700 active:scale-95"
+                    >
+                      <Gauge className="h-4 w-4" />
+                      Scheda macchina
+                    </Link>
                     <Link
                       href={`/vendite?cliente=${encodeURIComponent(row.cliente_id)}`}
                       className="inline-flex items-center gap-1.5 rounded-full bg-arancio px-3 py-2 text-sm font-semibold text-white active:scale-95"
