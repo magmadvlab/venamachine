@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Gauge, Search, ShieldAlert, ShoppingBag, Wrench } from "lucide-react";
+import { ArrowLeft, Gauge, Pencil, Search, ShieldAlert, ShoppingBag, Wrench } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 
@@ -186,6 +186,23 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
                 <span className="rounded-full bg-coffee-50 px-2 py-1 text-xs font-bold text-coffee-600">
                   {cliente.macchine.length} macchin{cliente.macchine.length === 1 ? "a" : "e"}
                 </span>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  href={`/clienti/${cliente.id}#modifica`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-coffee-200 bg-white px-3 py-2 text-xs font-semibold text-coffee-700 active:scale-95"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Modifica cliente
+                </Link>
+                <Link
+                  href={`/clienti/${cliente.id}`}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-coffee-900 px-3 py-2 text-xs font-semibold text-white active:scale-95"
+                >
+                  <Gauge className="h-3.5 w-3.5" />
+                  Timeline
+                </Link>
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, Coffee, Gauge, Phone, Plus, ShoppingBag, Target, Wrench } from "lucide-react";
+import { ArrowLeft, CalendarDays, Coffee, Gauge, Pencil, Phone, Plus, ShoppingBag, Target, Wrench } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { CustomerEditForm } from "@/components/customers/CustomerEditForm";
 import { CustomerNoteForm } from "@/components/customers/CustomerNoteForm";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 
@@ -43,7 +44,7 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
   const { data: clienteRow } = await db
     .from("clienti")
     .select(`id, ragione_sociale, tipo, piva_cf, telefono, email, indirizzo, canale_preferito,
-      caffe_giornalieri_attesi_override, created_at,
+      profilo_attivita_id, caffe_giornalieri_attesi_override, note_fedelta, consenso_gdpr, created_at,
       profilo:profili_attivita(nome, codice, caffe_giornalieri_min, caffe_giornalieri_max)`)
     .eq("id", params.id)
     .maybeSingle();
@@ -59,12 +60,14 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
     { data: analisiRows },
     { data: azioniAperte },
     { data: manutenzioni },
+    { data: profili },
   ] = await Promise.all([
     db.from("macchine").select("id, marca, modello, matricola, tipologia, categoria_utilizzo, regime_possesso, stato_ciclo_vita").eq("cliente_id", params.id).order("created_at", { ascending: false }),
     db.from("v_timeline_cliente").select("*").eq("cliente_id", params.id).order("data_evento", { ascending: false }).limit(120),
     db.from("v_analisi_commerciale_macchine").select("macchina_id, priorita_commerciale, azione_consigliata, machine_fit, caffe_acquistati_365gg, caffe_target_365gg, valore_acquisti_365gg, costo_interventi_365gg").eq("cliente_id", params.id),
     db.from("azioni_commerciali").select("id").eq("cliente_id", params.id).in("stato", ["aperta", "pianificata", "rimandata"]),
     db.from("manutenzioni_programmate").select("id").eq("cliente_id", params.id).in("stato", ["da_pianificare", "pianificata"]),
+    db.from("profili_attivita").select("id, nome, codice, caffe_giornalieri_min, caffe_giornalieri_max").order("nome", { ascending: true }),
   ]);
 
   const valoreVendite = (analisiRows ?? []).reduce((sum: number, row: any) => sum + Number(row.valore_acquisti_365gg ?? 0), 0);
@@ -91,6 +94,10 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          <a href="#modifica" className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
+            <Pencil className="h-4 w-4" />
+            Modifica
+          </a>
           {cliente.telefono && (
             <a href={`tel:${cliente.telefono}`} className="inline-flex h-10 items-center gap-2 rounded-full bg-arancio px-4 text-sm font-semibold text-white active:scale-95">
               <Phone className="h-4 w-4" />
@@ -170,6 +177,14 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
         </section>
 
         <aside className="space-y-4">
+          <Card id="modifica" className="p-4 sm:p-5">
+            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+              <Pencil className="h-5 w-5 text-arancio" />
+              Modifica cliente
+            </h2>
+            <CustomerEditForm cliente={cliente as any} profili={(profili ?? []) as any} />
+          </Card>
+
           <Card className="p-4 sm:p-5">
             <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Profilo</h2>
             <div className="space-y-2 text-sm text-coffee-700">
