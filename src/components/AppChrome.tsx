@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3,
   Bell,
+  BookOpen,
   CalendarDays,
   ClipboardList,
   Home,
@@ -22,6 +23,7 @@ import { cn } from "@/lib/cn";
 
 const primaryLinks = [
   { href: "/", label: "Schede", icon: Home },
+  { href: "/manuale", label: "Manuale", icon: BookOpen },
   { href: "/dashboard-commerciale", label: "Dashboard", icon: BarChart3 },
   { href: "/agenda", label: "Agenda", icon: CalendarDays },
   { href: "/manutenzioni", label: "Manutenzioni", icon: Wrench },
