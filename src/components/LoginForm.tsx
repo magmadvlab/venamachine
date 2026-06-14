@@ -40,7 +40,7 @@ export function LoginForm() {
   }
 
   const inputCls =
-    "w-full rounded-xl border border-coffee-200 bg-white px-3 py-3 text-base text-coffee-900 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20";
+    "w-full rounded-xl border border-coffee-700 bg-coffee-800 px-3 py-3 text-base text-coffee-50 placeholder:text-coffee-400 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20";
   const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-coffee-400";
 
   return (
@@ -71,7 +71,7 @@ export function LoginForm() {
       </div>
 
       {errore && (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{errore}</p>
+        <p className="rounded-lg bg-red-900/30 px-4 py-3 text-sm text-red-300">{errore}</p>
       )}
 
       <button
