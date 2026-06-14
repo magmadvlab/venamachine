@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { getSessionOperatore } from "@/lib/operator-server";
+import { inviaNotificaAdminSospeso } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -23,6 +24,14 @@ function cleanNullable(value: unknown) {
 
 function optionalBoolean(value: unknown) {
   return typeof value === "boolean" ? value : undefined;
+}
+
+async function countTotaleSospesi(db: any): Promise<number> {
+  const [{ count: c1 }, { count: c2 }] = await Promise.all([
+    db.from("riparazioni").select("*", { count: "exact", head: true }).eq("stato_pagamento", "sospeso"),
+    db.from("ordini_caffe").select("*", { count: "exact", head: true }).eq("stato_pagamento", "sospeso"),
+  ]);
+  return (c1 ?? 0) + (c2 ?? 0);
 }
 
 async function canEditRiparazione(db: any) {
@@ -137,6 +146,24 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
   }
 
+  const validStatiPagamento = ["sospeso", "pagato"];
+  if (body.stato_pagamento !== undefined) {
+    if (body.stato_pagamento === null || body.stato_pagamento === "") {
+      patch.stato_pagamento = null;
+      patch.metodo_pagamento = null;
+      patch.data_pagamento = null;
+    } else if (validStatiPagamento.includes(body.stato_pagamento)) {
+      patch.stato_pagamento = body.stato_pagamento;
+      if (body.stato_pagamento === "pagato") {
+        patch.metodo_pagamento = cleanNullable(body.metodo_pagamento);
+        patch.data_pagamento = clean(body.data_pagamento) ?? new Date().toISOString().slice(0, 10);
+      } else {
+        patch.metodo_pagamento = null;
+        patch.data_pagamento = null;
+      }
+    }
+  }
+
   // operatore_id NON viene aggiornato: la scheda resta in carico al custode (accettazione).
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ riparazione: current });
@@ -151,6 +178,47 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   if (error) {
     return NextResponse.json({ error: error.message, details: error.details, hint: error.hint }, { status: 400 });
+  }
+
+  if (patch.stato_pagamento === "sospeso") {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail) {
+      try {
+        const { data: schedaInfo } = await db
+          .from("riparazioni")
+          .select("numero_scheda, importo_finale, importo_preventivo, cliente:clienti(ragione_sociale)")
+          .eq("id", params.id)
+          .single();
+        const cliente = Array.isArray(schedaInfo?.cliente) ? schedaInfo.cliente[0] : schedaInfo?.cliente;
+        const totale = await countTotaleSospesi(db);
+
+        let pdfBuffer: Buffer | undefined;
+        if (totale >= 5) {
+          try {
+            const { buildSospesiPDF } = await import("@/lib/pdf/sospesi");
+            const { data: sospesiRip } = await db
+              .from("riparazioni")
+              .select("numero_scheda, importo_finale, importo_preventivo, data_ingresso, cliente:clienti(ragione_sociale, telefono, email)")
+              .eq("stato_pagamento", "sospeso");
+            const { data: sospesiVen } = await db
+              .from("ordini_caffe")
+              .select("id, data_ordine, numero_documento, righe:righe_ordine_caffe(prezzo_unitario, quantita), cliente:clienti(ragione_sociale, telefono, email)")
+              .eq("stato_pagamento", "sospeso");
+            pdfBuffer = await buildSospesiPDF({ riparazioni: sospesiRip ?? [], vendite: sospesiVen ?? [] });
+          } catch { /* PDF non bloccante */ }
+        }
+
+        await inviaNotificaAdminSospeso({
+          adminEmail,
+          tipo: "riparazione",
+          riferimento: schedaInfo?.numero_scheda ?? params.id,
+          cliente: cliente?.ragione_sociale ?? "Cliente",
+          importo: schedaInfo?.importo_finale ?? schedaInfo?.importo_preventivo ?? null,
+          totaleSospesi: totale,
+          pdfBuffer,
+        });
+      } catch { /* notifica non bloccante */ }
+    }
   }
 
   return NextResponse.json({ riparazione: data });

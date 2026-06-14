@@ -2,22 +2,35 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { PaymentForm, type PaymentFormValue } from "@/components/payments/PaymentForm";
+import type { StatoPagamento } from "@/lib/types";
 
 export function RepairWorkForm({
   id,
   diagnosi,
   importoPreventivo,
   importoFinale,
+  statoPagamento,
+  metodoPagamento,
+  dataPagamento,
 }: {
   id: string;
   diagnosi?: string | null;
   importoPreventivo?: number | null;
   importoFinale?: number | null;
+  statoPagamento?: StatoPagamento | null;
+  metodoPagamento?: string | null;
+  dataPagamento?: string | null;
 }) {
   const router = useRouter();
   const [diagnosiTecnico, setDiagnosiTecnico] = useState(diagnosi ?? "");
   const [preventivo, setPreventivo] = useState(importoPreventivo?.toString() ?? "");
   const [finale, setFinale] = useState(importoFinale?.toString() ?? "");
+  const [payment, setPayment] = useState<PaymentFormValue>({
+    stato_pagamento: statoPagamento ?? "",
+    metodo_pagamento: metodoPagamento ?? "",
+    data_pagamento: dataPagamento ?? "",
+  });
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -35,6 +48,9 @@ export function RepairWorkForm({
           diagnosi_tecnico: diagnosiTecnico,
           importo_preventivo: preventivo,
           importo_finale: finale,
+          stato_pagamento: payment.stato_pagamento || null,
+          metodo_pagamento: payment.metodo_pagamento || null,
+          data_pagamento: payment.data_pagamento || null,
         }),
       });
       const out = await res.json();
@@ -90,6 +106,9 @@ export function RepairWorkForm({
           />
         </div>
       </div>
+
+      <PaymentForm value={payment} onChange={setPayment} />
+
       <button
         type="button"
         onClick={save}
