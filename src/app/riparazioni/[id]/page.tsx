@@ -35,6 +35,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
     .from("riparazioni")
     .select(`id, numero_scheda, token_pubblico, stato, data_ingresso, data_riparazione, data_avviso_cliente, data_ritiro,
       difetto_cliente, diagnosi_tecnico, stato_estetico, accessori, preventivo_richiesto, spesa_max_autorizzata, importo_preventivo, importo_finale,
+      stato_pagamento, metodo_pagamento, data_pagamento,
       cliente:clienti(ragione_sociale, tipo, piva_cf, indirizzo, telefono, email, canale_preferito),
       macchina:macchine(id, marca, modello, matricola, tipologia, categoria_utilizzo, colore, regime_possesso),
       operatore:operatori(nome)`)
@@ -157,6 +158,14 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
               {field("Spesa max autorizzata", data.spesa_max_autorizzata != null ? `€ ${Number(data.spesa_max_autorizzata).toFixed(2)}` : null)}
               {field("Preventivo", data.importo_preventivo != null ? `€ ${Number(data.importo_preventivo).toFixed(2)}` : null)}
               {field("Finale", data.importo_finale != null ? `€ ${Number(data.importo_finale).toFixed(2)}` : null)}
+              {field("Stato pagamento",
+                (data as any).stato_pagamento === "pagato" ? "Pagato" :
+                (data as any).stato_pagamento === "sospeso" ? "Sospeso" : "—"
+              )}
+              {(data as any).stato_pagamento === "pagato" && field("Metodo", (data as any).metodo_pagamento)}
+              {(data as any).stato_pagamento === "pagato" && field("Data incasso",
+                (data as any).data_pagamento ? new Date((data as any).data_pagamento).toLocaleDateString("it-IT") : null
+              )}
             </div>
             <div className="mt-4 space-y-3">
               <div>
@@ -173,6 +182,9 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
               diagnosi={data.diagnosi_tecnico}
               importoPreventivo={data.importo_preventivo}
               importoFinale={data.importo_finale}
+              statoPagamento={(data as any).stato_pagamento}
+              metodoPagamento={(data as any).metodo_pagamento}
+              dataPagamento={(data as any).data_pagamento}
             />
             {data.stato === "attesa_preventivo" && <QuoteOutcome id={data.id} />}
           </Card>

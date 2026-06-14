@@ -50,7 +50,7 @@ export default async function VenditePage() {
     db.from("macchine").select("id, cliente_id, marca, modello, matricola, tipologia, categoria_utilizzo, regime_possesso").order("created_at", { ascending: false }).limit(1000),
     db.from("prodotti_caffe").select("id, nome, descrizione, categoria, formato, caffe_stimati_per_unita, sku, prezzo_standard, costo_standard, margine_standard, compatibilita_tipologie, compatibilita_categorie_uso, note_commerciali").eq("attivo", true).order("nome", { ascending: true }),
     db.from("ordini_caffe")
-      .select(`id, data_ordine, numero_documento, note, pagato, data_pagamento, metodo_pagamento,
+      .select(`id, data_ordine, numero_documento, note, pagato, stato_pagamento, data_pagamento, metodo_pagamento,
         cliente:clienti(ragione_sociale),
         macchina:macchine(marca, modello, matricola),
         righe:righe_ordine_caffe(quantita, prezzo_unitario, caffe_stimati, prodotto:prodotti_caffe(nome, descrizione, formato))`)
@@ -125,9 +125,17 @@ export default async function VenditePage() {
                         <div className="text-right">
                           <span className="block text-xs font-semibold text-coffee-400">{formatDate(ordine.data_ordine)}</span>
                           <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-xs font-bold ${
-                            ordine.pagato ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"
+                            ordine.stato_pagamento === "pagato"
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                              : ordine.stato_pagamento === "sospeso"
+                                ? "border-amber-200 bg-amber-50 text-amber-900"
+                                : "border-coffee-200 bg-coffee-50 text-coffee-500"
                           }`}>
-                            {ordine.pagato ? "Pagato" : "Non pagato"}
+                            {ordine.stato_pagamento === "pagato"
+                              ? "Pagato"
+                              : ordine.stato_pagamento === "sospeso"
+                                ? "Sospeso"
+                                : "—"}
                           </span>
                         </div>
                       </div>
@@ -147,7 +155,7 @@ export default async function VenditePage() {
                       <p className="mt-2 text-xs font-semibold text-coffee-500">
                         {caffeStimati} caffè stimati · € {valore.toFixed(2)}
                         {ordine.numero_documento ? ` · Doc. ${ordine.numero_documento}` : ""}
-                        {ordine.pagato && ordine.data_pagamento ? ` · Pagato il ${formatDate(ordine.data_pagamento)}` : ""}
+                        {ordine.stato_pagamento === "pagato" && ordine.data_pagamento ? ` · Pagato il ${formatDate(ordine.data_pagamento)}` : ""}
                         {ordine.metodo_pagamento ? ` · ${ordine.metodo_pagamento}` : ""}
                       </p>
                     </li>

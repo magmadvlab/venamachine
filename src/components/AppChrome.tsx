@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Banknote,
   BarChart3,
   Bell,
   BookOpen,
@@ -30,6 +31,7 @@ const primaryLinks = [
   { href: "/opportunita", label: "Opportunità", icon: Target },
   { href: "/clienti", label: "Clienti", icon: Users },
   { href: "/vendite", label: "Vendite", icon: ShoppingBag },
+  { href: "/incassi", label: "Incassi", icon: Banknote },
   { href: "/prodotti", label: "Prodotti", icon: PackageSearch },
   { href: "/solleciti", label: "Solleciti", icon: Bell },
 ];
@@ -45,14 +47,14 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function NavLink({ item, pathname, compact = false }: { item: any; pathname: string; compact?: boolean }) {
+function NavLink({ item, pathname, compact = false, badge = 0 }: { item: any; pathname: string; compact?: boolean; badge?: number }) {
   const Icon = item.icon;
   const active = isActive(pathname, item.href);
   return (
     <Link
       href={item.href}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition active:scale-95",
+        "relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition active:scale-95",
         compact && "min-w-[76px] flex-col gap-1 px-2 py-1.5 text-[11px]",
         item.highlight
           ? "bg-arancio text-white shadow-sm hover:bg-arancio-dark"
@@ -65,6 +67,11 @@ function NavLink({ item, pathname, compact = false }: { item: any; pathname: str
     >
       <Icon className={cn("h-4 w-4 shrink-0", compact && "h-5 w-5")} />
       <span>{item.label}</span>
+      {badge > 0 && (
+        <span className="absolute right-2 top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+          {badge}
+        </span>
+      )}
     </Link>
   );
 }
@@ -73,7 +80,7 @@ function shouldHideChrome(pathname: string) {
   return pathname === "/login" || pathname.startsWith("/r/");
 }
 
-export function AppChrome({ children }: { children: React.ReactNode }) {
+export function AppChrome({ children, incassiCount = 0 }: { children: React.ReactNode; incassiCount?: number }) {
   const pathname = usePathname();
   if (shouldHideChrome(pathname)) return <>{children}</>;
 
@@ -92,7 +99,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
         <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
           {primaryLinks.map((item) => (
-            <NavLink key={item.href} item={item} pathname={pathname} />
+            <NavLink key={item.href} item={item} pathname={pathname} badge={item.href === "/incassi" ? incassiCount : 0} />
           ))}
           <div className="my-3 border-t border-white/10" />
           {utilityLinks.map((item) => (
@@ -108,7 +115,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-coffee-800 bg-coffee-900/96 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-2xl backdrop-blur lg:hidden">
         <div className="flex gap-1 overflow-x-auto">
           {[...primaryLinks, utilityLinks[0]].map((item) => (
-            <NavLink key={item.href} item={item} pathname={pathname} compact />
+            <NavLink key={item.href} item={item} pathname={pathname} compact badge={item.href === "/incassi" ? incassiCount : 0} />
           ))}
         </div>
       </nav>

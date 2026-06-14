@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { PaymentForm, type PaymentFormValue } from "@/components/payments/PaymentForm";
 
 type ClienteOption = {
   id: string;
@@ -70,9 +71,11 @@ export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
   const [dataOrdine, setDataOrdine] = useState(() => new Date().toISOString().slice(0, 10));
   const [numeroDocumento, setNumeroDocumento] = useState("");
   const [note, setNote] = useState("");
-  const [pagato, setPagato] = useState(false);
-  const [dataPagamento, setDataPagamento] = useState(() => new Date().toISOString().slice(0, 10));
-  const [metodoPagamento, setMetodoPagamento] = useState("");
+  const [payment, setPayment] = useState<PaymentFormValue>({
+    stato_pagamento: "",
+    metodo_pagamento: "",
+    data_pagamento: new Date().toISOString().slice(0, 10),
+  });
 
   const macchineCliente = useMemo(
     () => macchine.filter((m) => m.cliente_id === clienteId),
@@ -133,9 +136,9 @@ export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
           data_ordine: dataOrdine,
           numero_documento: numeroDocumento || undefined,
           note: note || undefined,
-          pagato,
-          data_pagamento: pagato ? dataPagamento : undefined,
-          metodo_pagamento: pagato ? metodoPagamento || undefined : undefined,
+          stato_pagamento: payment.stato_pagamento || null,
+          data_pagamento: payment.stato_pagamento === "pagato" ? payment.data_pagamento : undefined,
+          metodo_pagamento: payment.stato_pagamento === "pagato" ? payment.metodo_pagamento || undefined : undefined,
           prodotto_id: prodottoId || undefined,
           prodotto: prodottoId ? undefined : {
             nome: nomeProdotto,
@@ -158,9 +161,7 @@ export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
       setPrezzoUnitario(undefined);
       setNumeroDocumento("");
       setNote("");
-      setPagato(false);
-      setMetodoPagamento("");
-      setDataPagamento(new Date().toISOString().slice(0, 10));
+      setPayment({ stato_pagamento: "", metodo_pagamento: "", data_pagamento: new Date().toISOString().slice(0, 10) });
     } catch (e: any) {
       setErrore(e.message);
     } finally {
@@ -280,34 +281,7 @@ export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-coffee-100 bg-coffee-50 p-3">
-        <label className="flex items-center gap-3 text-sm font-semibold text-coffee-800">
-          <input
-            type="checkbox"
-            checked={pagato}
-            onChange={(e) => setPagato(e.target.checked)}
-            className="h-5 w-5 accent-arancio"
-          />
-          Pagato
-        </label>
-        {pagato && (
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className={labelCls}>Data pagamento</label>
-              <input className={inputCls} type="date" value={dataPagamento} onChange={(e) => setDataPagamento(e.target.value)} />
-            </div>
-            <div>
-              <label className={labelCls}>Metodo pagamento</label>
-              <input
-                className={inputCls}
-                value={metodoPagamento}
-                placeholder="Contanti, POS, bonifico..."
-                onChange={(e) => setMetodoPagamento(e.target.value)}
-              />
-            </div>
-          </div>
-        )}
-      </div>
+      <PaymentForm value={payment} onChange={setPayment} />
 
       <div className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm text-coffee-700">
         Stima per score: <span className="font-bold text-coffee-900">{caffeStimati}</span> caffè coperti da questo acquisto.

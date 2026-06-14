@@ -202,3 +202,50 @@ export async function inviaSollecitoRitiro(opts: {
     }),
   });
 }
+
+export async function inviaNotificaAdminSospeso(opts: {
+  adminEmail: string;
+  tipo: "riparazione" | "vendita";
+  riferimento: string;
+  cliente: string;
+  importo: number | null;
+  totaleSospesi: number;
+  pdfBuffer?: Buffer;
+}) {
+  const resend = getResend();
+  const tipoLabel = opts.tipo === "riparazione" ? "Riparazione" : "Vendita";
+  const importoLabel = opts.importo != null ? `€ ${Number(opts.importo).toFixed(2)}` : "importo non definito";
+
+  const bodyHtml = `
+    <p style="margin:0 0 12px;">Un nuovo pagamento è stato marcato come <strong>sospeso</strong>.</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;line-height:1.6;color:#2b2320;width:100%;">
+      <tr><td style="padding:4px 0;color:#8a7d74;width:120px;">Tipo</td><td><strong>${escapeHtml(tipoLabel)}</strong></td></tr>
+      <tr><td style="padding:4px 0;color:#8a7d74;">Riferimento</td><td><strong>${escapeHtml(opts.riferimento)}</strong></td></tr>
+      <tr><td style="padding:4px 0;color:#8a7d74;">Cliente</td><td>${escapeHtml(opts.cliente)}</td></tr>
+      <tr><td style="padding:4px 0;color:#8a7d74;">Importo</td><td><strong>${escapeHtml(importoLabel)}</strong></td></tr>
+    </table>
+    <p style="margin:16px 0 0;font-size:13px;color:#8a7d74;">Totale sospesi attivi: <strong style="color:#2b2320;">${opts.totaleSospesi}</strong></p>
+    ${opts.totaleSospesi >= 5
+      ? `<p style="margin:8px 0 0;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px;font-size:13px;color:#9a3412;font-weight:bold;">⚠️ Raggiunti ${opts.totaleSospesi} sospesi — report PDF in allegato.</p>`
+      : ""}`;
+
+  const attachments: { filename: string; content: Buffer }[] = [];
+  if (opts.pdfBuffer) {
+    attachments.push({
+      filename: `Sospesi_${new Date().toISOString().slice(0, 10)}.pdf`,
+      content: opts.pdfBuffer,
+    });
+  }
+
+  return resend.emails.send({
+    from: fromAddress(),
+    to: opts.adminEmail,
+    subject: `⚠️ Pagamento sospeso: ${opts.riferimento} (${opts.tipo === "riparazione" ? "Riparazione" : "Vendita"}) · Vena`,
+    text: `Pagamento sospeso.\nTipo: ${tipoLabel}\nRiferimento: ${opts.riferimento}\nCliente: ${opts.cliente}\nImporto: ${importoLabel}\nTotale sospesi: ${opts.totaleSospesi}`,
+    html: emailLayout({
+      title: "Pagamento sospeso",
+      bodyHtml,
+    }),
+    ...(attachments.length > 0 ? { attachments } : {}),
+  });
+}

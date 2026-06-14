@@ -10,7 +10,7 @@ type VenditaPayload = {
   data_ordine?: string;
   numero_documento?: string;
   note?: string;
-  pagato?: boolean;
+  stato_pagamento?: "sospeso" | "pagato" | null;
   data_pagamento?: string;
   metodo_pagamento?: string;
   prodotto_id?: string;
@@ -98,9 +98,12 @@ export async function POST(req: Request) {
       data_ordine: clean(body.data_ordine) ?? new Date().toISOString().slice(0, 10),
       numero_documento: clean(body.numero_documento),
       note: clean(body.note),
-      pagato: Boolean(body.pagato),
-      data_pagamento: body.pagato ? clean(body.data_pagamento) ?? clean(body.data_ordine) ?? new Date().toISOString().slice(0, 10) : null,
-      metodo_pagamento: body.pagato ? clean(body.metodo_pagamento) : null,
+      stato_pagamento: body.stato_pagamento ?? null,
+      pagato: body.stato_pagamento === "pagato",
+      data_pagamento: body.stato_pagamento === "pagato"
+        ? clean(body.data_pagamento) ?? new Date().toISOString().slice(0, 10)
+        : null,
+      metodo_pagamento: body.stato_pagamento === "pagato" ? clean(body.metodo_pagamento) : null,
       canale: "manuale",
     })
     .select("id")
