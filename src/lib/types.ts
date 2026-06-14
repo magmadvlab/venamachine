@@ -9,6 +9,8 @@ export type StatoRiparazione =
   | "ingresso" | "in_diagnosi" | "attesa_preventivo" | "in_riparazione"
   | "riparata" | "cliente_avvisato" | "ritirata" | "non_riparabile" | "abbandonata";
 
+export type StatoPagamento = "sospeso" | "pagato";
+
 export interface ProfiloAttivita {
   id: string;
   codice: string;
