@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#2b2320",
+  themeColor: "#0f0805",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -36,7 +36,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="it">
-      <body className="font-sans text-coffee-900 antialiased">
+      <body className="font-sans text-coffee-50 antialiased">
         <AppChrome>{children}</AppChrome>
         <InstallPrompt />
       </body>

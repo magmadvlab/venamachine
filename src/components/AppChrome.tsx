@@ -7,7 +7,7 @@ import {
   Bell,
   BookOpen,
   CalendarDays,
-  ClipboardList,
+  Coffee,
   Home,
   PackageSearch,
   Plus,
@@ -57,8 +57,10 @@ function NavLink({ item, pathname, compact = false }: { item: any; pathname: str
         item.highlight
           ? "bg-arancio text-white shadow-sm hover:bg-arancio-dark"
           : active
-            ? "bg-white text-coffee-900 shadow-sm"
-            : "text-white/72 hover:bg-white/10 hover:text-white",
+            ? compact
+              ? "bg-white text-coffee-900 shadow-sm"
+              : "bg-arancio/20 text-arancio shadow-sm"
+            : "text-coffee-50/55 hover:bg-white/10 hover:text-coffee-50",
       )}
     >
       <Icon className={cn("h-4 w-4 shrink-0", compact && "h-5 w-5")} />
@@ -78,9 +80,9 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen lg:pl-64">
       <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col bg-coffee-900 px-4 py-5 text-white shadow-xl lg:flex">
-        <Link href="/" className="mb-5 flex items-start gap-3 rounded-2xl bg-white/8 p-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-arancio text-white">
-            <ClipboardList className="h-5 w-5" />
+        <Link href="/" className="mb-5 flex items-start gap-3 rounded-2xl bg-white/10 p-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-arancio text-white shadow-md shadow-arancio/30">
+            <Coffee className="h-5 w-5" />
           </span>
           <span className="leading-tight">
             <span className="block font-display text-lg font-bold">Vena Coffee Machine</span>
@@ -103,7 +105,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-coffee-100 bg-coffee-900/96 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-2xl backdrop-blur lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-coffee-800 bg-coffee-900/96 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-2xl backdrop-blur lg:hidden">
         <div className="flex gap-1 overflow-x-auto">
           {[...primaryLinks, utilityLinks[0]].map((item) => (
             <NavLink key={item.href} item={item} pathname={pathname} compact />
