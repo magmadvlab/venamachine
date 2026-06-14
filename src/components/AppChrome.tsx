@@ -80,7 +80,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen lg:pl-64">
       <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col bg-coffee-900 px-4 py-5 text-white shadow-xl lg:flex">
-        <Link href="/" className="mb-5 flex items-start gap-3 rounded-2xl bg-white/8 p-3">
+        <Link href="/" className="mb-5 flex items-start gap-3 rounded-2xl bg-white/10 p-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-arancio text-white shadow-md shadow-arancio/30">
             <Coffee className="h-5 w-5" />
           </span>
