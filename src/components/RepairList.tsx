@@ -52,6 +52,7 @@ export function RepairList({ righe, admin }: { righe: RiparazioneRow[]; admin: b
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
         {TABS.map((tab) => (
           <button
+            type="button"
             key={tab.key}
             onClick={() => setActiveFilter(tab.key)}
             className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition active:scale-95 ${
@@ -95,6 +96,7 @@ export function RepairList({ righe, admin }: { righe: RiparazioneRow[]; admin: b
                   <a
                     href={`/api/ricevuta/${r.id}`}
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 whitespace-nowrap font-medium text-coffee-400 hover:text-coffee-200"
                   >
                     <FileText className="h-3.5 w-3.5 shrink-0" /> Ricevuta
@@ -102,6 +104,7 @@ export function RepairList({ righe, admin }: { righe: RiparazioneRow[]; admin: b
                   <a
                     href={`/r/${r.token_pubblico}`}
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 whitespace-nowrap font-medium text-coffee-400 hover:text-coffee-200"
                   >
                     <ExternalLink className="h-3.5 w-3.5 shrink-0" /> Pagina cliente
