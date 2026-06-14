@@ -1,13 +1,13 @@
 import { cn } from "@/lib/cn";
 
 const stadioColore: Record<string, string> = {
-  "Ricevuta": "bg-coffee-100 text-coffee-700",
-  "In analisi": "bg-amber-100 text-amber-800",
-  "Preventivo": "bg-sky-100 text-sky-800",
-  "In lavorazione": "bg-arancio/15 text-arancio-dark",
-  "Pronta per il ritiro": "bg-emerald-100 text-emerald-800",
-  "Ritirata": "bg-stone-200 text-stone-600",
-  "Chiusa": "bg-stone-200 text-stone-600",
+  "Ricevuta":             "bg-coffee-800 text-coffee-200",
+  "In analisi":           "bg-amber-900/50 text-amber-300",
+  "Preventivo":           "bg-sky-900/50 text-sky-300",
+  "In lavorazione":       "bg-arancio/20 text-arancio",
+  "Pronta per il ritiro": "bg-emerald-900/50 text-emerald-300",
+  "Ritirata":             "bg-coffee-800 text-coffee-400",
+  "Chiusa":               "bg-coffee-800 text-coffee-400",
 };
 
 export function Badge({ stadio, className }: { stadio: string; className?: string }) {
@@ -15,7 +15,7 @@ export function Badge({ stadio, className }: { stadio: string; className?: strin
     <span
       className={cn(
         "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
-        stadioColore[stadio] ?? "bg-coffee-100 text-coffee-700",
+        stadioColore[stadio] ?? "bg-coffee-800 text-coffee-200",
         className,
       )}
     >
