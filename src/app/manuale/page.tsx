@@ -2,14 +2,18 @@ import Link from "next/link";
 import {
   ArrowRight,
   BarChart3,
+  Bell,
   BookOpen,
   CalendarDays,
   ClipboardList,
   Coffee,
+  LogIn,
   PackageSearch,
+  Plus,
   Settings,
   ShoppingBag,
   Target,
+  UserRound,
   Users,
   Wrench,
 } from "lucide-react";
@@ -17,12 +21,26 @@ import { Card } from "@/components/ui/Card";
 
 export const dynamic = "force-dynamic";
 
+const lastUpdated = "15 giugno 2026";
+
 const menuSections = [
   {
     href: "/",
     title: "Schede",
     icon: ClipboardList,
     text: "Dashboard dell'officina: cerca riparazioni, apri dettagli, cambia stato e crea nuove schede.",
+  },
+  {
+    href: "/manuale",
+    title: "Manuale",
+    icon: BookOpen,
+    text: "Guida rapida dentro l'app: riepiloga menu, flusso consigliato, dati da compilare e regole operative.",
+  },
+  {
+    href: "/nuova",
+    title: "Nuova scheda",
+    icon: Plus,
+    text: "Accettazione completa: cliente, macchina, storico per matricola, foto danni/graffi, GDPR, ricevuta e pagina cliente.",
   },
   {
     href: "/clienti",
@@ -34,7 +52,7 @@ const menuSections = [
     href: "/vendite",
     title: "Vendite",
     icon: ShoppingBag,
-    text: "Registra acquisti certi di caffe/prodotti con quantita, prezzo, data, pagamento e macchina collegata.",
+    text: "Registra acquisti certi con prodotto, quantita, prezzo, data, pagamento, documento e macchina collegata.",
   },
   {
     href: "/prodotti",
@@ -67,16 +85,32 @@ const menuSections = [
     text: "Vista direzionale su vendite, rischi, azioni, manutenzioni e clienti da recuperare.",
   },
   {
+    href: "/solleciti",
+    title: "Solleciti",
+    icon: Bell,
+    text: "Schede ferme o clienti da richiamare dopo preventivi, avvisi o riparazioni completate.",
+  },
+  {
     href: "/configurazione",
     title: "Configurazione",
     icon: Settings,
     text: "Soglie, profili attivita, regole azioni e impostazioni score modificabili dall'app.",
   },
+  {
+    href: "/admin/operatori",
+    title: "Operatori",
+    icon: UserRound,
+    text: "Sezione admin per creare operatori, vedere accessi abilitati e usare il reset dati operativo.",
+  },
 ];
 
 const workflow = [
+  "Accedi con nome operatore o email e password.",
   "Registra ogni nuova macchina da Nuova scheda.",
-  "Classifica cliente e macchina: categoria uso, regime possesso e profilo attivita.",
+  "Inserisci matricola e controlla lo storico macchina prima di salvare.",
+  "Classifica cliente e macchina: categoria uso, regime possesso, profilo attivita e stima caffe/giorno.",
+  "Segna stato estetico, accessori, difetto e foto quando ci sono danni o graffi.",
+  "Dal dettaglio assistenza aggiorna stato, diagnosi, preventivo e importo finale.",
   "Registra ogni vendita collegandola alla macchina quando possibile.",
   "Controlla Agenda ogni giorno e salva esiti/follow-up.",
   "Genera Manutenzioni almeno una volta a settimana.",
@@ -88,51 +122,74 @@ const rules = [
   "Comodato con pochi acquisti e assistenze frequenti: rischio alto.",
   "Ho.Re.Ca. sotto consumo atteso: recupero rapido.",
   "Assistenza recente senza vendite: possibile uso caffe concorrente.",
+  "Rientro entro 90 giorni: controllare ricontrollo o garanzia.",
+  "Difetto simile gia segnalato: leggere lo storico tecnico.",
   "Macchina sottodimensionata: valutare upgrade.",
   "Macchina sovradimensionata: valutare riallocazione.",
   "Vendite registrate bene: score piu affidabile.",
+];
+
+const repairStates = [
+  "Ingresso: Ricevuta",
+  "In diagnosi: In analisi",
+  "Attesa preventivo: Preventivo",
+  "In riparazione: In lavorazione",
+  "Riparata / cliente avvisato: Pronta per il ritiro",
+  "Ritirata: Ritirata",
+  "Non riparabile: Non riparabile",
+  "Abbandonata: Chiusa",
 ];
 
 export default function ManualePage() {
   return (
     <main className="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
       <header className="mb-5">
-        <p className="text-sm font-semibold text-arancio-dark">Guida operativa</p>
-        <h1 className="font-display text-2xl font-bold text-coffee-900">Manuale Vena Coffee Machine</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-coffee-600">
+        <p className="text-sm font-semibold text-arancio">Guida operativa</p>
+        <h1 className="font-display text-2xl font-bold text-coffee-50">Manuale Vena Coffee Machine</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-coffee-200">
           Questa guida spiega le voci principali dell'app e il flusso di lavoro consigliato per coordinare
           assistenza, vendite, manutenzioni e fidelizzazione dei clienti.
         </p>
+        <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-coffee-400">
+          Aggiornato il {lastUpdated}
+        </p>
       </header>
 
-      <section className="mb-5 grid gap-3 lg:grid-cols-3">
+      <section className="mb-5 grid gap-3 lg:grid-cols-4">
+        <Card className="p-4 sm:p-5">
+          <LogIn className="h-6 w-6 text-arancio" />
+          <h2 className="mt-3 font-display text-lg font-semibold text-coffee-50">Accesso</h2>
+          <p className="mt-2 text-sm leading-6 text-coffee-200">
+            Entra con nome operatore o email. Gli account vengono creati dagli admin in Operatori.
+          </p>
+        </Card>
         <Card className="p-4 sm:p-5">
           <BookOpen className="h-6 w-6 text-arancio" />
-          <h2 className="mt-3 font-display text-lg font-semibold text-coffee-900">Obiettivo</h2>
-          <p className="mt-2 text-sm leading-6 text-coffee-600">
+          <h2 className="mt-3 font-display text-lg font-semibold text-coffee-50">Obiettivo</h2>
+          <p className="mt-2 text-sm leading-6 text-coffee-200">
             L'app non registra solo riparazioni: collega vendite, macchine e assistenza per capire fedelta,
             rischio comodati e opportunita commerciali.
           </p>
         </Card>
         <Card className="p-4 sm:p-5">
           <Coffee className="h-6 w-6 text-arancio" />
-          <h2 className="mt-3 font-display text-lg font-semibold text-coffee-900">Dato chiave</h2>
-          <p className="mt-2 text-sm leading-6 text-coffee-600">
+          <h2 className="mt-3 font-display text-lg font-semibold text-coffee-50">Dato chiave</h2>
+          <p className="mt-2 text-sm leading-6 text-coffee-200">
             Le vendite registrate sono il dato certo: servono per stimare copertura caffe, riordino,
             margine e rischio uso concorrente.
           </p>
         </Card>
         <Card className="p-4 sm:p-5">
           <Target className="h-6 w-6 text-arancio" />
-          <h2 className="mt-3 font-display text-lg font-semibold text-coffee-900">Uso quotidiano</h2>
-          <p className="mt-2 text-sm leading-6 text-coffee-600">
+          <h2 className="mt-3 font-display text-lg font-semibold text-coffee-50">Uso quotidiano</h2>
+          <p className="mt-2 text-sm leading-6 text-coffee-200">
             Agenda e Manutenzioni sono le due viste operative da controllare con continuita.
           </p>
         </Card>
       </section>
 
       <section className="mb-5">
-        <h2 className="mb-3 font-display text-xl font-bold text-coffee-900">Voci del menu</h2>
+        <h2 className="mb-3 font-display text-xl font-bold text-coffee-50">Voci del menu</h2>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {menuSections.map((item) => {
             const Icon = item.icon;
@@ -143,9 +200,9 @@ export default function ManualePage() {
                     <Icon className="h-5 w-5" />
                   </span>
                   <div>
-                    <h3 className="font-display text-lg font-semibold text-coffee-900">{item.title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-coffee-600">{item.text}</p>
-                    <Link href={item.href} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-arancio-dark underline-offset-2 hover:underline">
+                    <h3 className="font-display text-lg font-semibold text-coffee-50">{item.title}</h3>
+                    <p className="mt-1 text-sm leading-6 text-coffee-200">{item.text}</p>
+                    <Link href={item.href} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-arancio underline-offset-2 hover:underline">
                       Apri voce
                       <ArrowRight className="h-4 w-4" />
                     </Link>
@@ -159,11 +216,11 @@ export default function ManualePage() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card className="p-4 sm:p-5">
-          <h2 className="mb-3 font-display text-xl font-bold text-coffee-900">Flusso consigliato</h2>
-          <ol className="space-y-2 text-sm leading-6 text-coffee-700">
+          <h2 className="mb-3 font-display text-xl font-bold text-coffee-50">Flusso consigliato</h2>
+          <ol className="space-y-2 text-sm leading-6 text-coffee-200">
             {workflow.map((item, index) => (
               <li key={item} className="flex gap-2">
-                <span className="font-bold text-arancio-dark">{index + 1}.</span>
+                <span className="font-bold text-arancio">{index + 1}.</span>
                 <span>{item}</span>
               </li>
             ))}
@@ -171,16 +228,27 @@ export default function ManualePage() {
         </Card>
 
         <Card className="p-4 sm:p-5">
-          <h2 className="mb-3 font-display text-xl font-bold text-coffee-900">Regole pratiche</h2>
-          <ul className="space-y-2 text-sm leading-6 text-coffee-700">
+          <h2 className="mb-3 font-display text-xl font-bold text-coffee-50">Regole pratiche</h2>
+          <ul className="space-y-2 text-sm leading-6 text-coffee-200">
             {rules.map((item) => (
-              <li key={item} className="rounded-xl border border-coffee-100 bg-coffee-50 px-3 py-2">
+              <li key={item} className="rounded-xl border border-coffee-700/50 bg-coffee-800 px-3 py-2">
                 {item}
               </li>
             ))}
           </ul>
         </Card>
       </div>
+
+      <Card className="mt-5 p-4 sm:p-5">
+        <h2 className="mb-3 font-display text-xl font-bold text-coffee-50">Stati riparazione</h2>
+        <div className="grid gap-2 text-sm text-coffee-200 sm:grid-cols-2 lg:grid-cols-4">
+          {repairStates.map((item) => (
+            <span key={item} className="rounded-xl border border-coffee-700/50 bg-coffee-800 px-3 py-2 font-semibold">
+              {item}
+            </span>
+          ))}
+        </div>
+      </Card>
     </main>
   );
 }
