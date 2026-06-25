@@ -189,6 +189,22 @@ Gestisce il catalogo prodotti. Per ogni prodotto puoi indicare:
 
 Quando registri una vendita, l'app usa il catalogo per stimare caffe coperti, margine e coerenza con la macchina.
 
+### Offerte prodotti
+
+La sezione Offerte e visibile solo agli admin. Serve per costruire un volantino digitale partendo dal catalogo prodotti o da una riga manuale.
+
+Per ogni campagna puoi indicare:
+
+- titolo e descrizione del volantino;
+- data di validita;
+- prodotti collegati al catalogo interno;
+- foto specifica dell'offerta;
+- prezzo di listino e prezzo promozionale;
+- link prodotto esterno, utile per e-commerce o PrestaShop;
+- pagina pubblica del volantino.
+
+Il batch WhatsApp prepara gli invii per tutti i clienti con telefono e consenso marketing attivo. Dalla stessa campagna puoi anche preparare l'invio singolo a un cliente specifico. Gli invii vengono registrati nella tabella `campagne_offerte_invii`; l'invio automatico reale richiede il collegamento di un provider WhatsApp.
+
 ### Agenda
 
 E la lista delle azioni commerciali da fare. Le azioni possono nascere da:

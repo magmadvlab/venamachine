@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  BadgePercent,
   Bell,
   BookOpen,
   CalendarDays,
@@ -37,8 +38,12 @@ const primaryLinks = [
   { href: "/solleciti", label: "Solleciti", icon: Bell },
 ];
 
-const utilityLinks = [
+const operatorUtilityLinks = [
   { href: "/nuova", label: "Nuova scheda", icon: Plus, highlight: true },
+];
+
+const adminUtilityLinks = [
+  { href: "/offerte", label: "Offerte", icon: BadgePercent },
   { href: "/configurazione", label: "Configurazione", icon: Settings },
   { href: "/admin/operatori", label: "Operatori", icon: UserRound },
 ];
@@ -46,11 +51,11 @@ const utilityLinks = [
 const mobilePrimaryLinks = [
   primaryLinks[0],
   primaryLinks[3],
-  utilityLinks[0],
+  operatorUtilityLinks[0],
   primaryLinks[6],
 ];
 
-const mobileMoreLinks = [
+const baseMobileMoreLinks = [
   primaryLinks[1],
   primaryLinks[2],
   primaryLinks[4],
@@ -58,8 +63,6 @@ const mobileMoreLinks = [
   primaryLinks[7],
   primaryLinks[8],
   primaryLinks[9],
-  utilityLinks[1],
-  utilityLinks[2],
 ];
 
 function isActive(pathname: string, href: string) {
@@ -120,10 +123,10 @@ function MobileNavLink({ item, pathname }: { item: any; pathname: string }) {
 }
 
 function shouldHideChrome(pathname: string) {
-  return pathname === "/login" || pathname.startsWith("/r/");
+  return pathname === "/login" || pathname.startsWith("/r/") || (pathname !== "/offerte" && pathname.startsWith("/offerte/"));
 }
 
-export function AppChrome({ children }: { children: React.ReactNode }) {
+export function AppChrome({ children, admin = false }: { children: React.ReactNode; admin?: boolean }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -150,6 +153,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   if (shouldHideChrome(pathname)) return <>{children}</>;
 
+  const utilityLinks = admin ? [...operatorUtilityLinks, ...adminUtilityLinks] : operatorUtilityLinks;
+  const mobileMoreLinks = admin ? [...baseMobileMoreLinks, ...adminUtilityLinks] : baseMobileMoreLinks;
   const moreSectionActive = mobileMoreLinks.some((item) => isActive(pathname, item.href));
 
   return (

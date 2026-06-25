@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  BadgePercent,
   BarChart3,
   Bell,
   BookOpen,
@@ -18,10 +19,11 @@ import {
   Wrench,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
 export const dynamic = "force-dynamic";
 
-const lastUpdated = "15 giugno 2026";
+const lastUpdated = "23 giugno 2026";
 
 const menuSections = [
   {
@@ -61,6 +63,13 @@ const menuSections = [
     text: "Catalogo con formato, caffe stimati, prezzo, margine e compatibilita con macchine.",
   },
   {
+    href: "/offerte",
+    title: "Offerte",
+    icon: BadgePercent,
+    text: "Sezione admin per volantini con foto, prezzi promozionali, link prodotto e invio WhatsApp batch o singolo predisposto.",
+    adminOnly: true,
+  },
+  {
     href: "/agenda",
     title: "Agenda",
     icon: CalendarDays,
@@ -95,12 +104,14 @@ const menuSections = [
     title: "Configurazione",
     icon: Settings,
     text: "Soglie, profili attivita, regole azioni e impostazioni score modificabili dall'app.",
+    adminOnly: true,
   },
   {
     href: "/admin/operatori",
     title: "Operatori",
     icon: UserRound,
     text: "Sezione admin per creare operatori, vedere accessi abilitati e usare il reset dati operativo.",
+    adminOnly: true,
   },
 ];
 
@@ -112,6 +123,7 @@ const workflow = [
   "Segna stato estetico, accessori, difetto e foto quando ci sono danni o graffi.",
   "Dal dettaglio assistenza aggiorna stato, diagnosi, preventivo e importo finale.",
   "Registra ogni vendita collegandola alla macchina quando possibile.",
+  "Crea offerte solo da admin e usa il batch solo per clienti con consenso marketing.",
   "Controlla Agenda ogni giorno e salva esiti/follow-up.",
   "Genera Manutenzioni almeno una volta a settimana.",
   "Usa Dashboard per decidere dove intervenire commercialmente.",
@@ -140,7 +152,11 @@ const repairStates = [
   "Abbandonata: Chiusa",
 ];
 
-export default function ManualePage() {
+export default async function ManualePage() {
+  const user = await getCurrentUser();
+  const admin = isAdminEmail(user?.email);
+  const visibleMenuSections = menuSections.filter((item) => !item.adminOnly || admin);
+
   return (
     <main className="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
       <header className="mb-5">
@@ -191,7 +207,7 @@ export default function ManualePage() {
       <section className="mb-5">
         <h2 className="mb-3 font-display text-xl font-bold text-coffee-50">Voci del menu</h2>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {menuSections.map((item) => {
+          {visibleMenuSections.map((item) => {
             const Icon = item.icon;
             return (
               <Card key={item.href} className="p-4 sm:p-5">

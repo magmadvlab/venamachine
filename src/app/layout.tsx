@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppChrome } from "@/components/AppChrome";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
 export const metadata: Metadata = {
   title: "Vena Coffee Machine · Officina",
@@ -33,11 +34,14 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
+  const admin = isAdminEmail(user?.email);
+
   return (
     <html lang="it">
       <body className="font-sans text-coffee-50 antialiased">
-        <AppChrome>{children}</AppChrome>
+        <AppChrome admin={admin}>{children}</AppChrome>
         <InstallPrompt />
       </body>
     </html>

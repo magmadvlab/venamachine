@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft, PackageSearch, SlidersHorizontal } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import {
@@ -8,10 +9,14 @@ import {
   ScoreSettingConfigForm,
 } from "@/components/config/ConfigForms";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
+import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export default async function ConfigurazionePage() {
+  const user = await getCurrentUser();
+  if (!isAdminEmail(user?.email)) redirect("/");
+
   const missingEnv = missingSupabaseEnv();
   if (missingEnv.length > 0) {
     return (
