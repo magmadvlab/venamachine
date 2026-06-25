@@ -27,7 +27,7 @@ function cleanPhoneForWa(phone: string): string {
   if (digits.startsWith("39")) return digits;
   if (digits.length === 10) return "39" + digits;
   if (digits.startsWith("0")) return "39" + digits.slice(1);
-  return digits;
+  return "39" + digits;
 }
 
 type ProductOption = {
