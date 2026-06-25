@@ -88,10 +88,9 @@ export function OfferWizard({
   void buildWaText;
 
   function addFiles(files: FileList | File[]) {
-    const next: WizardItem[] = Array.from(files)
-      .filter((f) => f.type.startsWith("image/"))
-      .slice(0, 12 - items.length)
-      .map((f) => ({
+    const fileArray = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    setItems((prev) => {
+      const newItems: WizardItem[] = fileArray.slice(0, 12 - prev.length).map((f) => ({
         id: genId(),
         file: f,
         previewUrl: URL.createObjectURL(f),
@@ -99,7 +98,8 @@ export function OfferWizard({
         descrizione: "",
         prezzo: "",
       }));
-    setItems((prev) => [...prev, ...next]);
+      return [...prev, ...newItems];
+    });
   }
 
   function removeItem(id: string) {
@@ -366,7 +366,7 @@ export function OfferWizard({
           <button
             type="button"
             onClick={saveAndPreview}
-            disabled={saving || items.length === 0}
+            disabled={saving || items.length === 0 || !canSave}
             className="inline-flex items-center gap-2 rounded-full bg-arancio px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 active:scale-95"
           >
             {saving ? (
