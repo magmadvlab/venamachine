@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Loader2, Megaphone, Plus, Send, UploadCloud } from "lucide-react";
+import { Loader2, Megaphone, Send } from "lucide-react";
 
 function buildWaText(opts: {
   titolo: string;
@@ -31,12 +31,6 @@ function cleanPhoneForWa(phone: string): string {
   return "39" + digits;
 }
 
-type ProductOption = {
-  id: string;
-  nome: string;
-  descrizione: string | null;
-  prezzo_standard: number | string | null;
-};
 
 type CustomerOption = {
   id: string;
@@ -103,123 +97,6 @@ export function OfferCampaignForm() {
   );
 }
 
-export function OfferLineForm({ campaignId, products }: { campaignId: string; products: ProductOption[] }) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [productId, setProductId] = useState("");
-  const [titolo, setTitolo] = useState("");
-  const [descrizione, setDescrizione] = useState("");
-  const [prezzoOriginale, setPrezzoOriginale] = useState("");
-  const [prezzoOfferta, setPrezzoOfferta] = useState("");
-  const [linkProdotto, setLinkProdotto] = useState("");
-  const [foto, setFoto] = useState<File | null>(null);
-
-  function selectProduct(id: string) {
-    setProductId(id);
-    const product = products.find((item) => item.id === id);
-    if (!product) return;
-    setTitolo(product.nome);
-    setDescrizione(product.descrizione ?? "");
-    setPrezzoOriginale(product.prezzo_standard == null ? "" : String(product.prezzo_standard));
-    if (!prezzoOfferta && product.prezzo_standard != null) setPrezzoOfferta(String(product.prezzo_standard));
-  }
-
-  function submit() {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const form = new FormData();
-      form.set("prodotto_id", productId);
-      form.set("titolo", titolo);
-      form.set("descrizione", descrizione);
-      form.set("prezzo_originale", prezzoOriginale);
-      form.set("prezzo_offerta", prezzoOfferta);
-      form.set("link_prodotto", linkProdotto);
-      if (foto) form.set("foto", foto);
-
-      const res = await fetch(`/api/offerte/${campaignId}/righe`, {
-        method: "POST",
-        body: form,
-      });
-      const out = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(out.error || "Salvataggio offerta non riuscito");
-        return;
-      }
-      setMessage("Offerta aggiunta");
-      setProductId("");
-      setTitolo("");
-      setDescrizione("");
-      setPrezzoOriginale("");
-      setPrezzoOfferta("");
-      setLinkProdotto("");
-      setFoto(null);
-      router.refresh();
-    });
-  }
-
-  return (
-    <div className="space-y-3 rounded-xl border border-coffee-100 bg-coffee-50 p-3">
-      <div className="grid gap-3 sm:grid-cols-[1fr_160px_160px]">
-        <label>
-          <span className={labelCls}>Prodotto catalogo</span>
-          <select className={inputCls} value={productId} onChange={(e) => selectProduct(e.target.value)}>
-            <option value="">Offerta manuale</option>
-            {products.map((product) => (
-              <option key={product.id} value={product.id}>{product.nome}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span className={labelCls}>Prezzo listino</span>
-          <input className={inputCls} type="number" step="0.01" min="0" value={prezzoOriginale} onChange={(e) => setPrezzoOriginale(e.target.value)} />
-        </label>
-        <label>
-          <span className={labelCls}>Prezzo offerta *</span>
-          <input className={inputCls} type="number" step="0.01" min="0" value={prezzoOfferta} onChange={(e) => setPrezzoOfferta(e.target.value)} />
-        </label>
-      </div>
-
-      <label>
-        <span className={labelCls}>Titolo offerta *</span>
-        <input className={inputCls} value={titolo} onChange={(e) => setTitolo(e.target.value)} placeholder="Cartone miscela Vena" />
-      </label>
-      <label>
-        <span className={labelCls}>Descrizione breve</span>
-        <textarea className={inputCls} rows={2} value={descrizione} onChange={(e) => setDescrizione(e.target.value)} />
-      </label>
-      <label>
-        <span className={labelCls}>Link prodotto esterno</span>
-        <input className={inputCls} type="url" value={linkProdotto} onChange={(e) => setLinkProdotto(e.target.value)} placeholder="https://..." />
-      </label>
-      <label className="block rounded-xl border border-dashed border-coffee-200 bg-white p-3 text-sm text-coffee-700">
-        <span className="mb-2 flex items-center gap-2 font-semibold">
-          <UploadCloud className="h-4 w-4 text-arancio" />
-          Foto specifica offerta
-        </span>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setFoto(e.target.files?.[0] ?? null)}
-          className="block w-full text-sm text-coffee-600 file:mr-3 file:rounded-full file:border-0 file:bg-coffee-900 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
-        />
-      </label>
-      {message && <p className="text-xs font-semibold text-emerald-700">{message}</p>}
-      {error && <p className="text-xs font-semibold text-red-700">{error}</p>}
-      <button
-        type="button"
-        onClick={submit}
-        disabled={isPending}
-        className="inline-flex items-center gap-2 rounded-full bg-arancio px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-      >
-        {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-        Aggiungi offerta
-      </button>
-    </div>
-  );
-}
 
 export function CampaignStatusButton({ campaignId, stato }: { campaignId: string; stato: "pubblicata" | "archiviata" }) {
   const router = useRouter();
