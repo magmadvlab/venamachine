@@ -316,11 +316,11 @@ export function CampaignSingleSendForm({ campaignId, customers }: { campaignId: 
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [clienteId, setClienteId] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
+  const [waLink, setWaLink] = useState<{ url: string; nome: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function submit() {
-    setMessage(null);
+    setWaLink(null);
     setError(null);
     startTransition(async () => {
       const res = await fetch(`/api/offerte/${campaignId}/invio-singolo`, {
@@ -333,7 +333,16 @@ export function CampaignSingleSendForm({ campaignId, customers }: { campaignId: 
         setError(out.error || "Invio singolo non riuscito");
         return;
       }
-      setMessage(`Invio preparato per ${out.destinatario}`);
+      const text = buildWaText({
+        titolo: out.titolo ?? "",
+        offertaUrl: out.offertaUrl ?? "",
+        valida_al: out.valida_al,
+      });
+      const phone = cleanPhoneForWa(out.destinatario ?? "");
+      setWaLink({
+        url: `https://wa.me/${phone}?text=${encodeURIComponent(text)}`,
+        nome: out.ragione_sociale ?? out.destinatario ?? "cliente",
+      });
       setClienteId("");
       router.refresh();
     });
@@ -364,7 +373,18 @@ export function CampaignSingleSendForm({ campaignId, customers }: { campaignId: 
           Singolo
         </button>
       </div>
-      {message && <p className="text-xs font-semibold text-emerald-700">{message}</p>}
+      {waLink && (
+        <a
+          href={waLink.url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-semibold text-white"
+          style={{ backgroundColor: "#25D366" }}
+        >
+          <Send className="h-4 w-4" />
+          Scrivi a {waLink.nome}
+        </a>
+      )}
       {error && <p className="text-xs font-semibold text-red-700">{error}</p>}
     </div>
   );
