@@ -17,6 +17,7 @@ type Cliente = {
   caffe_giornalieri_attesi_override: number | null;
   note_fedelta: string | null;
   consenso_gdpr: boolean | null;
+  consenso_marketing: boolean | null;
 };
 
 type Profilo = {
@@ -47,6 +48,7 @@ export function CustomerEditForm({ cliente, profili }: { cliente: Cliente; profi
   const [caffeOverride, setCaffeOverride] = useState(cliente.caffe_giornalieri_attesi_override == null ? "" : String(cliente.caffe_giornalieri_attesi_override));
   const [noteFedelta, setNoteFedelta] = useState(cliente.note_fedelta ?? "");
   const [consensoGdpr, setConsensoGdpr] = useState(Boolean(cliente.consenso_gdpr));
+  const [consensoMarketing, setConsensoMarketing] = useState(Boolean(cliente.consenso_marketing));
 
   function submit() {
     setError(null);
@@ -67,6 +69,7 @@ export function CustomerEditForm({ cliente, profili }: { cliente: Cliente; profi
           caffe_giornalieri_attesi_override: caffeOverride === "" ? null : Number(caffeOverride),
           note_fedelta: noteFedelta,
           consenso_gdpr: consensoGdpr,
+          consenso_marketing: consensoMarketing,
         }),
       });
       const out = await res.json().catch(() => ({}));
@@ -154,6 +157,16 @@ export function CustomerEditForm({ cliente, profili }: { cliente: Cliente; profi
       <label className="flex items-center gap-3 rounded-xl border border-coffee-100 bg-coffee-50 px-3 py-2 text-sm font-semibold text-coffee-800">
         <input type="checkbox" checked={consensoGdpr} onChange={(e) => setConsensoGdpr(e.target.checked)} className="h-5 w-5 accent-arancio" />
         Consenso GDPR registrato
+      </label>
+
+      <label className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
+        <input type="checkbox" checked={consensoMarketing} onChange={(e) => setConsensoMarketing(e.target.checked)} className="mt-0.5 h-5 w-5 accent-arancio" />
+        <span>
+          Consenso marketing WhatsApp/offerte
+          <span className="block text-xs font-medium text-amber-800">
+            Necessario per includere il cliente nei volantini e nei batch promozionali.
+          </span>
+        </span>
       </label>
 
       {message && <p className="text-xs font-semibold text-emerald-700">{message}</p>}

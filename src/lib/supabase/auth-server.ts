@@ -66,3 +66,8 @@ export function isAdminEmail(email?: string | null): boolean {
   if (!email) return false;
   return adminEmails().includes(email.toLowerCase());
 }
+
+export async function requireAdmin(): Promise<boolean> {
+  const user = await getCurrentUser();
+  return isAdminEmail(user?.email);
+}

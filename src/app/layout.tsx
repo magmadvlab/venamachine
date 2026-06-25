@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppChrome } from "@/components/AppChrome";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -35,6 +36,9 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
+  const admin = isAdminEmail(user?.email);
+
   let incassiCount = 0;
   if (hasServiceConfig()) {
     try {
@@ -50,7 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="it">
       <body className="font-sans text-coffee-50 antialiased">
-        <AppChrome incassiCount={incassiCount}>{children}</AppChrome>
+        <AppChrome admin={admin} incassiCount={incassiCount}>{children}</AppChrome>
         <InstallPrompt />
       </body>
     </html>

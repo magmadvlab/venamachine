@@ -17,6 +17,7 @@ type ClientePayload = {
   caffe_giornalieri_attesi_override?: number | null;
   note_fedelta?: string;
   consenso_gdpr?: boolean;
+  consenso_marketing?: boolean;
 };
 
 function clean(value?: string | null) {
@@ -63,6 +64,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   const consensoGdpr = Boolean(body.consenso_gdpr);
+  const consensoMarketing = Boolean(body.consenso_marketing);
   const patch = {
     tipo: body.tipo ?? "azienda",
     ragione_sociale: ragioneSociale,
@@ -76,6 +78,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     note_fedelta: clean(body.note_fedelta) ?? null,
     consenso_gdpr: consensoGdpr,
     consenso_data: consensoGdpr ? new Date().toISOString() : null,
+    consenso_marketing: consensoMarketing,
+    consenso_marketing_data: consensoMarketing ? new Date().toISOString() : null,
   };
 
   const { data, error } = await db

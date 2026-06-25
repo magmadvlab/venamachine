@@ -44,7 +44,7 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
   const { data: clienteRow } = await db
     .from("clienti")
     .select(`id, ragione_sociale, tipo, piva_cf, telefono, email, indirizzo, canale_preferito,
-      profilo_attivita_id, caffe_giornalieri_attesi_override, note_fedelta, consenso_gdpr, created_at,
+      profilo_attivita_id, caffe_giornalieri_attesi_override, note_fedelta, consenso_gdpr, consenso_marketing, created_at,
       profilo:profili_attivita(nome, codice, caffe_giornalieri_min, caffe_giornalieri_max)`)
     .eq("id", params.id)
     .maybeSingle();
@@ -191,6 +191,7 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
               <p>{cliente.tipo ?? "Tipo cliente n.d."}</p>
               <p>{cliente.indirizzo ?? "Indirizzo mancante"}</p>
               <p>Canale: {cliente.canale_preferito ?? "-"}</p>
+              <p>Marketing: {cliente.consenso_marketing ? "consenso attivo" : "non autorizzato"}</p>
               <p>
                 Consumo atteso: {profilo
                   ? `${cliente.caffe_giornalieri_attesi_override ?? `${profilo.caffe_giornalieri_min}-${profilo.caffe_giornalieri_max}`} caffè/giorno`
