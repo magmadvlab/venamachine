@@ -63,6 +63,7 @@ export interface RiparazioneRow {
   difetto_cliente: string | null;
   stato_estetico: StatoEstetico | null;
   importo_preventivo: number | null;
+  importo_finale: number | null;
   stato_pagamento: StatoPagamento | null;
   metodo_pagamento: string | null;
   data_pagamento: string | null;
