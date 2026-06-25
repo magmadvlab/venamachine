@@ -99,6 +99,14 @@ export function OfferWizard({
     });
   }
 
+  function resetWizard() {
+    setItems((prev) => {
+      prev.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+      return [];
+    });
+    setStep(1);
+  }
+
   function updateItem(
     id: string,
     field: keyof Pick<WizardItem, "nome" | "descrizione" | "prezzo">,
@@ -439,10 +447,7 @@ export function OfferWizard({
 
       <button
         type="button"
-        onClick={() => {
-          setStep(1);
-          setItems([]);
-        }}
+        onClick={resetWizard}
         className="text-sm font-semibold text-coffee-500 hover:text-coffee-700"
       >
         + Aggiungi altri prodotti
