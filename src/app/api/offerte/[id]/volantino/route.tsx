@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/supabase/auth-server";
 import { getPublicAppUrl } from "@/lib/app-url";
 
 export const runtime = "nodejs";
@@ -38,6 +39,9 @@ export async function GET(
 ) {
   if (missingSupabaseEnv().length > 0) {
     return new Response("Configurazione mancante", { status: 503 });
+  }
+  if (!(await requireAdmin())) {
+    return new Response("Solo amministratore", { status: 403 });
   }
 
   const db = createServiceClient();
