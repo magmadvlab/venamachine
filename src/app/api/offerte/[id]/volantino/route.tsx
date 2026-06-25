@@ -13,7 +13,7 @@ const COFFEE_200 = "#e3d4c6";
 const ARANCIO = "#E8731C";
 
 function money(v: number) {
-  return `€ ${v.toFixed(2)}`;
+  return `€ ${v.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function formatDate(v: string) {
@@ -22,7 +22,7 @@ function formatDate(v: string) {
 
 async function fetchAsDataUrl(url: string): Promise<string | null> {
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;
     const buf = await res.arrayBuffer();
     const mime = res.headers.get("content-type") ?? "image/jpeg";
@@ -254,6 +254,10 @@ export async function GET(
         </div>
       </div>
     ),
-    { width: 794, height: 1122 }
+    {
+      width: 794,
+      height: 1122,
+      headers: { "Cache-Control": "public, max-age=300, stale-while-revalidate=60" },
+    }
   );
 }
