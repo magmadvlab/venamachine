@@ -25,6 +25,7 @@ function buildWaText(opts: {
 function cleanPhoneForWa(phone: string): string {
   const digits = phone.replace(/[^0-9]/g, "");
   if (digits.startsWith("39")) return digits;
+  if (digits.startsWith("0039")) return digits.slice(2); // IDD prefix 0039 → strip 00, keep 39
   if (digits.length === 10) return "39" + digits;
   if (digits.startsWith("0")) return "39" + digits.slice(1);
   return "39" + digits;
