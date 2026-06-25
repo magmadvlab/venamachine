@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -9,7 +9,6 @@ import {
   Loader2,
   MessageCircle,
   Plus,
-  Send,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -21,6 +20,7 @@ type WizardItem = {
   nome: string;
   descrizione: string;
   prezzo: string;
+  saved: boolean;
 };
 
 const inputCls =
@@ -75,18 +75,6 @@ export function OfferWizard({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addMoreRef = useRef<HTMLInputElement>(null);
 
-  // suppress unused-variable warnings for props/state used in step 3 (Task 7)
-  void useTransition;
-  void Download;
-  void MessageCircle;
-  void Send;
-  void volantinoTs;
-  void offertaUrl;
-  void campaignSlug;
-  void campaignTitolo;
-  void campaignValida_al;
-  void buildWaText;
-
   function addFiles(files: FileList | File[]) {
     const fileArray = Array.from(files).filter((f) => f.type.startsWith("image/"));
     setItems((prev) => {
@@ -97,6 +85,7 @@ export function OfferWizard({
         nome: f.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
         descrizione: "",
         prezzo: "",
+        saved: false,
       }));
       return [...prev, ...newItems];
     });
@@ -208,12 +197,14 @@ export function OfferWizard({
 
   // ── STEP 2: Grid editor ───────────────────────────────────────────────
   if (step === 2) {
-    const canSave = items.every(
-      (i) =>
-        i.nome.trim().length > 0 &&
-        i.prezzo.trim().length > 0 &&
-        !isNaN(Number(i.prezzo.replace(",", ".")))
-    );
+    const canSave = items
+      .filter((i) => !i.saved)
+      .every(
+        (i) =>
+          i.nome.trim().length > 0 &&
+          i.prezzo.trim().length > 0 &&
+          !isNaN(Number(i.prezzo.replace(",", ".")))
+      );
 
     async function saveAndPreview() {
       if (!canSave) {
@@ -223,8 +214,9 @@ export function OfferWizard({
       setSaveError(null);
       setSaving(true);
 
+      const pendingItems = items.filter((item) => !item.saved);
       const results = await Promise.allSettled(
-        items.map(async (item, idx) => {
+        pendingItems.map(async (item) => {
           const form = new FormData();
           form.set("titolo", item.nome.trim());
           form.set("descrizione", item.descrizione.trim());
@@ -232,7 +224,7 @@ export function OfferWizard({
             "prezzo_offerta",
             String(Number(item.prezzo.replace(",", ".")).toFixed(2))
           );
-          form.set("ordinamento", String(idx));
+          form.set("ordinamento", String(items.findIndex((i) => i.id === item.id)));
           form.set("foto", item.file);
           const res = await fetch(`/api/offerte/${campaignId}/righe`, {
             method: "POST",
@@ -246,6 +238,16 @@ export function OfferWizard({
       );
 
       setSaving(false);
+
+      const savedIds = new Set(
+        pendingItems
+          .filter((_, i) => results[i].status === "fulfilled")
+          .map((item) => item.id)
+      );
+      setItems((prev) =>
+        prev.map((item) => (savedIds.has(item.id) ? { ...item, saved: true } : item))
+      );
+
       const failed = results.filter((r) => r.status === "rejected");
       if (failed.length > 0) {
         setSaveError(`${failed.length} prodotti non salvati. Riprova.`);
@@ -381,6 +383,70 @@ export function OfferWizard({
     );
   }
 
-  // Step 3 implemented in Task 7 — this placeholder keeps TypeScript happy
-  return null;
+  // ── STEP 3: Preview + Send ────────────────────────────────────────────
+  const volantinoUrl = `/api/offerte/${campaignId}/volantino?v=${volantinoTs}`;
+  const waText = buildWaText({
+    titolo: campaignTitolo,
+    offertaUrl,
+    valida_al: campaignValida_al,
+  });
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(waText)}`;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-semibold text-white">
+          ✓
+        </span>
+        <span className="text-sm font-semibold text-coffee-900">
+          Volantino pronto
+        </span>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-coffee-100 shadow-sm">
+        <img
+          src={volantinoUrl}
+          alt="Anteprima volantino"
+          className="w-full"
+          loading="eager"
+        />
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <a
+          href={volantinoUrl}
+          download={`volantino-${campaignSlug}.png`}
+          className="inline-flex items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 py-2.5 text-sm font-semibold text-coffee-700 active:scale-95"
+        >
+          <Download className="h-4 w-4" />
+          Scarica PNG
+        </a>
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold text-white active:scale-95"
+          style={{ backgroundColor: "#25D366" }}
+        >
+          <MessageCircle className="h-4 w-4" />
+          Apri WA con messaggio pronto
+        </a>
+      </div>
+      <p className="text-xs text-coffee-400">
+        Scarica il PNG e invialo dalla tua lista broadcast WA, oppure usa il
+        link per un messaggio testuale con il link al volantino digitale.
+      </p>
+
+      <button
+        type="button"
+        onClick={() => {
+          setStep(1);
+          setItems([]);
+        }}
+        className="text-sm font-semibold text-coffee-500 hover:text-coffee-700"
+      >
+        + Aggiungi altri prodotti
+      </button>
+    </div>
+  );
 }
