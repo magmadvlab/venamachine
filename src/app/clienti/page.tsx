@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Gauge, Pencil, Search, ShieldAlert, ShoppingBag, Wrench } from "lucide-react";
+import { ArrowLeft, Gauge, Pencil, Plus, Search, ShieldAlert, ShoppingBag, Wrench } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 
@@ -59,9 +59,12 @@ function formatDate(value?: string | null) {
   return value ? new Date(value).toLocaleDateString("it-IT") : "—";
 }
 
-export default async function ClientiPage({ searchParams }: { searchParams?: { q?: string } }) {
+type Filtro = "tutti" | "assistenza" | "vendite" | "entrambi";
+
+export default async function ClientiPage({ searchParams }: { searchParams?: { q?: string; f?: string } }) {
   const missingEnv = missingSupabaseEnv();
   const q = searchParams?.q?.trim() ?? "";
+  const filtro = (searchParams?.f ?? "tutti") as Filtro;
 
   if (missingEnv.length > 0) {
     return (
@@ -96,6 +99,9 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
   const { data: riparazioni } = clientiIds.length
     ? await db.from("riparazioni").select("id, cliente_id, numero_scheda, stato, data_ingresso, difetto_cliente").in("cliente_id", clientiIds).order("data_ingresso", { ascending: false })
     : { data: [] };
+  const { data: ordini } = clientiIds.length
+    ? await db.from("ordini_caffe").select("id, cliente_id").in("cliente_id", clientiIds).limit(1000)
+    : { data: [] };
   const { data: analisiRows } = macchineIds.length
     ? await db
       .from("v_analisi_commerciale_macchine")
@@ -114,7 +120,14 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
       .filter((m: any) => m.cliente_id === cliente.id)
       .map((m: any) => ({ ...m, score: scoresByMacchina.get(m.id) ?? null, analisi: analisiByMacchina.get(m.id) ?? null }));
     const clienteRiparazioni = (riparazioni ?? []).filter((r: any) => r.cliente_id === cliente.id);
-    return { ...cliente, profilo, macchine: clienteMacchine, riparazioni: clienteRiparazioni };
+    const hasAssistenza = clienteRiparazioni.length > 0;
+    const hasVendite = (ordini ?? []).some((o: any) => o.cliente_id === cliente.id);
+    return { ...cliente, profilo, macchine: clienteMacchine, riparazioni: clienteRiparazioni, hasAssistenza, hasVendite };
+  }).filter((cliente: any) => {
+    if (filtro === "assistenza") return cliente.hasAssistenza && !cliente.hasVendite;
+    if (filtro === "vendite") return !cliente.hasAssistenza && cliente.hasVendite;
+    if (filtro === "entrambi") return cliente.hasAssistenza && cliente.hasVendite;
+    return true;
   }).filter((cliente: any) => {
     if (!q) return true;
     const haystack = [
@@ -138,13 +151,20 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
           <ArrowLeft className="h-4 w-4" />
           <span>Schede</span>
         </Link>
-        <div>
-          <p className="text-sm font-semibold text-arancio-dark">Anagrafica</p>
-          <h1 className="font-display text-xl font-bold text-coffee-900">Clienti e macchine</h1>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-arancio">Anagrafica</p>
+          <h1 className="font-display text-xl font-bold text-coffee-50">Clienti e macchine</h1>
         </div>
+        <Link
+          href="/clienti/nuovo"
+          className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-arancio px-4 text-sm font-semibold text-white shadow-sm active:scale-95"
+        >
+          <Plus className="h-4 w-4" />
+          Nuovo cliente
+        </Link>
       </header>
 
-      <form className="mb-4" action="/clienti">
+      <form className="mb-3" action="/clienti">
         <label className="sr-only" htmlFor="q">Cerca cliente</label>
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-coffee-400" />
@@ -153,13 +173,29 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
             name="q"
             defaultValue={q}
             placeholder="Cerca cliente, telefono, email, matricola"
-            className="w-full rounded-full border border-coffee-200 bg-white py-3 pl-9 pr-3 text-base text-coffee-900 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20 sm:py-2.5 sm:text-sm"
+            className="w-full rounded-full border border-coffee-700/60 bg-coffee-800 py-3 pl-9 pr-3 text-base text-coffee-50 placeholder:text-coffee-400 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20 sm:py-2.5 sm:text-sm"
           />
         </div>
       </form>
 
+      <div className="mb-4 flex flex-wrap gap-2">
+        {(["tutti", "assistenza", "vendite", "entrambi"] as const).map((f) => (
+          <Link
+            key={f}
+            href={`/clienti?f=${f}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold capitalize transition active:scale-95 ${
+              filtro === f
+                ? "bg-arancio text-white"
+                : "border border-coffee-700/60 bg-coffee-800 text-coffee-300 hover:text-coffee-50"
+            }`}
+          >
+            {f === "tutti" ? "Tutti" : f === "assistenza" ? "Solo assistenza" : f === "vendite" ? "Solo vendite" : "Assistenza + vendite"}
+          </Link>
+        ))}
+      </div>
+
       {rows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-coffee-200 bg-white px-6 py-16 text-center">
+        <div className="rounded-2xl border border-dashed border-coffee-700/40 bg-coffee-900 px-6 py-16 text-center">
           <p className="text-coffee-400">Nessun cliente trovato.</p>
         </div>
       ) : (
@@ -168,13 +204,13 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
             <Card key={cliente.id} className="p-4 sm:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <Link href={`/clienti/${cliente.id}`} className="font-display text-lg font-bold text-coffee-900 underline-offset-2 hover:underline">
+                  <Link href={`/clienti/${cliente.id}`} className="font-display text-xl font-bold text-white underline-offset-2 hover:text-arancio">
                     {cliente.ragione_sociale}
                   </Link>
                   <p className="text-sm text-coffee-400">
                     {[cliente.telefono, cliente.email, cliente.piva_cf].filter(Boolean).join(" · ") || "Recapiti mancanti"}
                   </p>
-                  <p className="mt-1 text-xs font-semibold text-coffee-500">
+                  <p className="mt-1 text-xs font-semibold text-coffee-400">
                     {cliente.profilo
                       ? `${cliente.profilo.nome} · atteso ${
                         cliente.caffe_giornalieri_attesi_override ??
@@ -183,15 +219,34 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
                       : "Profilo attività da definire"}
                   </p>
                 </div>
-                <span className="rounded-full bg-coffee-50 px-2 py-1 text-xs font-bold text-coffee-600">
-                  {cliente.macchine.length} macchin{cliente.macchine.length === 1 ? "a" : "e"}
-                </span>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="rounded-full bg-coffee-800 px-2 py-1 text-xs font-bold text-coffee-200">
+                    {cliente.macchine.length} macchin{cliente.macchine.length === 1 ? "a" : "e"}
+                  </span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    cliente.hasAssistenza && cliente.hasVendite
+                      ? "bg-arancio/20 text-arancio-dark"
+                      : cliente.hasAssistenza
+                        ? "bg-amber-900/40 text-amber-400"
+                        : cliente.hasVendite
+                          ? "bg-emerald-900/40 text-emerald-400"
+                          : "bg-coffee-800 text-coffee-400"
+                  }`}>
+                    {cliente.hasAssistenza && cliente.hasVendite
+                      ? "assistenza + vendite"
+                      : cliente.hasAssistenza
+                        ? "solo assistenza"
+                        : cliente.hasVendite
+                          ? "solo vendite"
+                          : "nessuna attività"}
+                  </span>
+                </div>
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
                   href={`/clienti/${cliente.id}#modifica`}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-coffee-200 bg-white px-3 py-2 text-xs font-semibold text-coffee-700 active:scale-95"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-coffee-700/60 bg-coffee-800 px-3 py-2 text-xs font-semibold text-coffee-200 active:scale-95"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                   Modifica cliente
@@ -221,8 +276,8 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
                           <p className="font-semibold text-coffee-900">
                             {[m.marca, m.modello].filter(Boolean).join(" ") || "Macchina"}
                           </p>
-                          <p className="text-coffee-500">
-                            {m.matricola ? `Matr. ${m.matricola}` : "Matricola mancante"}
+                          <p className="font-mono text-xs font-semibold text-coffee-700">
+                            {m.matricola ? `# ${m.matricola}` : "Matr. mancante"}
                           </p>
                         </div>
                         {score && (
@@ -232,7 +287,7 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
                           </span>
                         )}
                       </div>
-                      <p className="mt-1 text-xs font-semibold text-coffee-500">
+                      <p className="mt-1 text-xs font-semibold text-coffee-600">
                         {m.regime_possesso === "comodato_uso" ? "Comodato d'uso" : "Proprietà cliente"}
                         {categoriaScore ? ` · ${categoriaScore === "horeca" ? "Ho.Re.Ca." : categoriaScore}` : ""}
                       </p>
@@ -303,11 +358,11 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
                   <ul className="space-y-2">
                     {cliente.riparazioni.slice(0, 4).map((r: any) => (
                       <li key={r.id} className="text-sm">
-                        <Link href={`/riparazioni/${r.id}`} className="font-mono text-xs font-bold text-arancio-dark underline underline-offset-2">
+                        <Link href={`/riparazioni/${r.id}`} className="font-mono text-xs font-bold text-arancio underline underline-offset-2">
                           {r.numero_scheda}
                         </Link>
                         <span className="ml-2 text-coffee-400">{new Date(r.data_ingresso).toLocaleDateString("it-IT")}</span>
-                        <span className="ml-2 text-coffee-600">{r.stato.replace(/_/g, " ")}</span>
+                        <span className="ml-2 text-coffee-400">{r.stato.replace(/_/g, " ")}</span>
                       </li>
                     ))}
                   </ul>

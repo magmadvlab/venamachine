@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BadgePercent,
   Banknote,
   BarChart3,
-  BadgePercent,
-  Bell,
   BookOpen,
   CalendarDays,
   Coffee,
@@ -16,7 +15,6 @@ import {
   PackageSearch,
   Plus,
   Settings,
-  ShoppingBag,
   Target,
   Users,
   UserRound,
@@ -28,16 +26,13 @@ import { cn } from "@/lib/cn";
 
 const primaryLinks = [
   { href: "/", label: "Schede", icon: Home },
-  { href: "/manuale", label: "Manuale", icon: BookOpen },
-  { href: "/dashboard-commerciale", label: "Dashboard", icon: BarChart3 },
+  { href: "/clienti", label: "Clienti", icon: Users },
   { href: "/agenda", label: "Agenda", icon: CalendarDays },
   { href: "/manutenzioni", label: "Manutenzioni", icon: Wrench },
   { href: "/opportunita", label: "Opportunità", icon: Target },
-  { href: "/clienti", label: "Clienti", icon: Users },
-  { href: "/vendite", label: "Vendite", icon: ShoppingBag },
-  { href: "/incassi", label: "Incassi", icon: Banknote },
   { href: "/prodotti", label: "Prodotti", icon: PackageSearch },
-  { href: "/solleciti", label: "Solleciti", icon: Bell },
+  { href: "/dashboard-commerciale", label: "Report", icon: BarChart3 },
+  { href: "/manuale", label: "Manuale", icon: BookOpen },
 ];
 
 const operatorUtilityLinks = [
@@ -51,20 +46,18 @@ const adminUtilityLinks = [
 ];
 
 const mobilePrimaryLinks = [
-  primaryLinks[0],
-  primaryLinks[3],
-  operatorUtilityLinks[0],
-  primaryLinks[6],
+  primaryLinks[0], // Schede
+  primaryLinks[3], // Manutenzioni
+  operatorUtilityLinks[0], // Nuova scheda
+  primaryLinks[6], // Report
 ];
 
 const baseMobileMoreLinks = [
-  primaryLinks[1],
-  primaryLinks[2],
-  primaryLinks[4],
-  primaryLinks[5],
-  primaryLinks[7],
-  primaryLinks[8],
-  primaryLinks[9],
+  primaryLinks[1], // Clienti
+  primaryLinks[2], // Agenda
+  primaryLinks[4], // Opportunità
+  primaryLinks[5], // Prodotti
+  primaryLinks[7], // Manuale
 ];
 
 function isActive(pathname: string, href: string) {
