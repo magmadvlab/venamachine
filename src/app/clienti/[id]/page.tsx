@@ -89,8 +89,8 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
           </Link>
           <div>
             <p className="text-sm font-semibold text-arancio-dark">Storico commerciale</p>
-            <h1 className="font-display text-xl font-bold text-coffee-900">{cliente.ragione_sociale}</h1>
-            <p className="text-sm text-coffee-500">{[cliente.telefono, cliente.email, cliente.piva_cf].filter(Boolean).join(" · ") || "Recapiti mancanti"}</p>
+            <h1 className="font-display text-xl font-bold text-coffee-50">{cliente.ragione_sociale}</h1>
+            <p className="text-sm text-coffee-400">{[cliente.telefono, cliente.email, cliente.piva_cf].filter(Boolean).join(" · ") || "Recapiti mancanti"}</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -118,32 +118,32 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
       <section className="mb-4 grid grid-cols-2 gap-2 lg:grid-cols-5">
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Priorità</p>
-          <p className="mt-1 font-display text-2xl font-bold text-coffee-900">{priorita || "-"}</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{priorita || "-"}</p>
         </Card>
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Copertura anno</p>
-          <p className="mt-1 font-display text-2xl font-bold text-coffee-900">{caffeTarget ? `${Math.round((caffeAcquistati / caffeTarget) * 100)}%` : "-"}</p>
-          <p className="text-xs text-coffee-500">{caffeAcquistati}/{caffeTarget} caffè</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{caffeTarget ? `${Math.round((caffeAcquistati / caffeTarget) * 100)}%` : "-"}</p>
+          <p className="text-xs text-coffee-400">{caffeAcquistati}/{caffeTarget} caffè</p>
         </Card>
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Vendite 365g</p>
-          <p className="mt-1 font-display text-2xl font-bold text-coffee-900">{money(valoreVendite)}</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{money(valoreVendite)}</p>
         </Card>
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Assistenza</p>
-          <p className="mt-1 font-display text-2xl font-bold text-coffee-900">{money(costoInterventi)}</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{money(costoInterventi)}</p>
         </Card>
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Azioni</p>
-          <p className="mt-1 font-display text-2xl font-bold text-coffee-900">{azioniAperte?.length ?? 0}</p>
-          <p className="text-xs text-coffee-500">{manutenzioni?.length ?? 0} manutenzioni attive</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{azioniAperte?.length ?? 0}</p>
+          <p className="text-xs text-coffee-400">{manutenzioni?.length ?? 0} manutenzioni attive</p>
         </Card>
       </section>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <section className="space-y-4">
           <Card className="p-4 sm:p-5">
-            <h2 className="mb-4 font-display text-lg font-semibold text-coffee-900">Timeline</h2>
+            <h2 className="mb-4 font-display text-lg font-semibold text-coffee-50">Timeline</h2>
             {(timeline ?? []).length === 0 ? (
               <p className="text-sm text-coffee-400">Nessun evento commerciale registrato.</p>
             ) : (
@@ -156,13 +156,13 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
-                          <p className="font-semibold text-coffee-900">{event.titolo}</p>
+                          <p className="font-semibold text-coffee-800">{event.titolo}</p>
                           <p className="text-xs text-coffee-400">{formatDate(event.data_evento)} · {event.tipo_evento}</p>
                         </div>
                         <span className="rounded-full border border-coffee-200 bg-white px-2 py-0.5 text-xs font-bold text-coffee-700">{event.stato ?? "evento"}</span>
                       </div>
                       <p className="mt-2 text-sm text-coffee-700">{event.descrizione}</p>
-                      {event.importo != null && <p className="mt-1 text-xs font-semibold text-coffee-500">{money(event.importo)}</p>}
+                      {event.importo != null && <p className="mt-1 text-xs font-semibold text-coffee-600">{money(event.importo)}</p>}
                       {event.href && (
                         <Link href={event.href} className="mt-2 inline-flex text-xs font-semibold text-arancio-dark underline underline-offset-2">
                           Apri dettaglio
@@ -178,7 +178,7 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
 
         <aside className="space-y-4">
           <Card id="modifica" className="p-4 sm:p-5">
-            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
               <Pencil className="h-5 w-5 text-arancio" />
               Modifica cliente
             </h2>
@@ -186,8 +186,8 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
           </Card>
 
           <Card className="p-4 sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Profilo</h2>
-            <div className="space-y-2 text-sm text-coffee-700">
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Profilo</h2>
+            <div className="space-y-2 text-sm text-coffee-300">
               <p>{cliente.tipo ?? "Tipo cliente n.d."}</p>
               <p>{cliente.indirizzo ?? "Indirizzo mancante"}</p>
               <p>Canale: {cliente.canale_preferito ?? "-"}</p>
@@ -201,7 +201,7 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
           </Card>
 
           <Card className="p-4 sm:p-5">
-            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
               <Coffee className="h-5 w-5 text-arancio" />
               Macchine
             </h2>
@@ -212,7 +212,7 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
                 {(macchine ?? []).map((macchina: any) => (
                   <li key={macchina.id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm">
                     <p className="font-semibold text-coffee-900">{[macchina.marca, macchina.modello].filter(Boolean).join(" ") || "Macchina"}</p>
-                    <p className="text-coffee-500">{[macchina.matricola, macchina.categoria_utilizzo, macchina.regime_possesso].filter(Boolean).join(" · ")}</p>
+                    <p className="text-coffee-600">{[macchina.matricola, macchina.categoria_utilizzo, macchina.regime_possesso].filter(Boolean).join(" · ")}</p>
                     <Link href={`/macchine/${macchina.id}`} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-arancio-dark underline underline-offset-2">
                       <Gauge className="h-3.5 w-3.5" />
                       Scheda macchina
@@ -224,7 +224,7 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
           </Card>
 
           <Card className="p-4 sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Aggiungi nota</h2>
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Aggiungi nota</h2>
             <CustomerNoteForm clienteId={params.id} macchine={(macchine ?? []) as any} />
           </Card>
         </aside>

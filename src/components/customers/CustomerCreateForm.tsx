@@ -2,23 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Loader2, Save } from "lucide-react";
-
-type Cliente = {
-  id: string;
-  tipo: "privato" | "azienda";
-  ragione_sociale: string;
-  piva_cf: string | null;
-  indirizzo: string | null;
-  telefono: string | null;
-  email: string | null;
-  canale_preferito: string | null;
-  profilo_attivita_id: string | null;
-  caffe_giornalieri_attesi_override: number | null;
-  note_fedelta: string | null;
-  consenso_gdpr: boolean | null;
-  consenso_marketing: boolean | null;
-};
+import { Loader2, UserPlus } from "lucide-react";
 
 type Profilo = {
   id: string;
@@ -31,31 +15,28 @@ type Profilo = {
 const inputCls = "w-full rounded-xl border border-coffee-700/60 bg-coffee-800 px-3 py-2.5 text-sm text-coffee-50 placeholder:text-coffee-400 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20";
 const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-coffee-400";
 
-export function CustomerEditForm({ cliente, profili }: { cliente: Cliente; profili: Profilo[] }) {
+export function CustomerCreateForm({ profili }: { profili: Profilo[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
 
-  const [tipo, setTipo] = useState(cliente.tipo ?? "azienda");
-  const [ragioneSociale, setRagioneSociale] = useState(cliente.ragione_sociale ?? "");
-  const [pivaCf, setPivaCf] = useState(cliente.piva_cf ?? "");
-  const [indirizzo, setIndirizzo] = useState(cliente.indirizzo ?? "");
-  const [telefono, setTelefono] = useState(cliente.telefono ?? "");
-  const [email, setEmail] = useState(cliente.email ?? "");
-  const [canalePreferito, setCanalePreferito] = useState(cliente.canale_preferito ?? "telefono");
-  const [profiloAttivitaId, setProfiloAttivitaId] = useState(cliente.profilo_attivita_id ?? "");
-  const [caffeOverride, setCaffeOverride] = useState(cliente.caffe_giornalieri_attesi_override == null ? "" : String(cliente.caffe_giornalieri_attesi_override));
-  const [noteFedelta, setNoteFedelta] = useState(cliente.note_fedelta ?? "");
-  const [consensoGdpr, setConsensoGdpr] = useState(Boolean(cliente.consenso_gdpr));
-  const [consensoMarketing, setConsensoMarketing] = useState(Boolean(cliente.consenso_marketing));
+  const [tipo, setTipo] = useState<"privato" | "azienda">("azienda");
+  const [ragioneSociale, setRagioneSociale] = useState("");
+  const [pivaCf, setPivaCf] = useState("");
+  const [indirizzo, setIndirizzo] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [email, setEmail] = useState("");
+  const [canalePreferito, setCanalePreferito] = useState("telefono");
+  const [profiloAttivitaId, setProfiloAttivitaId] = useState("");
+  const [caffeOverride, setCaffeOverride] = useState("");
+  const [noteFedelta, setNoteFedelta] = useState("");
+  const [consensoGdpr, setConsensoGdpr] = useState(false);
 
   function submit() {
     setError(null);
-    setMessage(null);
     startTransition(async () => {
-      const res = await fetch(`/api/clienti/${cliente.id}`, {
-        method: "PATCH",
+      const res = await fetch("/api/clienti", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tipo,
@@ -69,16 +50,14 @@ export function CustomerEditForm({ cliente, profili }: { cliente: Cliente; profi
           caffe_giornalieri_attesi_override: caffeOverride === "" ? null : Number(caffeOverride),
           note_fedelta: noteFedelta,
           consenso_gdpr: consensoGdpr,
-          consenso_marketing: consensoMarketing,
         }),
       });
       const out = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(out.error || "Aggiornamento non riuscito");
+        setError(out.error || "Creazione non riuscita");
         return;
       }
-      setMessage("Cliente aggiornato");
-      router.refresh();
+      router.push(`/clienti/${out.cliente.id}`);
     });
   }
 
@@ -94,7 +73,7 @@ export function CustomerEditForm({ cliente, profili }: { cliente: Cliente; profi
         </label>
         <label>
           <span className={labelCls}>Nome / ragione sociale *</span>
-          <input className={inputCls} value={ragioneSociale} onChange={(e) => setRagioneSociale(e.target.value)} />
+          <input className={inputCls} value={ragioneSociale} onChange={(e) => setRagioneSociale(e.target.value)} placeholder="Es. Bar Centrale" />
         </label>
       </div>
 
@@ -105,7 +84,7 @@ export function CustomerEditForm({ cliente, profili }: { cliente: Cliente; profi
         </label>
         <label>
           <span className={labelCls}>Telefono</span>
-          <input className={inputCls} value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+          <input className={inputCls} type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
         </label>
       </div>
 
@@ -146,39 +125,32 @@ export function CustomerEditForm({ cliente, profili }: { cliente: Cliente; profi
         </label>
       </div>
 
-      <textarea
-        className={inputCls}
-        rows={3}
-        value={noteFedelta}
-        onChange={(e) => setNoteFedelta(e.target.value)}
-        placeholder="Note su fedeltà, accordi, condizioni commerciali..."
-      />
+      <label>
+        <span className={labelCls}>Note commerciali</span>
+        <textarea
+          className={inputCls}
+          rows={3}
+          value={noteFedelta}
+          onChange={(e) => setNoteFedelta(e.target.value)}
+          placeholder="Accordi, condizioni, note di fedeltà..."
+        />
+      </label>
 
       <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-coffee-700/60 bg-coffee-800 px-3 py-2.5 text-sm font-semibold text-coffee-200">
         <input type="checkbox" checked={consensoGdpr} onChange={(e) => setConsensoGdpr(e.target.checked)} className="h-5 w-5 accent-arancio" />
         Consenso GDPR registrato
       </label>
 
-      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-coffee-700/60 bg-coffee-800 px-3 py-2.5 text-sm font-semibold text-coffee-200">
-        <input type="checkbox" checked={consensoMarketing} onChange={(e) => setConsensoMarketing(e.target.checked)} className="mt-0.5 h-5 w-5 accent-arancio" />
-        <span>
-          Consenso marketing WhatsApp/offerte
-          <span className="block text-xs font-medium text-coffee-400">
-            Necessario per includere il cliente nei volantini e nei batch promozionali.
-          </span>
-        </span>
-      </label>
-
-      {message && <p className="text-xs font-semibold text-emerald-400">{message}</p>}
       {error && <p className="text-xs font-semibold text-red-400">{error}</p>}
+
       <button
         type="button"
         onClick={submit}
-        disabled={isPending}
-        className="inline-flex items-center gap-2 rounded-full bg-arancio px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60 active:scale-95"
+        disabled={isPending || !ragioneSociale.trim()}
+        className="inline-flex items-center gap-2 rounded-full bg-arancio px-5 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-50 active:scale-95"
       >
-        {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-        Salva modifiche cliente
+        {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+        Crea cliente
       </button>
     </div>
   );
