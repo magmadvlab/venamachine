@@ -83,11 +83,11 @@ export default async function OffertePage() {
     <main className="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
       <header className="mb-4 flex flex-wrap items-center gap-3">
         <Link
-          href="/"
-          className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-coffee-200 bg-white px-3 text-sm font-semibold text-coffee-700 active:scale-95"
+          href="/admin"
+          className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-coffee-700 bg-coffee-900 px-3 text-sm font-semibold text-coffee-50 active:scale-95"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Schede</span>
+          <span>Admin</span>
         </Link>
         <div className="flex-1">
           <p className="text-sm font-semibold text-arancio">Admin marketing</p>

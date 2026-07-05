@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, BadgePercent, MessageCircle, Settings, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgePercent, MessageCircle, Settings, UserRound } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
@@ -12,24 +12,28 @@ const adminCards = [
     title: "Offerte",
     icon: BadgePercent,
     text: "Crea volantini, pubblica campagne e prepara invii WhatsApp batch o singoli.",
+    cta: "Apri offerte",
   },
   {
     href: "/configurazione",
     title: "Configurazione",
     icon: Settings,
     text: "Gestisci soglie, profili, score e regole che alimentano agenda e manutenzioni.",
+    cta: "Apri configurazione",
   },
   {
     href: "/admin/operatori",
     title: "Operatori",
     icon: UserRound,
     text: "Crea utenti operatore e gestisci il reset dati operativo.",
+    cta: "Gestisci operatori",
   },
   {
     href: "/api/admin/whatsapp/health",
     title: "Stato WhatsApp",
     icon: MessageCircle,
     text: "Controlla configurazione OpenWA, worker e coda messaggi outbox.",
+    cta: "Controlla stato",
     external: true,
   },
 ];
@@ -49,13 +53,16 @@ export default async function AdminPage() {
           <span>Schede</span>
         </Link>
         <div>
-          <p className="text-sm font-semibold text-arancio-dark">Area riservata</p>
-          <h1 className="font-display text-xl font-bold text-coffee-900">Admin</h1>
+          <p className="text-sm font-semibold text-arancio">Area riservata</p>
+          <h1 className="font-display text-xl font-bold text-coffee-50">Admin</h1>
         </div>
       </header>
 
-      <Card className="mb-4 border-blue-200 bg-blue-50 text-blue-950">
-        Usa questa pagina come ingresso unico alle funzioni amministrative. In questo modo il menu resta corto anche su mobile.
+      <Card className="mb-4 border-arancio/30 bg-coffee-900 text-coffee-50">
+        <h2 className="font-display text-lg font-semibold text-coffee-50">Hub amministrativo</h2>
+        <p className="mt-2 text-sm leading-6 text-coffee-100">
+          Usa questa pagina come ingresso unico alle funzioni amministrative. In questo modo il menu resta corto anche su mobile e le impostazioni restano separate dal lavoro operativo.
+        </p>
       </Card>
 
       <section className="grid gap-3 sm:grid-cols-2">
@@ -66,13 +73,17 @@ export default async function AdminPage() {
               key={item.href}
               href={item.href}
               target={item.external ? "_blank" : undefined}
-              className="rounded-2xl border border-coffee-100 bg-white p-4 shadow-sm shadow-coffee-900/5 transition hover:border-arancio/50 active:scale-[0.99]"
+              className="group flex min-h-[190px] flex-col rounded-2xl border border-coffee-700/50 bg-coffee-900 p-4 text-coffee-50 shadow-sm shadow-black/30 transition hover:border-arancio/60 hover:bg-coffee-800 active:scale-[0.99]"
             >
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-arancio/10 text-arancio">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-arancio text-white shadow-sm shadow-arancio/20">
                 <Icon className="h-5 w-5" />
               </span>
-              <h2 className="mt-3 font-display text-lg font-bold text-coffee-900">{item.title}</h2>
-              <p className="mt-1 text-sm leading-6 text-coffee-600">{item.text}</p>
+              <h2 className="mt-3 font-display text-lg font-bold text-coffee-50">{item.title}</h2>
+              <p className="mt-1 text-sm leading-6 text-coffee-100">{item.text}</p>
+              <span className="mt-auto inline-flex w-fit items-center gap-2 rounded-full border border-arancio/40 bg-coffee-950/50 px-3 py-2 text-sm font-semibold text-arancio transition group-hover:bg-arancio group-hover:text-white">
+                {item.cta}
+                <ArrowRight className="h-4 w-4" />
+              </span>
             </Link>
           );
         })}
