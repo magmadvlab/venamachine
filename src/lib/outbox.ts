@@ -10,6 +10,7 @@ type QueueMessageInput = {
   sourceId?: string;
   clienteId?: string | null;
   riparazioneId?: string | null;
+  dedupeSource?: boolean;
 };
 
 function cleanPhone(value: string) {
@@ -32,6 +33,20 @@ export async function queueMessage(opts: QueueMessageInput) {
 
   if (!destinatario) {
     throw new Error("Destinatario messaggio mancante");
+  }
+
+  if (opts.dedupeSource && opts.sourceTable && opts.sourceId) {
+    const { data: existing, error: existingError } = await opts.db
+      .from("messaggi_outbox")
+      .select("id")
+      .eq("canale", opts.canale)
+      .eq("source_table", opts.sourceTable)
+      .eq("source_id", opts.sourceId)
+      .neq("stato", "annullata")
+      .maybeSingle();
+
+    if (existingError) throw existingError;
+    if (existing) return existing;
   }
 
   const { data, error } = await opts.db

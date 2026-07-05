@@ -225,7 +225,7 @@ Nel frontend l'admin vede:
 - invio singolo verso un cliente marketing;
 - wizard per caricare foto, generare anteprima PNG e scaricare il volantino.
 
-Il batch WhatsApp prepara gli invii per tutti i clienti con telefono e consenso marketing attivo. Dalla stessa campagna puoi anche preparare l'invio singolo a un cliente specifico. Gli invii vengono registrati nella tabella `campagne_offerte_invii`; l'invio automatico reale richiede il worker WhatsApp/fornitore configurato.
+Il batch WhatsApp prepara gli invii per tutti i clienti con telefono e consenso marketing attivo. Dalla stessa campagna puoi anche preparare l'invio singolo a un cliente specifico. Gli invii vengono registrati nella tabella `campagne_offerte_invii` e accodati anche in `messaggi_outbox`; il worker WhatsApp su Railway li invia quando OpenWA e configurato.
 
 ### Agenda
 
@@ -409,3 +409,4 @@ Per rendere affidabili score, agenda e manutenzioni, non lasciare vuoti questi c
 - Le proposte manutenzione usano link pubblici con token e non richiedono login cliente.
 - Le offerte pubbliche usano `/offerte/[slug]` e mostrano solo campagne pubblicate o inviate.
 - Il worker WhatsApp su Railway legge la outbox quando il provider e configurato; senza provider l'app prepara testo/link e lascia l'invio manuale all'operatore.
+- L'admin puo verificare provider e coda da `GET /api/admin/whatsapp/health`.

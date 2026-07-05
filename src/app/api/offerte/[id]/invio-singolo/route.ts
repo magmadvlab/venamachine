@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { queueMessage } from "@/lib/outbox";
 import { requireAdmin } from "@/lib/supabase/auth-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 import { dbError } from "@/app/api/offerte/_helpers";
@@ -9,6 +10,15 @@ export const runtime = "nodejs";
 type SingleSendPayload = {
   cliente_id?: string;
 };
+
+function offerMessage(opts: { titolo: string; offertaUrl: string; validaAl?: string | null }) {
+  return [
+    "Ciao! Vena Coffee Machine ha nuove offerte per te.",
+    `Volantino: ${opts.titolo}`,
+    opts.validaAl ? `Valide fino al ${new Date(opts.validaAl).toLocaleDateString("it-IT")}.` : null,
+    `Vedi tutte le offerte: ${opts.offertaUrl}`,
+  ].filter(Boolean).join("\n");
+}
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   if (!hasServiceConfig()) {
@@ -53,7 +63,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
 
   const offertaUrl = `${getPublicAppUrl()}/offerte/${campagna.slug}`;
-  const { error: insertError } = await db
+  const { data: invio, error: insertError } = await db
     .from("campagne_offerte_invii")
     .upsert({
       campagna_id: campagna.id,
@@ -70,9 +80,31 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       },
     }, {
       onConflict: "campagna_id,cliente_id,canale",
-    });
+    })
+    .select("id, cliente_id, destinatario")
+    .single();
 
   if (insertError) return dbError("Preparazione invio singolo", insertError);
+
+  await queueMessage({
+    db,
+    canale: "whatsapp",
+    tipo: "offerta_singola",
+    destinatario,
+    testo: offerMessage({ titolo: campagna.titolo, offertaUrl, validaAl: campagna.valida_al }),
+    priorita: 55,
+    payload: {
+      offertaUrl,
+      titolo: campagna.titolo,
+      valida_al: campagna.valida_al ?? null,
+      campagna_id: campagna.id,
+      invio_id: invio.id,
+    },
+    sourceTable: "campagne_offerte_invii",
+    sourceId: invio.id,
+    clienteId: invio.cliente_id,
+    dedupeSource: true,
+  });
 
   return NextResponse.json({
     ok: true,
@@ -82,6 +114,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     titolo: campagna.titolo,
     valida_al: campagna.valida_al ?? null,
     stato: "in_coda",
-    nota: "Invio WhatsApp singolo preparato. Collega un provider WhatsApp per l'invio reale.",
+    outbox: 1,
+    nota: "Invio WhatsApp accodato nella outbox. Il worker Railway lo invia quando OpenWA è configurato.",
   });
 }

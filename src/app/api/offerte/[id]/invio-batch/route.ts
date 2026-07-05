@@ -1,10 +1,20 @@
 import { NextResponse } from "next/server";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { queueMessage } from "@/lib/outbox";
 import { requireAdmin } from "@/lib/supabase/auth-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 import { dbError } from "@/app/api/offerte/_helpers";
 
 export const runtime = "nodejs";
+
+function offerMessage(opts: { titolo: string; offertaUrl: string; validaAl?: string | null }) {
+  return [
+    "Ciao! Vena Coffee Machine ha nuove offerte per te.",
+    `Volantino: ${opts.titolo}`,
+    opts.validaAl ? `Valide fino al ${new Date(opts.validaAl).toLocaleDateString("it-IT")}.` : null,
+    `Vedi tutte le offerte: ${opts.offertaUrl}`,
+  ].filter(Boolean).join("\n");
+}
 
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
   if (!hasServiceConfig()) {
@@ -59,13 +69,39 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     }, { status: 400 });
   }
 
-  const { error: insertError } = await db
+  const { data: invii, error: insertError } = await db
     .from("campagne_offerte_invii")
     .upsert(rows, {
       onConflict: "campagna_id,cliente_id,canale",
-    });
+    })
+    .select("id, cliente_id, destinatario");
 
   if (insertError) return dbError("Preparazione invii campagna", insertError);
+
+  let outboxQueued = 0;
+  const testo = offerMessage({ titolo: campagna.titolo, offertaUrl, validaAl: campagna.valida_al });
+  for (const invio of invii ?? []) {
+    await queueMessage({
+      db,
+      canale: "whatsapp",
+      tipo: "offerta_batch",
+      destinatario: invio.destinatario,
+      testo,
+      priorita: 40,
+      payload: {
+        offertaUrl,
+        titolo: campagna.titolo,
+        valida_al: campagna.valida_al ?? null,
+        campagna_id: campagna.id,
+        invio_id: invio.id,
+      },
+      sourceTable: "campagne_offerte_invii",
+      sourceId: invio.id,
+      clienteId: invio.cliente_id,
+      dedupeSource: true,
+    });
+    outboxQueued += 1;
+  }
 
   const now = new Date().toISOString();
   const { error: updateError } = await db
@@ -86,6 +122,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     titolo: campagna.titolo,
     valida_al: campagna.valida_al ?? null,
     stato: "in_coda",
-    nota: "Invii WhatsApp preparati. Collega un provider WhatsApp per l'invio reale.",
+    outbox: outboxQueued,
+    nota: "Invii WhatsApp accodati nella outbox. Il worker Railway li invia quando OpenWA è configurato.",
   });
 }

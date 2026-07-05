@@ -46,6 +46,8 @@ npm run build    # build di produzione
 4. Crea un secondo servizio Railway dallo stesso repo per WhatsApp.
 5. Imposta lo start command del secondo servizio su `npm run worker:whatsapp`.
 6. Imposta `NEXT_PUBLIC_APP_URL` sul dominio Railway/custom domain, cosi link e QR puntano all'URL giusto.
+7. Nel servizio worker inserisci anche `OPENWA_URL`, `OPENWA_API_KEY`, `OPENWA_SESSION`, `SUPABASE_SERVICE_ROLE_KEY` e le variabili Supabase.
+8. Da admin puoi controllare lo stato provider/outbox con `GET /api/admin/whatsapp/health`.
 
 Il file `railway.json` configura build e start del servizio web. Il worker usa lo stesso build, ma start command dedicato.
 
@@ -68,7 +70,7 @@ src/
     pdf/build.ts             render PDF + QR
     email.ts                 invio via Resend
     outbox.ts                coda messaggi server-side
-    whatsapp.ts              client OpenWA
+    whatsapp-gateway.ts      client/health OpenWA
     types.ts                 tipi + mappatura stato→stadio cliente
 scripts/
   whatsapp-worker.mjs        worker Railway per invii WhatsApp
@@ -78,6 +80,7 @@ supabase/                    script SQL (schema, notifiche, storage)
 ## Note
 - La generazione PDF gira in runtime **Node** (route con `export const runtime = "nodejs"`).
 - Se il cliente preferisce WhatsApp e ha telefono, la notifica entra in `messaggi_outbox` e viene processata dal worker.
+- Gli invii offerte batch/singoli creano anche righe `messaggi_outbox`: il worker aggiorna `campagne_offerte_invii` a `inviata` o `errore`.
 - Se il cliente preferisce email, l'invio parte via Resend. Ogni evento viene loggato in tabella `notifiche`.
 - Le icone PWA (`/icon-192.png`, `/icon-512.png`) sono da aggiungere in `public/`.
 
@@ -85,5 +88,4 @@ supabase/                    script SQL (schema, notifiche, storage)
 - Autenticazione operatori (Supabase Auth) e Row Level Security.
 - Avanzamento stati dalla dashboard (diagnosi → preventivo → riparata → ritirata).
 - Invio preventivo con accetta/rifiuta dal cliente sulla pagina di tracking.
-- Avviso "pronta per il ritiro" via WhatsApp worker.
 - Confronto con i dati di vendita.

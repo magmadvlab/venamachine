@@ -91,6 +91,23 @@ async function markSent(row, providerMsgId) {
       errore: null,
     })
     .filter("payload->>outboxId", "eq", row.id);
+
+  if (row.source_table === "campagne_offerte_invii" && row.source_id) {
+    await db
+      .from("campagne_offerte_invii")
+      .update({
+        stato_invio: "inviata",
+        inviata_at: sentAt,
+        errore: null,
+        payload: {
+          ...(row.payload ?? {}),
+          outboxId: row.id,
+          provider: "openwa",
+          providerMsgId,
+        },
+      })
+      .eq("id", row.source_id);
+  }
 }
 
 async function markFailed(row, error) {
@@ -117,6 +134,22 @@ async function markFailed(row, error) {
       errore: message,
     })
     .filter("payload->>outboxId", "eq", row.id);
+
+  if (row.source_table === "campagne_offerte_invii" && row.source_id) {
+    await db
+      .from("campagne_offerte_invii")
+      .update({
+        stato_invio: "errore",
+        errore: message,
+        payload: {
+          ...(row.payload ?? {}),
+          outboxId: row.id,
+          provider: "openwa",
+          errore: message,
+        },
+      })
+      .eq("id", row.source_id);
+  }
 }
 
 async function claimBatch() {

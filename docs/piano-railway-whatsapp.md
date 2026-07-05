@@ -81,10 +81,10 @@ Quando il cliente preferisce email, resta attivo Resend.
 5. Sovrascrivere start command del secondo servizio con `npm run worker:whatsapp`.
 6. Inserire variabili OpenWA anche nel worker.
 7. Applicare migrazione `20260705000300_17_messaggi_outbox_whatsapp.sql`.
+8. Controllare lo stato con endpoint admin `GET /api/admin/whatsapp/health`.
 
 ## Prossime integrazioni
 
-- Collegare offerte batch/singole alla outbox unica.
 - Collegare suggerimenti CTA all'invio WhatsApp reale.
 - Aggiungere pagina admin `/notifiche` o sezione in agenda per vedere outbox/errori.
-- Aggiungere healthcheck per worker e stato sessione OpenWA.
+- Aggiungere invio media/PNG del volantino quando il provider espone upload o send-image stabile.
