@@ -68,15 +68,15 @@ export function MachineEditForm({ macchina }: MachineEditFormProps) {
   }
 
   return (
-    <details className="rounded-2xl border border-coffee-100 bg-white p-4 shadow-sm shadow-coffee-900/5 sm:p-5">
-      <summary className="flex cursor-pointer list-none items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+    <details className="rounded-2xl border border-coffee-700/40 bg-coffee-900 p-4 shadow-sm shadow-black/30 sm:p-5">
+      <summary className="flex cursor-pointer list-none items-center gap-2 font-display text-lg font-semibold text-coffee-50">
         <Edit3 className="h-5 w-5 text-arancio" />
         Modifica macchina
       </summary>
 
       <form action={save} className="mt-4 space-y-5">
         <section>
-          <h3 className="mb-3 text-sm font-bold text-coffee-900">Identificazione</h3>
+          <h3 className="mb-3 text-sm font-bold text-coffee-50">Identificazione</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={labelCls}>Marca</label>
@@ -98,7 +98,7 @@ export function MachineEditForm({ macchina }: MachineEditFormProps) {
         </section>
 
         <section>
-          <h3 className="mb-3 text-sm font-bold text-coffee-900">Uso e ciclo vita</h3>
+          <h3 className="mb-3 text-sm font-bold text-coffee-50">Uso e ciclo vita</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={labelCls}>Tipologia</label>
@@ -142,7 +142,7 @@ export function MachineEditForm({ macchina }: MachineEditFormProps) {
         </section>
 
         <section>
-          <h3 className="mb-3 text-sm font-bold text-coffee-900">Soglie specifiche opzionali</h3>
+          <h3 className="mb-3 text-sm font-bold text-coffee-50">Soglie specifiche opzionali</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={labelCls}>Consumo annuo minimo</label>
@@ -166,13 +166,13 @@ export function MachineEditForm({ macchina }: MachineEditFormProps) {
         <button
           type="submit"
           disabled={saving || isPending}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-coffee-900 px-4 py-3 text-sm font-semibold text-white active:scale-[0.99] disabled:opacity-60 sm:w-auto"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-arancio px-4 py-3 text-sm font-semibold text-white active:scale-[0.99] disabled:opacity-60 sm:w-auto"
         >
           {saving || isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {saving || isPending ? "Salvataggio..." : "Salva macchina"}
         </button>
 
-        {saved && <p className="text-sm font-semibold text-green-700">Macchina aggiornata.</p>}
+        {saved && <p className="text-sm font-semibold text-emerald-300">Macchina aggiornata.</p>}
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       </form>
     </details>

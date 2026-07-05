@@ -89,7 +89,7 @@ function field(label: string, value?: string | number | null) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-coffee-900">{value || "—"}</p>
+      <p className="mt-1 text-sm font-semibold text-coffee-50">{value || "—"}</p>
     </div>
   );
 }
@@ -205,11 +205,11 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
             <span>Schede</span>
           </Link>
           <div>
-            <p className="text-sm font-semibold text-arancio-dark">Parco macchine</p>
-            <h1 className="font-display text-xl font-bold text-coffee-900">
+            <p className="text-sm font-semibold text-arancio">Parco macchine</p>
+            <h1 className="font-display text-xl font-bold text-coffee-50">
               {[macchina.marca, macchina.modello].filter(Boolean).join(" ") || "Macchina"}
             </h1>
-            <p className="text-sm text-coffee-500">
+            <p className="text-sm text-coffee-300">
               {[macchina.matricola, CATEGORY_LABELS[macchina.categoria_utilizzo] ?? "Da classificare", macchina.tipologia].filter(Boolean).join(" · ")}
             </p>
           </div>
@@ -235,28 +235,28 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
       <section className="mb-4 grid grid-cols-2 gap-2 lg:grid-cols-5">
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Score</p>
-          <p className="mt-1 font-display text-2xl font-bold text-coffee-900">{scoreValue ?? "—"}</p>
-          <p className="text-xs text-coffee-500">{RISK_LABELS[score?.classe_rischio] ?? "Da valutare"}</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{scoreValue ?? "—"}</p>
+          <p className="text-xs text-coffee-300">{RISK_LABELS[score?.classe_rischio] ?? "Da valutare"}</p>
         </Card>
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Copertura 365g</p>
-          <p className="mt-1 font-display text-2xl font-bold text-coffee-900">{coverage365 == null ? "—" : `${coverage365}%`}</p>
-          <p className="text-xs text-coffee-500">{analisi?.caffe_acquistati_365gg ?? 0}/{analisi?.caffe_target_365gg ?? 0} caffè</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{coverage365 == null ? "—" : `${coverage365}%`}</p>
+          <p className="text-xs text-coffee-300">{analisi?.caffe_acquistati_365gg ?? 0}/{analisi?.caffe_target_365gg ?? 0} caffè</p>
         </Card>
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Vendite macchina</p>
-          <p className="mt-1 font-display text-2xl font-bold text-coffee-900">{money(salesValue)}</p>
-          <p className="text-xs text-coffee-500">{coffeeSold} caffè stimati</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{money(salesValue)}</p>
+          <p className="text-xs text-coffee-300">{coffeeSold} caffè stimati</p>
         </Card>
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Interventi</p>
-          <p className="mt-1 font-display text-2xl font-bold text-coffee-900">{riparazioni?.length ?? 0}</p>
-          <p className="text-xs text-coffee-500">Ultimo: {formatDate(analisi?.ultimo_intervento)}</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{riparazioni?.length ?? 0}</p>
+          <p className="text-xs text-coffee-300">Ultimo: {formatDate(analisi?.ultimo_intervento)}</p>
         </Card>
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Ciclo vita</p>
-          <p className="mt-1 font-display text-lg font-bold text-coffee-900">{CICLO_LABELS[macchina.stato_ciclo_vita] ?? "—"}</p>
-          <p className="text-xs text-coffee-500">{REGIME_LABELS[macchina.regime_possesso] ?? "—"}</p>
+          <p className="mt-1 font-display text-lg font-bold text-coffee-50">{CICLO_LABELS[macchina.stato_ciclo_vita] ?? "—"}</p>
+          <p className="text-xs text-coffee-300">{REGIME_LABELS[macchina.regime_possesso] ?? "—"}</p>
         </Card>
       </section>
 
@@ -265,7 +265,7 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
           <MachineEditForm macchina={macchina} />
 
           <Card className="sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Cliente attuale</h2>
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Cliente attuale</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {field("Nome / Ragione sociale", cliente?.ragione_sociale)}
               {field("Tipo", cliente?.tipo)}
@@ -286,29 +286,29 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
           </Card>
 
           <Card className="sm:p-5">
-            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
               <Gauge className="h-5 w-5 text-arancio" /> Analisi commerciale
             </h2>
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-coffee-100 bg-coffee-50 p-3">
+              <div className="rounded-xl border border-coffee-700 bg-coffee-800 p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Fit macchina</p>
-                <p className="mt-1 font-bold text-coffee-900">{FIT_LABELS[analisi?.machine_fit] ?? analisi?.machine_fit ?? "—"}</p>
-                <p className="mt-1 text-sm text-coffee-500">Segmento: {analisi?.segmento_consumo ?? "—"}</p>
+                <p className="mt-1 font-bold text-coffee-50">{FIT_LABELS[analisi?.machine_fit] ?? analisi?.machine_fit ?? "—"}</p>
+                <p className="mt-1 text-sm text-coffee-300">Segmento: {analisi?.segmento_consumo ?? "—"}</p>
               </div>
               <div className={`rounded-xl border p-3 ${scoreTone(scoreValue, score?.classe_rischio)}`}>
                 <p className="text-xs font-semibold uppercase tracking-wide">Rischio</p>
                 <p className="mt-1 font-bold">{RISK_LABELS[score?.classe_rischio] ?? score?.classe_rischio ?? "—"}</p>
                 <p className="mt-1 text-sm">Copertura 90g: {coverage90 == null ? "—" : `${coverage90}%`}</p>
               </div>
-              <div className="rounded-xl border border-coffee-100 bg-white p-3">
+              <div className="rounded-xl border border-coffee-700 bg-coffee-800 p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Acquisti 365 giorni</p>
-                <p className="mt-1 font-bold text-coffee-900">{analisi?.caffe_acquistati_365gg ?? 0}/{analisi?.caffe_target_365gg ?? 0} caffè</p>
-                <p className="mt-1 text-sm text-coffee-500">Ultimo: {formatDate(analisi?.ultimo_acquisto)}</p>
+                <p className="mt-1 font-bold text-coffee-50">{analisi?.caffe_acquistati_365gg ?? 0}/{analisi?.caffe_target_365gg ?? 0} caffè</p>
+                <p className="mt-1 text-sm text-coffee-300">Ultimo: {formatDate(analisi?.ultimo_acquisto)}</p>
               </div>
-              <div className="rounded-xl border border-coffee-100 bg-white p-3">
+              <div className="rounded-xl border border-coffee-700 bg-coffee-800 p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Assistenza 365 giorni</p>
-                <p className="mt-1 font-bold text-coffee-900">{analisi?.interventi_365gg ?? 0} interventi · {money(analisi?.costo_interventi_365gg)}</p>
-                <p className="mt-1 text-sm text-coffee-500">
+                <p className="mt-1 font-bold text-coffee-50">{analisi?.interventi_365gg ?? 0} interventi · {money(analisi?.costo_interventi_365gg)}</p>
+                <p className="mt-1 text-sm text-coffee-300">
                   {analisi?.caffe_non_idoneo_rilevato ? "Segnale caffè non idoneo" : "Nessun segnale miscela critico"}
                 </p>
               </div>
@@ -316,13 +316,13 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
           </Card>
 
           <Card className="sm:p-5">
-            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
               <ShoppingBag className="h-5 w-5 text-arancio" /> Vendite collegate
             </h2>
             {(ordini ?? []).length === 0 ? (
               <p className="text-sm text-coffee-400">Nessuna vendita associata direttamente a questa macchina.</p>
             ) : (
-              <ul className="divide-y divide-coffee-100">
+              <ul className="divide-y divide-coffee-700">
                 {(ordini ?? []).map((ordine: any) => {
                   const righe = ordine.righe ?? [];
                   const valore = righe.reduce((sum: number, row: any) => sum + Number(row.quantita ?? 0) * Number(row.prezzo_unitario ?? 0), 0);
@@ -331,8 +331,8 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
                     <li key={ordine.id} className="py-3 text-sm">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
-                          <p className="font-semibold text-coffee-900">{formatDate(ordine.data_ordine)}</p>
-                          <p className="text-coffee-500">{caffe} caffè stimati · {money(valore)}</p>
+                          <p className="font-semibold text-coffee-50">{formatDate(ordine.data_ordine)}</p>
+                          <p className="text-coffee-300">{caffe} caffè stimati · {money(valore)}</p>
                         </div>
                         <span className={`rounded-full border px-2 py-0.5 text-xs font-bold ${
                           ordine.pagato ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"
@@ -344,9 +344,9 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
                         {righe.map((row: any, index: number) => {
                           const prodotto = one(row.prodotto);
                           return (
-                            <li key={index} className="rounded-lg bg-coffee-50 px-3 py-2">
-                              <span className="font-semibold text-coffee-800">{prodotto?.nome ?? "Prodotto"}</span>
-                              <span className="ml-2 text-coffee-500">
+                            <li key={index} className="rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2">
+                              <span className="font-semibold text-coffee-50">{prodotto?.nome ?? "Prodotto"}</span>
+                              <span className="ml-2 text-coffee-300">
                                 q.tà {Number(row.quantita ?? 0).toLocaleString("it-IT")} · {money(row.prezzo_unitario)}/pz
                               </span>
                             </li>
@@ -361,24 +361,24 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
           </Card>
 
           <Card className="sm:p-5">
-            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
               <Wrench className="h-5 w-5 text-arancio" /> Storico assistenza
             </h2>
             {(riparazioni ?? []).length === 0 ? (
               <p className="text-sm text-coffee-400">Nessun intervento registrato.</p>
             ) : (
-              <ul className="divide-y divide-coffee-100">
+              <ul className="divide-y divide-coffee-700">
                 {(riparazioni ?? []).map((r: any) => (
                   <li key={r.id} className="py-3 text-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Link href={`/riparazioni/${r.id}`} className="font-mono text-xs font-bold text-arancio-dark underline underline-offset-2">
+                      <Link href={`/riparazioni/${r.id}`} className="font-mono text-xs font-bold text-arancio underline underline-offset-2">
                         {r.numero_scheda}
                       </Link>
                       <span className="text-xs font-semibold text-coffee-400">{formatDate(r.data_ingresso)}</span>
                     </div>
-                    <p className="mt-1 font-semibold text-coffee-900">{r.difetto_cliente || "Difetto non indicato"}</p>
-                    {r.diagnosi_tecnico && <p className="mt-1 text-coffee-500">Fatto: {r.diagnosi_tecnico}</p>}
-                    <p className="mt-1 text-xs text-coffee-500">
+                    <p className="mt-1 font-semibold text-coffee-50">{r.difetto_cliente || "Difetto non indicato"}</p>
+                    {r.diagnosi_tecnico && <p className="mt-1 text-coffee-300">Fatto: {r.diagnosi_tecnico}</p>}
+                    <p className="mt-1 text-xs text-coffee-400">
                       Stato: {r.stato} · Preventivo {money(r.importo_preventivo)} · Finale {money(r.importo_finale)}
                     </p>
                   </li>
@@ -390,7 +390,7 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
 
         <aside className="space-y-4">
           <Card className="sm:p-5">
-            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
               <Target className="h-5 w-5 text-arancio" /> Azioni aperte e recenti
             </h2>
             {(azioni ?? []).length === 0 ? (
@@ -398,17 +398,17 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
             ) : (
               <ul className="space-y-3">
                 {(azioni ?? []).map((azione: any) => (
-                  <li key={azione.id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm">
+                  <li key={azione.id} className="rounded-xl border border-coffee-700 bg-coffee-800 p-3 text-sm">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
-                        <p className="font-semibold text-coffee-900">{ACTION_LABELS[azione.tipo] ?? azione.tipo}</p>
-                        <p className="text-xs text-coffee-500">Scadenza: {formatDate(azione.data_scadenza)}</p>
+                        <p className="font-semibold text-coffee-50">{ACTION_LABELS[azione.tipo] ?? azione.tipo}</p>
+                        <p className="text-xs text-coffee-300">Scadenza: {formatDate(azione.data_scadenza)}</p>
                       </div>
                       <span className={`rounded-full border px-2 py-0.5 text-xs font-bold ${statusTone(azione.stato)}`}>
                         {azione.stato}
                       </span>
                     </div>
-                    <p className="mt-2 text-coffee-600">{azione.motivo}</p>
+                    <p className="mt-2 text-coffee-200">{azione.motivo}</p>
                     <AgendaActionControls
                       action={{
                         id: azione.id,
@@ -424,31 +424,31 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
           </Card>
 
           <Card className="sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Azioni rapide</h2>
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Azioni rapide</h2>
             <div className="grid gap-2 text-sm">
               {cliente?.telefono && (
-                <a href={`tel:${cliente.telefono}`} className="inline-flex items-center gap-2 rounded-lg border border-coffee-200 px-3 py-2 font-semibold text-coffee-700">
+                <a href={`tel:${cliente.telefono}`} className="inline-flex items-center gap-2 rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
                   <Phone className="h-4 w-4" />
                   Chiama cliente
                 </a>
               )}
-              <Link href="/vendite" className="inline-flex items-center gap-2 rounded-lg border border-coffee-200 px-3 py-2 font-semibold text-coffee-700">
+              <Link href="/vendite" className="inline-flex items-center gap-2 rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
                 <ShoppingBag className="h-4 w-4" />
                 Registra vendita
               </Link>
-              <Link href={`/agenda?q=${encodeURIComponent(cliente?.ragione_sociale ?? "")}`} className="inline-flex items-center gap-2 rounded-lg border border-coffee-200 px-3 py-2 font-semibold text-coffee-700">
+              <Link href={`/agenda?q=${encodeURIComponent(cliente?.ragione_sociale ?? "")}`} className="inline-flex items-center gap-2 rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
                 <CalendarDays className="h-4 w-4" />
                 Apri agenda cliente
               </Link>
-              <Link href="/manutenzioni" className="inline-flex items-center gap-2 rounded-lg border border-coffee-200 px-3 py-2 font-semibold text-coffee-700">
+              <Link href="/manutenzioni" className="inline-flex items-center gap-2 rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
                 <Wrench className="h-4 w-4" />
                 Programma manutenzione
               </Link>
-              <Link href={cliente?.id ? `/clienti/${cliente.id}` : `/clienti?q=${encodeURIComponent(cliente?.ragione_sociale ?? "")}`} className="inline-flex items-center gap-2 rounded-lg border border-coffee-200 px-3 py-2 font-semibold text-coffee-700">
+              <Link href={cliente?.id ? `/clienti/${cliente.id}` : `/clienti?q=${encodeURIComponent(cliente?.ragione_sociale ?? "")}`} className="inline-flex items-center gap-2 rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
                 <History className="h-4 w-4" />
                 Storico cliente
               </Link>
-              <Link href="/nuova" className="inline-flex items-center gap-2 rounded-lg border border-coffee-200 px-3 py-2 font-semibold text-coffee-700">
+              <Link href="/nuova" className="inline-flex items-center gap-2 rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
                 <Plus className="h-4 w-4" />
                 Nuova scheda assistenza
               </Link>
