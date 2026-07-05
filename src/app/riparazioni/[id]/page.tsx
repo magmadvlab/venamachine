@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import StatusControl from "@/components/StatusControl";
+import { SendWhatsAppButton } from "@/components/SendWhatsAppButton";
+import { getPublicAppUrl } from "@/lib/app-url";
 import { PhotoUploadForm } from "@/components/PhotoUploadForm";
 import { RepairEditForm } from "@/components/RepairEditForm";
 import { RepairWorkForm } from "@/components/RepairWorkForm";
@@ -48,6 +50,14 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
   const macchina: any = Array.isArray(data.macchina) ? data.macchina[0] : data.macchina;
   const operatore: any = Array.isArray(data.operatore) ? data.operatore[0] : data.operatore;
   const stadio = stadioCliente(data.stato as StatoRiparazione);
+  const macchinaLabel = [macchina?.marca, macchina?.modello, macchina?.matricola].filter(Boolean).join(" ");
+  const trackingUrl = `${getPublicAppUrl()}/r/${data.token_pubblico}`;
+  const defaultTestoWhatsApp = [
+    "Vena Coffee Machine",
+    `Aggiornamento scheda ${data.numero_scheda}: ${stadio}.`,
+    macchinaLabel ? `Macchina: ${macchinaLabel}` : null,
+    `Dettagli: ${trackingUrl}`,
+  ].filter(Boolean).join("\n");
   const user = await getCurrentUser();
   const admin = isAdminEmail(user?.email);
 
@@ -251,6 +261,9 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
           <Card className="sm:p-5">
             <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Azioni</h2>
             <StatusControl id={data.id} stato={data.stato as StatoRiparazione} />
+            {cliente?.canale_preferito === "whatsapp" && cliente?.telefono && (
+              <SendWhatsAppButton id={data.id} defaultTesto={defaultTestoWhatsApp} />
+            )}
             <div className="mt-4 grid gap-2 text-sm">
               <a href={`/api/ricevuta/${data.id}`} target="_blank" className="rounded-lg border border-coffee-200 px-3 py-2 font-semibold text-coffee-700">
                 Apri ricevuta PDF

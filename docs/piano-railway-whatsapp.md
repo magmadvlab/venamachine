@@ -11,11 +11,11 @@ VenaMachine ora ha flussi che non sono piu solo pagine e API brevi:
 - suggerimenti con CTA;
 - invii WhatsApp con retry.
 
-Per questi flussi serve un backend sempre acceso. Railway e piu adatto di Vercel quando servono worker persistenti, code, retry e un servizio OpenWA con sessione WhatsApp.
+Per questi flussi serve un backend sempre acceso. Railway e piu adatto di Vercel quando servono worker persistenti, code, retry e un servizio WhatsApp Baileys con sessione dedicata.
 
 ## Architettura proposta
 
-Un solo repository, due servizi Railway:
+Un solo repository, tre servizi Railway:
 
 1. `venamachine-web`
    - start: `npm run start`
@@ -24,8 +24,13 @@ Un solo repository, due servizi Railway:
 2. `venamachine-whatsapp-worker`
    - start: `npm run worker:whatsapp`
    - legge `messaggi_outbox`;
-   - invia via OpenWA;
+   - invia via il servizio WhatsApp Baileys dedicato;
    - aggiorna stato, provider message id, errori e retry.
+
+3. `wzapp-venamachine`
+   - root directory: `services/whatsapp`
+   - start: `node dist/index.js`
+   - servizio Baileys dedicato (WhatsApp Web multi-device), con volume persistente per la sessione.
 
 Supabase resta database e storage.
 
@@ -45,17 +50,25 @@ La funzione SQL `claim_messaggi_outbox(worker_id, batch_size)` usa `for update s
 
 ## WhatsApp
 
-Provider iniziale: OpenWA o endpoint compatibile.
+Provider: servizio Baileys dedicato in `services/whatsapp/` (stesso pattern
+gia in produzione per PitStop e Beauty App), deployato come servizio Railway
+separato (`wzapp-venamachine`) con volume persistente su `/data`.
 
-Variabili richieste:
+Variabili richieste (servizio web + worker):
 
-- `OPENWA_URL`
-- `OPENWA_API_KEY`
-- `OPENWA_SESSION`
+- `WA_GATEWAY_URL` (URL pubblico del servizio `wzapp-venamachine`)
+- `WA_GATEWAY_TOKEN` (= `WA_API_SECRET` del servizio whatsapp)
+- `WA_INSTANCE` (= `default`)
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
-Variabili opzionali:
+Variabili richieste (servizio `wzapp-venamachine`, vedi `services/whatsapp/README.md`):
+
+- `WA_API_SECRET`
+- `WA_DEFAULT_INSTANCE=default`
+- `WA_AUTH_DIR=/data/.wa-auth`
+
+Variabili opzionali (worker):
 
 - `WHATSAPP_WORKER_BATCH_SIZE`
 - `WHATSAPP_WORKER_POLL_MS`
@@ -79,9 +92,13 @@ Quando il cliente preferisce email, resta attivo Resend.
 3. Deploy web con `npm run start`.
 4. Creare secondo servizio Railway dallo stesso repo.
 5. Sovrascrivere start command del secondo servizio con `npm run worker:whatsapp`.
-6. Inserire variabili OpenWA anche nel worker.
-7. Applicare migrazione `20260705000300_17_messaggi_outbox_whatsapp.sql`.
-8. Controllare lo stato con endpoint admin `GET /api/admin/whatsapp/health`.
+6. Creare un terzo servizio Railway dallo stesso repo, root directory `services/whatsapp`.
+7. Aggiungere un volume persistente al servizio whatsapp, mount path `/data` (vedi `services/whatsapp/README.md`).
+8. Impostare `WA_API_SECRET`, `WA_DEFAULT_INSTANCE=default`, `WA_AUTH_DIR=/data/.wa-auth` sul servizio whatsapp.
+9. Impostare `WA_GATEWAY_URL` (URL pubblico del servizio whatsapp), `WA_GATEWAY_TOKEN` (= `WA_API_SECRET`), `WA_INSTANCE=default` sui servizi web e worker.
+10. Applicare migrazione `20260705000300_17_messaggi_outbox_whatsapp.sql`.
+11. Aprire `/qr?token=<WA_API_SECRET>` sul servizio whatsapp e scansionare il QR con il numero WhatsApp dell'attivita.
+12. Controllare lo stato con endpoint admin `GET /api/admin/whatsapp/health`.
 
 ## Prossime integrazioni
 

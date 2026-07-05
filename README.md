@@ -29,7 +29,7 @@ Copia `.env.local.example` in `.env.local` e compila:
 - `SUPABASE_SERVICE_ROLE_KEY` — Settings → API (segreta, solo server)
 - `RESEND_API_KEY` + `MAIL_FROM` — da Resend (verifica prima il dominio per non finire in spam)
 - `NEXT_PUBLIC_APP_URL` — dominio pubblico dell'app (usato nei link/QR di tracking, agenda e CTA)
-- `OPENWA_URL`, `OPENWA_API_KEY`, `OPENWA_SESSION` — provider WhatsApp/OpenWA per il worker
+- `WA_GATEWAY_URL`, `WA_GATEWAY_TOKEN`, `WA_INSTANCE` — servizio WhatsApp Baileys dedicato (`services/whatsapp/`) per il worker
 - `WHATSAPP_WORKER_BATCH_SIZE`, `WHATSAPP_WORKER_POLL_MS`, `WORKER_ID` — tuning del worker WhatsApp
 
 ## 3. Avvio
@@ -46,7 +46,7 @@ npm run build    # build di produzione
 4. Crea un secondo servizio Railway dallo stesso repo per WhatsApp.
 5. Imposta lo start command del secondo servizio su `npm run worker:whatsapp`.
 6. Imposta `NEXT_PUBLIC_APP_URL` sul dominio Railway/custom domain, cosi link e QR puntano all'URL giusto.
-7. Nel servizio worker inserisci anche `OPENWA_URL`, `OPENWA_API_KEY`, `OPENWA_SESSION`, `SUPABASE_SERVICE_ROLE_KEY` e le variabili Supabase.
+7. Nel servizio worker inserisci anche `WA_GATEWAY_URL`, `WA_GATEWAY_TOKEN`, `WA_INSTANCE`, `SUPABASE_SERVICE_ROLE_KEY` e le variabili Supabase.
 8. Da admin puoi controllare lo stato provider/outbox con `GET /api/admin/whatsapp/health`.
 
 Il file `railway.json` configura build e start del servizio web. Il worker usa lo stesso build, ma start command dedicato.
@@ -70,7 +70,8 @@ src/
     pdf/build.ts             render PDF + QR
     email.ts                 invio via Resend
     outbox.ts                coda messaggi server-side
-    whatsapp-gateway.ts      client/health OpenWA
+    whatsapp.ts              client servizio WhatsApp Baileys (invio diretto)
+    whatsapp-gateway.ts      health-check servizio WhatsApp Baileys
     types.ts                 tipi + mappatura stato→stadio cliente
 scripts/
   whatsapp-worker.mjs        worker Railway per invii WhatsApp

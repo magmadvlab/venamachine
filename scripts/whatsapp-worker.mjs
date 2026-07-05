@@ -3,9 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 const required = [
   "NEXT_PUBLIC_SUPABASE_URL",
   "SUPABASE_SERVICE_ROLE_KEY",
-  "OPENWA_URL",
-  "OPENWA_API_KEY",
-  "OPENWA_SESSION",
+  "WA_GATEWAY_URL",
+  "WA_GATEWAY_TOKEN",
+  "WA_INSTANCE",
 ];
 
 for (const key of required) {
@@ -42,25 +42,25 @@ async function sendWhatsApp(row) {
   const text = row.payload?.testo || row.payload?.text || row.payload?.message;
   if (!text) throw new Error("Payload senza testo WhatsApp");
 
-  const res = await fetch(`${process.env.OPENWA_URL.replace(/\/+$/, "")}/messages/send-text`, {
+  const url = `${process.env.WA_GATEWAY_URL.replace(/\/+$/, "")}/api/sessions/${process.env.WA_INSTANCE}/messages/send-text`;
+  const res = await fetch(url, {
     method: "POST",
     headers: {
-      "X-API-Key": process.env.OPENWA_API_KEY,
+      "X-API-Key": process.env.WA_GATEWAY_TOKEN,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      sessionId: process.env.OPENWA_SESSION,
       chatId: chatIdFor(row.destinatario),
       text,
     }),
   });
 
   const body = await res.text().catch(() => "");
-  if (!res.ok) throw new Error(`OpenWA ${res.status}: ${body}`);
+  if (!res.ok) throw new Error(`WhatsApp gateway ${res.status}: ${body}`);
 
   try {
     const parsed = body ? JSON.parse(body) : null;
-    return parsed?.id ?? parsed?.messageId ?? parsed?.data?.id ?? null;
+    return parsed?.messageId ?? parsed?.id ?? null;
   } catch {
     return null;
   }
@@ -73,7 +73,7 @@ async function markSent(row, providerMsgId) {
     .update({
       stato: "inviata",
       sent_at: sentAt,
-      provider: "openwa",
+      provider: "baileys",
       provider_msg_id: providerMsgId,
       locked_at: null,
       locked_by: null,
@@ -102,7 +102,7 @@ async function markSent(row, providerMsgId) {
         payload: {
           ...(row.payload ?? {}),
           outboxId: row.id,
-          provider: "openwa",
+          provider: "baileys",
           providerMsgId,
         },
       })
@@ -121,7 +121,7 @@ async function markFailed(row, error) {
       prossimo_tentativo_at: exhausted ? row.prossimo_tentativo_at : next.toISOString(),
       locked_at: null,
       locked_by: null,
-      provider: "openwa",
+      provider: "baileys",
       errore: message,
     })
     .eq("id", row.id);
@@ -144,7 +144,7 @@ async function markFailed(row, error) {
         payload: {
           ...(row.payload ?? {}),
           outboxId: row.id,
-          provider: "openwa",
+          provider: "baileys",
           errore: message,
         },
       })

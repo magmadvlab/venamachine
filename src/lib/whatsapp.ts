@@ -1,40 +1,35 @@
-// Stub per futura integrazione OpenWA.
-// Deployment: docker compose up -d nel repo https://github.com/rmyndharis/OpenWA
-// Configurare: OPENWA_URL, OPENWA_API_KEY, OPENWA_SESSION, ADMIN_PHONE
+// Client per il servizio WhatsApp Baileys dedicato (services/whatsapp/).
+// Endpoint compatibile OpenWA: POST {WA_GATEWAY_URL}/api/sessions/{WA_INSTANCE}/messages/send-text
 
 export function isWhatsAppConfigured(): boolean {
-  return !!(process.env.OPENWA_URL && process.env.OPENWA_API_KEY && process.env.OPENWA_SESSION);
+  return !!(process.env.WA_GATEWAY_URL && process.env.WA_GATEWAY_TOKEN && process.env.WA_INSTANCE);
 }
 
 function chatIdFor(phone: string) {
   return `${phone.replace(/\D/g, "")}@c.us`;
 }
 
-export async function inviaMessaggioWhatsApp(opts: { telefono: string; testo: string }): Promise<{ providerMsgId?: string | null }> {
-  const url = process.env.OPENWA_URL;
-  const apiKey = process.env.OPENWA_API_KEY;
-  const session = process.env.OPENWA_SESSION;
+async function sendText(chatId: string, text: string): Promise<{ providerMsgId?: string | null }> {
+  const url = process.env.WA_GATEWAY_URL;
+  const token = process.env.WA_GATEWAY_TOKEN;
+  const instance = process.env.WA_INSTANCE;
 
-  if (!url || !apiKey || !session) {
-    throw new Error("OpenWA non configurato — verificare OPENWA_URL, OPENWA_API_KEY, OPENWA_SESSION");
+  if (!url || !token || !instance) {
+    throw new Error("WhatsApp non configurato — verificare WA_GATEWAY_URL, WA_GATEWAY_TOKEN, WA_INSTANCE");
   }
 
-  const res = await fetch(`${url.replace(/\/+$/, "")}/messages/send-text`, {
+  const res = await fetch(`${url.replace(/\/+$/, "")}/api/sessions/${instance}/messages/send-text`, {
     method: "POST",
     headers: {
-      "X-API-Key": apiKey,
+      "X-API-Key": token,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      sessionId: session,
-      chatId: chatIdFor(opts.telefono),
-      text: opts.testo,
-    }),
+    body: JSON.stringify({ chatId, text }),
   });
 
   const body = await res.text().catch(() => "");
   if (!res.ok) {
-    throw new Error(`OpenWA error ${res.status}: ${body}`);
+    throw new Error(`WhatsApp gateway error ${res.status}: ${body}`);
   }
 
   let parsed: any = null;
@@ -45,35 +40,18 @@ export async function inviaMessaggioWhatsApp(opts: { telefono: string; testo: st
   }
 
   return {
-    providerMsgId: parsed?.id ?? parsed?.messageId ?? parsed?.data?.id ?? null,
+    providerMsgId: parsed?.messageId ?? parsed?.id ?? null,
   };
 }
 
+export async function inviaMessaggioWhatsApp(opts: { telefono: string; testo: string }): Promise<{ providerMsgId?: string | null }> {
+  return sendText(chatIdFor(opts.telefono), opts.testo);
+}
+
 export async function inviaMessaggioAdmin(testo: string): Promise<void> {
-  const url = process.env.OPENWA_URL;
-  const apiKey = process.env.OPENWA_API_KEY;
-  const session = process.env.OPENWA_SESSION;
   const phone = process.env.ADMIN_PHONE;
-
-  if (!url || !apiKey || !session || !phone) {
-    throw new Error("OpenWA non configurato — verificare OPENWA_URL, OPENWA_API_KEY, OPENWA_SESSION, ADMIN_PHONE");
+  if (!phone) {
+    throw new Error("ADMIN_PHONE non configurato");
   }
-
-  const res = await fetch(`${url.replace(/\/+$/, "")}/messages/send-text`, {
-    method: "POST",
-    headers: {
-      "X-API-Key": apiKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      sessionId: session,
-      chatId: chatIdFor(phone),
-      text: testo,
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`OpenWA error ${res.status}: ${body}`);
-  }
+  await sendText(chatIdFor(phone), testo);
 }
