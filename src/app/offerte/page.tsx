@@ -99,12 +99,12 @@ export default async function OffertePage() {
         </span>
       </header>
 
-      <Card className="mb-4 border-blue-200 bg-blue-50 p-4 text-blue-950">
+      <Card className="mb-4 border-arancio/30 bg-coffee-900 p-4 text-coffee-50">
         <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
-          <Megaphone className="h-5 w-5" />
+          <Megaphone className="h-5 w-5 text-arancio" />
           Come preparare un'offerta
         </h2>
-        <div className="mt-3 grid gap-2 text-sm leading-6 md:grid-cols-4">
+        <div className="mt-3 grid gap-2 text-sm leading-6 text-coffee-100 md:grid-cols-4">
           <p><strong>1.</strong> Crea il volantino con titolo, descrizione e validita.</p>
           <p><strong>2.</strong> Aggiungi prodotti/foto dal wizard e controlla l'anteprima PNG.</p>
           <p><strong>3.</strong> Pubblica la campagna per rendere visibile `/offerte/[slug]`.</p>
@@ -121,7 +121,7 @@ export default async function OffertePage() {
             </h2>
             <OfferCampaignForm />
           </Card>
-          <Card className="mt-4 border-amber-200 bg-amber-50 text-sm text-amber-950">
+          <Card className="mt-4 border-arancio/30 bg-coffee-900 text-sm leading-6 text-coffee-100">
             Il batch usa solo clienti con telefono e consenso marketing. Se il worker WhatsApp e configurato su Railway, gli invii vengono processati dalla outbox; altrimenti resta disponibile il messaggio/link manuale.
           </Card>
         </aside>
