@@ -273,3 +273,22 @@ export async function notificaSollecitoRitiro(opts: NotificaBase & {
     return { inviata: false, canale: "email" as const, motivo: "errore_provider" };
   }
 }
+
+export async function notificaManuale(opts: NotificaBase & { testo: string }) {
+  const canaleRichiesto = canalePreferito(opts.cliente);
+  const telefono = telefonoDestinatario(opts.cliente);
+
+  if (canaleRichiesto !== "whatsapp" || !telefono) {
+    return { ok: false as const, motivo: "canale_non_disponibile" as const };
+  }
+
+  await queueWhatsAppNotification({
+    db: opts.db,
+    riparazioneId: opts.riparazioneId,
+    tipo: "manuale",
+    destinatario: telefono,
+    testo: opts.testo,
+  });
+
+  return { ok: true as const, motivo: "in_coda" as const };
+}
