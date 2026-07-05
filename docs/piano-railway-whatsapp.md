@@ -75,7 +75,7 @@ Quando il cliente preferisce email, resta attivo Resend.
 ## Deploy Railway
 
 1. Creare servizio web da GitHub.
-2. Impostare variabili ambiente Supabase, Resend, `NEXT_PUBLIC_APP_URL`.
+2. Impostare variabili ambiente Supabase, Resend, `NEXT_PUBLIC_APP_URL=https://venamachine-production.up.railway.app`.
 3. Deploy web con `npm run start`.
 4. Creare secondo servizio Railway dallo stesso repo.
 5. Sovrascrivere start command del secondo servizio con `npm run worker:whatsapp`.
