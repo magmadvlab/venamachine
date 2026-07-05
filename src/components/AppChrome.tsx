@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   Banknote,
   BarChart3,
+  Bell,
   BookOpen,
   CalendarDays,
   Coffee,
@@ -31,6 +32,7 @@ const primaryLinks = [
   { href: "/prodotti", label: "Prodotti", icon: PackageSearch },
   { href: "/dashboard-commerciale", label: "Report", icon: BarChart3 },
   { href: "/manuale", label: "Manuale", icon: BookOpen },
+  { href: "/notifiche", label: "Notifiche", icon: Bell },
 ];
 
 const operatorUtilityLinks = [
@@ -54,6 +56,7 @@ const baseMobileMoreLinks = [
   primaryLinks[4], // Opportunità
   primaryLinks[5], // Prodotti
   primaryLinks[7], // Manuale
+  primaryLinks[8], // Notifiche
 ];
 
 function isActive(pathname: string, href: string) {

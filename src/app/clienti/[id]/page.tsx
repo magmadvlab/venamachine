@@ -4,6 +4,7 @@ import { ArrowLeft, CalendarDays, Coffee, Gauge, Pencil, Phone, Plus, ShoppingBa
 import { Card } from "@/components/ui/Card";
 import { CustomerEditForm } from "@/components/customers/CustomerEditForm";
 import { CustomerNoteForm } from "@/components/customers/CustomerNoteForm";
+import { SendWhatsAppButton } from "@/components/SendWhatsAppButton";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -181,6 +182,16 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
         </section>
 
         <aside className="space-y-4">
+          {cliente.canale_preferito === "whatsapp" && cliente.telefono && (
+            <Card className="p-4 sm:p-5">
+              <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Contatto WhatsApp</h2>
+              <SendWhatsAppButton
+                sendUrl={`/api/clienti/${cliente.id}/whatsapp`}
+                defaultTesto={`Ciao ${cliente.ragione_sociale ?? ""}, `}
+              />
+            </Card>
+          )}
+
           <Card id="modifica" className="p-4 sm:p-5">
             <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
               <Pencil className="h-5 w-5 text-arancio" />

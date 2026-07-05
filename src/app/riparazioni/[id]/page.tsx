@@ -319,7 +319,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
             <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Azioni</h2>
             <StatusControl id={data.id} stato={data.stato as StatoRiparazione} />
             {cliente?.canale_preferito === "whatsapp" && cliente?.telefono && (
-              <SendWhatsAppButton id={data.id} defaultTesto={defaultTestoWhatsApp} />
+              <SendWhatsAppButton sendUrl={`/api/riparazioni/${data.id}/whatsapp`} defaultTesto={defaultTestoWhatsApp} />
             )}
             <div className="mt-4 grid gap-2 text-sm">
               <a href={`/api/ricevuta/${data.id}`} target="_blank" className="rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
