@@ -68,8 +68,9 @@ export interface RiparazioneRow {
   stato_pagamento: StatoPagamento | null;
   metodo_pagamento: string | null;
   data_pagamento: string | null;
-  cliente: { ragione_sociale: string; email: string | null; telefono: string | null; piva_cf?: string | null } | null;
+  cliente: { ragione_sociale: string; email: string | null; telefono: string | null; piva_cf?: string | null; canale_preferito?: string | null } | null;
   macchina: { marca: string | null; modello: string | null; matricola: string | null; tipologia: TipoMacchina | null; categoria_utilizzo?: CategoriaUtilizzoMacchina | null; colore: string | null; regime_possesso?: RegimePossessoMacchina | null } | null;
+  whatsappTesto?: string;
 }
 
 // stato interno -> stadio mostrato al cliente

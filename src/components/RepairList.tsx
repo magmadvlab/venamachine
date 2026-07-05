@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import StatusControl from "@/components/StatusControl";
 import { DeleteRepairButton } from "@/components/DeleteRepairButton";
+import { SendWhatsAppButton } from "@/components/SendWhatsAppButton";
 
 type FilterKey = "tutte" | "aperte" | "in-lavorazione" | "pronte" | "chiuse";
 
@@ -123,6 +124,9 @@ export function RepairList({ righe, admin }: { righe: RiparazioneRow[]; admin: b
                   </span>
                 </div>
                 <StatusControl id={r.id} stato={r.stato} />
+                {r.cliente?.canale_preferito === "whatsapp" && r.cliente?.telefono && (
+                  <SendWhatsAppButton sendUrl={`/api/riparazioni/${r.id}/whatsapp`} defaultTesto={r.whatsappTesto ?? ""} />
+                )}
               </Card>
             );
           })}

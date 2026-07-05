@@ -231,7 +231,6 @@ export function MaintenanceProposalButton({
       </div>
       {whatsappAvailable && !prenotata && (
         <SendWhatsAppButton
-          id={item.id}
           sendUrl={`/api/manutenzioni/${item.id}/whatsapp`}
           defaultTesto={item.whatsappTesto ?? ""}
         />
