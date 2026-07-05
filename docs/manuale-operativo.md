@@ -346,6 +346,22 @@ Sezione riservata agli amministratori. Serve per:
 
 Il reset elimina schede, clienti, macchine, notifiche e foto. Admin e operatori restano attivi. Va usato solo quando si vuole ripartire con dati operativi puliti.
 
+### Collegare il numero WhatsApp
+
+L'invio WhatsApp (automatico e manuale) passa dal servizio Baileys dedicato (`wzapp-venamachine` su Railway). Il servizio funziona come WhatsApp Web: va collegato una volta al numero di telefono dell'attivita scansionando un QR code, poi resta connesso stabilmente (la sessione e salvata su un volume persistente, non va rifatta a ogni deploy).
+
+Per collegare o ricollegare il numero:
+
+1. Apri nel browser `https://<url-servizio-wzapp-venamachine>/qr?token=<WA_API_SECRET>` (l'URL del servizio e il valore di `WA_API_SECRET` si trovano nelle variabili d'ambiente Railway del servizio `wzapp-venamachine`).
+2. Sul telefono con il numero WhatsApp dell'attivita: apri WhatsApp → **Impostazioni** → **Dispositivi collegati** → **Collega un dispositivo**.
+3. Inquadra il QR mostrato nella pagina col telefono.
+4. La pagina si aggiorna da sola e mostra "WhatsApp connesso" quando l'abbinamento e riuscito.
+5. Da quel momento gli invii (automatici sulle riparazioni e manuali dal bottone "Invia WhatsApp") partono davvero.
+
+Se il numero risulta scollegato (es. dopo un logout dal telefono, o cambio numero), basta ripetere gli stessi passi: il servizio genera un nuovo QR da scansionare.
+
+Per verificare lo stato attuale senza aprire il QR, usa da admin `GET /api/admin/whatsapp/health`: indica se il gateway e configurato e se la sessione risulta connessa (`ok: true`).
+
 ## Stati riparazione
 
 Gli stati interni vengono mostrati al cliente come stadi piu semplici:
