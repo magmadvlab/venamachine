@@ -37,7 +37,7 @@ export function AdminOperatorsForm() {
 
   const inputCls =
     "w-full rounded-xl border border-coffee-200 bg-white px-3 py-3 text-base text-coffee-900 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20";
-  const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-coffee-400";
+  const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-coffee-100";
 
   return (
     <div className="space-y-3">
@@ -49,7 +49,7 @@ export function AdminOperatorsForm() {
           autoComplete="off"
           className={inputCls}
         />
-        <p className="mt-1 text-xs text-coffee-400">L'operatore accederà con questo nome. Dev'essere univoco.</p>
+        <p className="mt-1 text-xs text-coffee-200">L'operatore accederà con questo nome. Dev'essere univoco.</p>
       </div>
       <div>
         <label className={labelCls}>Password provvisoria</label>
@@ -69,7 +69,7 @@ export function AdminOperatorsForm() {
       >
         {saving || isPending ? "Creazione..." : "Crea operatore"}
       </button>
-      {saved && <p className="text-sm font-semibold text-green-700">Operatore creato. Comunicagli nome e password.</p>}
+      {saved && <p className="rounded-lg bg-green-50 px-3 py-2 text-sm font-semibold text-green-800">Operatore creato. Comunicagli nome e password.</p>}
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
     </div>
   );
