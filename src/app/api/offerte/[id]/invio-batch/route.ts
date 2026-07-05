@@ -1,23 +1,10 @@
 import { NextResponse } from "next/server";
 import { getPublicAppUrl } from "@/lib/app-url";
-import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
+import { requireAdmin } from "@/lib/supabase/auth-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
+import { dbError } from "@/app/api/offerte/_helpers";
 
 export const runtime = "nodejs";
-
-async function requireAdmin() {
-  const user = await getCurrentUser();
-  return isAdminEmail(user?.email);
-}
-
-function dbError(step: string, error: { message: string; code?: string; details?: string | null; hint?: string | null }) {
-  return NextResponse.json({
-    error: `${step}: ${error.message}`,
-    code: error.code,
-    details: error.details,
-    hint: error.hint,
-  }, { status: 400 });
-}
 
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
   if (!hasServiceConfig()) {
