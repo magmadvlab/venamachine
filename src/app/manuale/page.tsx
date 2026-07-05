@@ -23,7 +23,7 @@ import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
 export const dynamic = "force-dynamic";
 
-const lastUpdated = "23 giugno 2026";
+const lastUpdated = "5 luglio 2026";
 
 const menuSections = [
   {
@@ -66,20 +66,20 @@ const menuSections = [
     href: "/offerte",
     title: "Offerte",
     icon: BadgePercent,
-    text: "Sezione admin per volantini con foto, prezzi promozionali, link prodotto e invio WhatsApp batch o singolo predisposto.",
+    text: "Sezione admin per campagne, volantini pubblici, PNG, foto prodotto e invio WhatsApp batch o singolo predisposto.",
     adminOnly: true,
   },
   {
     href: "/agenda",
     title: "Agenda",
     icon: CalendarDays,
-    text: "Azioni commerciali generate da rischio comodato, riordino, calo vendite, upgrade e assistenza.",
+    text: "Vista giornaliera con calendario prenotazioni, manutenzioni da convertire, consigli utili con CTA e azioni commerciali.",
   },
   {
     href: "/manutenzioni",
     title: "Manutenzioni",
     icon: Wrench,
-    text: "Programmazione preventiva basata su uso stimato, tempo, categoria macchina e segnali tecnici.",
+    text: "Programmazione preventiva, proposta cliente, link pubblico di prenotazione e collegamento alla scheda riparazione.",
   },
   {
     href: "/opportunita",
@@ -124,8 +124,9 @@ const workflow = [
   "Dal dettaglio assistenza aggiorna stato, diagnosi, preventivo e importo finale.",
   "Registra ogni vendita collegandola alla macchina quando possibile.",
   "Crea offerte solo da admin e usa il batch solo per clienti con consenso marketing.",
-  "Controlla Agenda ogni giorno e salva esiti/follow-up.",
+  "Controlla Agenda ogni giorno: calendario, azioni, manutenzioni da convertire e consigli utili.",
   "Genera Manutenzioni almeno una volta a settimana.",
+  "Prepara il link cliente per prenotare la manutenzione ordinaria negli slot disponibili.",
   "Usa Dashboard per decidere dove intervenire commercialmente.",
   "Aggiorna Prodotti e Configurazione quando cambiano prezzi, soglie o regole.",
 ];
@@ -139,6 +140,8 @@ const rules = [
   "Macchina sottodimensionata: valutare upgrade.",
   "Macchina sovradimensionata: valutare riallocazione.",
   "Vendite registrate bene: score piu affidabile.",
+  "Manutenzione proposta prima della rottura: meno urgenze e meno sovraffollamento.",
+  "Consigli utili: inviarli una tantum e usare CTA coerenti con macchina e consumo.",
 ];
 
 const repairStates = [

@@ -1,6 +1,6 @@
 # Manuale operativo Vena Coffee Machine
 
-Ultimo aggiornamento: 15 giugno 2026.
+Ultimo aggiornamento: 5 luglio 2026.
 
 Questo manuale spiega le voci principali dell'app e il flusso di lavoro consigliato. Va aggiornato ogni volta che vengono aggiunte nuove funzioni operative o cambiano i campi usati dagli operatori.
 
@@ -21,23 +21,35 @@ L'app richiede accesso operatore. La schermata di login accetta nome operatore o
 La navigazione principale e nella barra laterale su desktop e nella barra bassa su mobile. Le voci operative sono:
 
 - `Schede`
-- `Manuale`
-- `Dashboard`
 - `Agenda`
 - `Manutenzioni`
 - `Opportunita`
 - `Clienti`
-- `Vendite`
 - `Prodotti`
-- `Solleciti`
+- `Report`
+- `Manuale`
 
-Le voci di servizio sono:
+Le voci admin o di servizio sono:
 
 - `Nuova scheda`
+- `Offerte`
 - `Configurazione`
 - `Operatori`
 
-Le pagine pubbliche cliente `/r/[token]` non mostrano la navigazione interna e non richiedono login.
+Le pagine pubbliche non mostrano la navigazione interna e non richiedono login:
+
+- `/r/[token]`: pagina cliente della riparazione;
+- `/manutenzione/[token]`: prenotazione manutenzione ordinaria;
+- `/offerte/[slug]`: volantino pubblico.
+
+### Nuove funzioni esposte nel frontend
+
+- `Agenda`: calendario settimanale, manutenzioni da convertire in appuntamento, consigli utili con CTA e azioni commerciali.
+- `Manutenzioni`: generazione preventiva, stati, proposta cliente e link pubblico di prenotazione.
+- `Offerte`: area admin per campagne/volantini, pagina pubblica, PNG, invio WhatsApp batch o singolo predisposto.
+- `Manuale`: guida interna consultabile dagli operatori.
+
+Queste funzioni non sostituiscono le riparazioni: lavorano in parallelo. Le riparazioni restano il flusso tecnico; agenda, manutenzioni, consigli e offerte servono a prevenire rotture, distribuire gli appuntamenti e trasformare vendite/manutenzione in azioni proattive.
 
 ## Voci del menu
 
@@ -203,11 +215,30 @@ Per ogni campagna puoi indicare:
 - link prodotto esterno, utile per e-commerce o PrestaShop;
 - pagina pubblica del volantino.
 
-Il batch WhatsApp prepara gli invii per tutti i clienti con telefono e consenso marketing attivo. Dalla stessa campagna puoi anche preparare l'invio singolo a un cliente specifico. Gli invii vengono registrati nella tabella `campagne_offerte_invii`; l'invio automatico reale richiede il collegamento di un provider WhatsApp.
+Nel frontend l'admin vede:
+
+- form `Nuovo volantino`;
+- lista campagne con stato, validita, righe offerta e invii preparati;
+- pulsante `Anteprima` verso `/offerte/[slug]`;
+- pulsante per pubblicare la campagna;
+- batch WhatsApp per clienti con telefono e consenso marketing;
+- invio singolo verso un cliente marketing;
+- wizard per caricare foto, generare anteprima PNG e scaricare il volantino.
+
+Il batch WhatsApp prepara gli invii per tutti i clienti con telefono e consenso marketing attivo. Dalla stessa campagna puoi anche preparare l'invio singolo a un cliente specifico. Gli invii vengono registrati nella tabella `campagne_offerte_invii`; l'invio automatico reale richiede il worker WhatsApp/fornitore configurato.
 
 ### Agenda
 
-E la lista delle azioni commerciali da fare. Le azioni possono nascere da:
+E la vista operativa giornaliera. Non contiene solo azioni commerciali: unisce calendario, manutenzioni da convertire, consigli utili e azioni da fare.
+
+In alto mostra:
+
+- calendario settimanale delle prenotazioni;
+- manutenzioni `Da convertire`, con link cliente per prenotare;
+- consigli utili una tantum con testo copiabile, CTA prodotto e stato;
+- pulsanti per rigenerare agenda e consigli.
+
+Le azioni commerciali possono nascere da:
 
 - comodato con vendite sotto soglia;
 - Ho.Re.Ca. sotto consumo atteso;
@@ -218,6 +249,8 @@ E la lista delle azioni commerciali da fare. Le azioni possono nascere da:
 - segnali tecnici di caffe non idoneo.
 
 Ogni azione ha priorita, scadenza, motivo e stato. Dopo la chiamata va registrato l'esito e, se serve, un follow-up.
+
+I consigli utili sono messaggi una tantum per aiutare il cliente a usare meglio la macchina. Possono includere una CTA verso un prodotto o accessorio. L'operatore puo copiare il testo, segnare il consiglio come inviato, convertito o scartato. Se manca il consenso marketing, il frontend lo segnala e il contatto va gestito solo come comunicazione operativa o su richiesta esplicita.
 
 ### Manutenzioni
 
@@ -231,6 +264,26 @@ Serve per programmare manutenzioni preventive. Il generatore considera:
 - segnali di caffe non idoneo.
 
 Una manutenzione puo essere da pianificare, pianificata, fatta, saltata o annullata. Quando viene eseguita, puo essere collegata a una scheda riparazione.
+
+Nel frontend ogni manutenzione mostra:
+
+- cliente, macchina e matricola;
+- data prevista e giorni alla scadenza;
+- priorita;
+- stato tecnico;
+- stato proposta cliente: da proporre, proposta inviata, prenotata, scaduta o rifiutata;
+- caffe stimati e giorni dall'ultimo intervento;
+- motivo generato dal motore.
+
+Azioni disponibili:
+
+- `Genera manutenzioni`;
+- segnare `Fatta` o `Annulla`;
+- pianificare data/stato e collegare una scheda riparazione;
+- `Prepara proposta`, che genera testo e link da inviare al cliente;
+- aprire `Link cliente` su `/manutenzione/[token]`.
+
+La pagina pubblica `/manutenzione/[token]` permette al cliente di scegliere uno slot disponibile per manutenzione ordinaria senza accedere all'area operatori. Quando la prenotazione viene presa, la manutenzione risulta `Prenotata` e appare nel calendario agenda.
 
 ### Opportunita
 
@@ -314,9 +367,12 @@ Aggiorna lo stato appena cambia la situazione reale: e il dato che il cliente ve
 7. Durante il lavoro tecnico aggiorna stato, diagnosi, preventivo e importo finale dal dettaglio assistenza.
 8. Registra ogni vendita da `Vendite`, collegandola alla macchina quando possibile.
 9. Controlla `Agenda` ogni giorno e salva esiti/follow-up.
-10. Genera e controlla `Manutenzioni` almeno una volta a settimana.
-11. Usa `Dashboard` per capire dove si perde valore.
-12. Aggiorna `Prodotti` e `Configurazione` quando cambiano prezzi, soglie o regole.
+10. Dalla stessa Agenda controlla manutenzioni da convertire e consigli utili con CTA.
+11. Genera e controlla `Manutenzioni` almeno una volta a settimana.
+12. Prepara il link cliente per le manutenzioni ordinarie e distribuisci gli appuntamenti sul calendario.
+13. Crea offerte solo da admin e usa il batch solo per clienti con consenso marketing.
+14. Usa `Report` per capire dove si perde valore.
+15. Aggiorna `Prodotti` e `Configurazione` quando cambiano prezzi, soglie o regole.
 
 ## Regole pratiche di lettura
 
@@ -328,6 +384,8 @@ Aggiorna lo stato appena cambia la situazione reale: e il dato che il cliente ve
 - Un rientro ravvicinato entro 90 giorni va controllato come possibile ricontrollo o garanzia.
 - Un difetto simile gia segnalato va letto insieme allo storico tecnico.
 - Il dato vendita e il dato piu importante per rendere lo score affidabile.
+- Una manutenzione proposta prima della rottura riduce sovraffollamento e urgenze in officina.
+- Un consiglio utile va inviato una tantum e deve portare valore reale; la CTA commerciale deve essere coerente con macchina e consumo.
 
 ## Dati da compilare sempre
 
@@ -337,7 +395,9 @@ Per rendere affidabili score, agenda e manutenzioni, non lasciare vuoti questi c
 - macchina: matricola, tecnologia prodotto, categoria uso, regime;
 - scheda: stato estetico, difetto, accessori, preventivo/spesa autorizzata;
 - intervento: diagnosi, importo finale, stato aggiornato;
-- vendita: cliente, macchina, prodotto, quantita, prezzo, data e pagamento.
+- vendita: cliente, macchina, prodotto, quantita, prezzo, data e pagamento;
+- marketing: consenso marketing, telefono valido e prodotto/CTA coerente;
+- manutenzione: data prevista, stato proposta, eventuale prenotazione e scheda collegata.
 
 ## Note operative
 
@@ -346,3 +406,6 @@ Per rendere affidabili score, agenda e manutenzioni, non lasciare vuoti questi c
 - La ricevuta PDF e la pagina cliente sono generate a partire dalla scheda.
 - Le foto riparazione usano il bucket privato `riparazioni-foto` e vengono mostrate con link firmati temporanei.
 - Le pagine pubbliche cliente non devono contenere dati interni non necessari.
+- Le proposte manutenzione usano link pubblici con token e non richiedono login cliente.
+- Le offerte pubbliche usano `/offerte/[slug]` e mostrano solo campagne pubblicate o inviate.
+- Il worker WhatsApp su Railway legge la outbox quando il provider e configurato; senza provider l'app prepara testo/link e lascia l'invio manuale all'operatore.
