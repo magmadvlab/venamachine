@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   BarChart3,
-  Bell,
   BookOpen,
   CalendarDays,
   ClipboardList,
@@ -77,12 +76,6 @@ const menuSections = [
     title: "Dashboard",
     icon: BarChart3,
     text: "Vista direzionale su vendite, rischi, azioni, manutenzioni e clienti da recuperare.",
-  },
-  {
-    href: "/solleciti",
-    title: "Solleciti",
-    icon: Bell,
-    text: "Schede ferme o clienti da richiamare dopo preventivi, avvisi o riparazioni completate.",
   },
   {
     href: "/admin",
