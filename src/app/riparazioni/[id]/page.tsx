@@ -204,7 +204,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
             {macchina?.id && (
               <Link
                 href={`/macchine/${macchina.id}`}
-                className="mt-4 inline-flex items-center rounded-full bg-coffee-900 px-3 py-2 text-sm font-semibold text-white active:scale-95"
+                className="mt-4 inline-flex items-center rounded-full bg-arancio px-3 py-2 text-sm font-semibold text-white active:scale-95"
               >
                 Apri scheda macchina
               </Link>
