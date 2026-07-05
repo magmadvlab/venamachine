@@ -29,7 +29,7 @@ Copia `.env.local.example` in `.env.local` e compila:
 - `SUPABASE_SERVICE_ROLE_KEY` — Settings → API (segreta, solo server)
 - `RESEND_API_KEY` + `MAIL_FROM` — da Resend (verifica prima il dominio per non finire in spam)
 - `NEXT_PUBLIC_APP_URL` — dominio pubblico dell'app (usato nei link/QR di tracking, agenda e CTA)
-- `OPENWA_URL`, `OPENWA_API_KEY`, `OPENWA_SESSION` — provider WhatsApp/OpenWA per il worker
+- `WA_GATEWAY_URL`, `WA_GATEWAY_TOKEN`, `WA_INSTANCE` — servizio WhatsApp Baileys dedicato (`services/whatsapp/`) per il worker
 - `WHATSAPP_WORKER_BATCH_SIZE`, `WHATSAPP_WORKER_POLL_MS`, `WORKER_ID` — tuning del worker WhatsApp
 
 ## 3. Avvio
