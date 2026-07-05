@@ -54,9 +54,11 @@ export async function getCurrentUser() {
   }
 }
 
-/** Email considerate admin (variabile ADMIN_EMAILS, separate da virgola). */
+/** Email considerate admin: ADMIN_EMAIL singola o ADMIN_EMAILS separate da virgola. */
 export function adminEmails(): string[] {
-  return (process.env.ADMIN_EMAILS ?? "")
+  return [process.env.ADMIN_EMAIL, process.env.ADMIN_EMAILS]
+    .filter(Boolean)
+    .join(",")
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
