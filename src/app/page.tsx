@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 import { type RiparazioneRow } from "@/lib/types";
+import { getPublicAppUrl } from "@/lib/app-url";
+import { stadioCliente } from "@/lib/types";
 import { BrandHeader } from "@/components/BrandHeader";
 import { Card } from "@/components/ui/Card";
 import { RepairList } from "@/components/RepairList";
@@ -25,15 +27,32 @@ function NuovaSchedaButton() {
 export const dynamic = "force-dynamic";
 
 const RIPARAZIONI_SELECT = `id, numero_scheda, token_pubblico, stato, data_ingresso, difetto_cliente, stato_estetico, importo_preventivo,
-  cliente:clienti(ragione_sociale, email, telefono, piva_cf),
+  cliente:clienti(ragione_sociale, email, telefono, piva_cf, canale_preferito),
   macchina:macchine(marca, modello, matricola, tipologia, colore, regime_possesso)`;
 
+function buildWhatsappTesto(row: { numero_scheda: string; stato: string; token_pubblico: string; macchina: any }) {
+  const stadio = stadioCliente(row.stato as any);
+  const macchinaLabel = [row.macchina?.marca, row.macchina?.modello, row.macchina?.matricola].filter(Boolean).join(" ");
+  const trackingUrl = `${getPublicAppUrl()}/r/${row.token_pubblico}`;
+  return [
+    "Vena Coffee Machine",
+    `Aggiornamento scheda ${row.numero_scheda}: ${stadio}.`,
+    macchinaLabel ? `Macchina: ${macchinaLabel}` : null,
+    `Dettagli: ${trackingUrl}`,
+  ].filter(Boolean).join("\n");
+}
+
 function normalizeRows(data: any[] | null): RiparazioneRow[] {
-  return (data ?? []).map((r: any) => ({
-    ...r,
-    cliente: Array.isArray(r.cliente) ? r.cliente[0] : r.cliente,
-    macchina: Array.isArray(r.macchina) ? r.macchina[0] : r.macchina,
-  })) as RiparazioneRow[];
+  return (data ?? []).map((r: any) => {
+    const cliente = Array.isArray(r.cliente) ? r.cliente[0] : r.cliente;
+    const macchina = Array.isArray(r.macchina) ? r.macchina[0] : r.macchina;
+    return {
+      ...r,
+      cliente,
+      macchina,
+      whatsappTesto: buildWhatsappTesto({ numero_scheda: r.numero_scheda, stato: r.stato, token_pubblico: r.token_pubblico, macchina }),
+    };
+  }) as RiparazioneRow[];
 }
 
 function rowMatchesSearch(row: RiparazioneRow, query: string) {
