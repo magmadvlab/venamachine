@@ -216,6 +216,27 @@ export async function POST(req: Request) {
     .single();
   if (e3) return dbError("Riparazione", e3);
 
+  const prenotazioneId = clean(body.scheda.prenotazione_id);
+  if (prenotazioneId) {
+    const { error: bookingError } = await db
+      .from("prenotazioni")
+      .update({
+        riparazione_id: rip!.id,
+        stato: "in_lavorazione",
+      })
+      .eq("id", prenotazioneId);
+    if (bookingError) return dbError("Prenotazione", bookingError);
+
+    const { error: maintenanceError } = await db
+      .from("manutenzioni_programmate")
+      .update({
+        riparazione_id: rip!.id,
+        stato: "pianificata",
+      })
+      .eq("prenotazione_id", prenotazioneId);
+    if (maintenanceError) return dbError("Manutenzione programmata", maintenanceError);
+  }
+
   // 4) foto in ingresso (se caricata lato client su Storage)
   if (body.scheda.foto_path) {
     await db.from("foto_riparazione").insert({

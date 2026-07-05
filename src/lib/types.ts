@@ -45,6 +45,7 @@ export interface NuovaAccettazione {
     regime_possesso?: RegimePossessoMacchina;
   };
   scheda: {
+    prenotazione_id?: string;
     stato_estetico?: StatoEstetico;
     accessori: string[];
     difetto_cliente?: string;

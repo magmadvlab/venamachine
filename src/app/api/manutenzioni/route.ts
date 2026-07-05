@@ -135,6 +135,7 @@ export async function POST() {
       data_prevista: todayPlus(dueDays(prio)),
       priorita: prio,
       stato: "da_pianificare",
+      durata_stimata_minuti: row.categoria_utilizzo === "horeca" ? 90 : 60,
       caffe_stimati_da_ultimo_intervento: row.estimatedCoffee,
       giorni_da_ultimo_intervento: row.days,
       motivo: [
@@ -150,7 +151,15 @@ export async function POST() {
     if (current) {
       const { error: updateError } = await db
         .from("manutenzioni_programmate")
-        .update(payload)
+        .update({
+          tipo: payload.tipo,
+          data_prevista: payload.data_prevista,
+          priorita: payload.priorita,
+          durata_stimata_minuti: payload.durata_stimata_minuti,
+          caffe_stimati_da_ultimo_intervento: payload.caffe_stimati_da_ultimo_intervento,
+          giorni_da_ultimo_intervento: payload.giorni_da_ultimo_intervento,
+          motivo: payload.motivo,
+        })
         .eq("id", current.id);
       if (updateError) return dbError("Aggiornamento manutenzione", updateError);
       updated += 1;

@@ -23,6 +23,8 @@ function money(value?: number | string | null) {
 function eventIcon(tipo?: string | null) {
   if (tipo === "vendita") return <ShoppingBag className="h-4 w-4" />;
   if (tipo === "riparazione") return <Wrench className="h-4 w-4" />;
+  if (tipo === "manutenzione") return <Coffee className="h-4 w-4" />;
+  if (tipo === "prenotazione") return <CalendarDays className="h-4 w-4" />;
   if (tipo === "azione") return <Target className="h-4 w-4" />;
   if (tipo === "contatto") return <Phone className="h-4 w-4" />;
   return <CalendarDays className="h-4 w-4" />;
@@ -31,6 +33,8 @@ function eventIcon(tipo?: string | null) {
 function eventTone(tipo?: string | null) {
   if (tipo === "vendita") return "border-emerald-200 bg-emerald-50 text-emerald-800";
   if (tipo === "riparazione") return "border-amber-200 bg-amber-50 text-amber-900";
+  if (tipo === "manutenzione") return "border-arancio/30 bg-arancio/10 text-arancio-dark";
+  if (tipo === "prenotazione") return "border-blue-200 bg-blue-50 text-blue-800";
   if (tipo === "azione") return "border-blue-200 bg-blue-50 text-blue-800";
   if (tipo === "contatto") return "border-coffee-200 bg-white text-coffee-700";
   return "border-stone-200 bg-stone-100 text-stone-700";
