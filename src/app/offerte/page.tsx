@@ -90,8 +90,8 @@ export default async function OffertePage() {
           <span>Schede</span>
         </Link>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-arancio-dark">Admin marketing</p>
-          <h1 className="font-display text-xl font-bold text-coffee-900">Offerte prodotti</h1>
+          <p className="text-sm font-semibold text-arancio">Admin marketing</p>
+          <h1 className="font-display text-xl font-bold text-coffee-50">Offerte prodotti</h1>
         </div>
         <span className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-3 text-sm font-semibold text-coffee-700">
           <Send className="h-4 w-4 text-arancio" />
@@ -115,7 +115,7 @@ export default async function OffertePage() {
       <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
         <aside>
           <Card className="p-4 sm:p-5">
-            <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+            <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
               <Megaphone className="h-5 w-5 text-arancio" />
               Nuovo volantino
             </h2>
@@ -128,7 +128,7 @@ export default async function OffertePage() {
 
         <section className="space-y-4">
           {(campagne ?? []).length === 0 ? (
-            <Card className="p-8 text-center text-coffee-400">Nessuna campagna offerte creata.</Card>
+            <Card className="p-8 text-center text-coffee-100">Nessuna campagna offerte creata.</Card>
           ) : (
             (campagne ?? []).map((campagna: any) => {
               const publicUrl = `${getPublicAppUrl()}/offerte/${campagna.slug}`;
@@ -139,13 +139,13 @@ export default async function OffertePage() {
                   <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <h2 className="font-display text-lg font-bold text-coffee-900">{campagna.titolo}</h2>
+                        <h2 className="font-display text-lg font-bold text-coffee-50">{campagna.titolo}</h2>
                         <span className={`rounded-full border px-2 py-1 text-xs font-bold ${stateTone(campagna.stato)}`}>
                           {campagna.stato}
                         </span>
                       </div>
-                      <p className="text-sm text-coffee-500">{campagna.descrizione || "Nessuna descrizione."}</p>
-                      <p className="mt-1 text-xs font-semibold text-coffee-400">
+                      <p className="text-sm text-coffee-200">{campagna.descrizione || "Nessuna descrizione."}</p>
+                      <p className="mt-1 text-xs font-semibold text-coffee-300">
                         Valida fino al {formatDate(campagna.valida_al)} · {righe.length} offerte · {invii.length} invii preparati
                       </p>
                     </div>
@@ -205,7 +205,7 @@ export default async function OffertePage() {
                     campaignValida_al={campagna.valida_al}
                     offertaUrl={publicUrl}
                   />
-                  <p className="mt-3 rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-xs leading-5 text-coffee-600">
+                  <p className="mt-3 rounded-xl border border-coffee-700/60 bg-coffee-800 p-3 text-xs leading-5 text-coffee-100">
                     Sequenza pratica: aggiungi almeno una riga offerta, controlla `Anteprima`, pubblica, poi prepara batch o invio singolo. Gli invii non partono verso clienti senza consenso marketing.
                   </p>
                 </Card>

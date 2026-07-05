@@ -26,7 +26,7 @@ type WizardItem = {
 const inputCls =
   "w-full rounded-xl border border-coffee-200 bg-white px-3 py-2 text-sm text-coffee-900 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20";
 const labelCls =
-  "mb-1 block text-xs font-semibold uppercase tracking-wide text-coffee-400";
+  "mb-1 block text-xs font-semibold uppercase tracking-wide text-coffee-500";
 
 function genId() {
   return Math.random().toString(36).slice(2, 9);
@@ -122,10 +122,10 @@ export function OfferWizard({
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-coffee-900 text-xs font-semibold text-white">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-arancio text-xs font-semibold text-white">
             1
           </span>
-          <span className="text-sm font-semibold text-coffee-900">
+          <span className="text-sm font-semibold text-coffee-50">
             Carica le foto dei prodotti
           </span>
         </div>
@@ -270,10 +270,10 @@ export function OfferWizard({
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-coffee-900 text-xs font-semibold text-white">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-arancio text-xs font-semibold text-white">
             2
           </span>
-          <span className="text-sm font-semibold text-coffee-900">
+          <span className="text-sm font-semibold text-coffee-50">
             Aggiungi nome, descrizione e prezzo
           </span>
         </div>
@@ -362,14 +362,14 @@ export function OfferWizard({
         </div>
 
         {saveError && (
-          <p className="text-xs font-semibold text-red-700">{saveError}</p>
+          <p className="text-xs font-semibold text-red-300">{saveError}</p>
         )}
 
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => setStep(1)}
-            className="text-sm font-semibold text-coffee-500 hover:text-coffee-700"
+            className="text-sm font-semibold text-coffee-200 hover:text-white"
           >
             ← Indietro
           </button>
@@ -406,7 +406,7 @@ export function OfferWizard({
         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-semibold text-white">
           ✓
         </span>
-        <span className="text-sm font-semibold text-coffee-900">
+        <span className="text-sm font-semibold text-coffee-50">
           Volantino pronto
         </span>
       </div>
@@ -440,7 +440,7 @@ export function OfferWizard({
           Apri WA con messaggio pronto
         </a>
       </div>
-      <p className="text-xs text-coffee-400">
+      <p className="text-xs text-coffee-200">
         Scarica il PNG e invialo dalla tua lista broadcast WA, oppure usa il
         link per un messaggio testuale con il link al volantino digitale.
       </p>
@@ -448,7 +448,7 @@ export function OfferWizard({
       <button
         type="button"
         onClick={resetWizard}
-        className="text-sm font-semibold text-coffee-500 hover:text-coffee-700"
+        className="text-sm font-semibold text-coffee-200 hover:text-white"
       >
         + Aggiungi altri prodotti
       </button>

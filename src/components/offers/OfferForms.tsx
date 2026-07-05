@@ -39,7 +39,7 @@ type CustomerOption = {
 };
 
 const inputCls = "w-full rounded-xl border border-coffee-200 bg-white px-3 py-2.5 text-sm text-coffee-900 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20";
-const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-coffee-400";
+const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-coffee-200";
 
 export function OfferCampaignForm() {
   const router = useRouter();
@@ -83,12 +83,12 @@ export function OfferCampaignForm() {
         <span className={labelCls}>Valida fino al</span>
         <input className={inputCls} type="date" value={validaAl} onChange={(e) => setValidaAl(e.target.value)} />
       </label>
-      {error && <p className="text-xs font-semibold text-red-700">{error}</p>}
+      {error && <p className="text-xs font-semibold text-red-300">{error}</p>}
       <button
         type="button"
         onClick={submit}
         disabled={isPending}
-        className="inline-flex items-center gap-2 rounded-full bg-coffee-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+        className="inline-flex items-center gap-2 rounded-full bg-arancio px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
       >
         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Megaphone className="h-4 w-4" />}
         Crea campagna
@@ -185,7 +185,7 @@ export function CampaignBatchButton({ campaignId }: { campaignId: string }) {
           <p className="text-xs text-emerald-600">Seleziona la tua lista broadcast in WA e invia</p>
         </div>
       )}
-      {error && <p className="text-xs font-semibold text-red-700">{error}</p>}
+      {error && <p className="text-xs font-semibold text-red-300">{error}</p>}
     </div>
   );
 }
@@ -263,7 +263,7 @@ export function CampaignSingleSendForm({ campaignId, customers }: { campaignId: 
           Scrivi a {waLink.nome}
         </a>
       )}
-      {error && <p className="text-xs font-semibold text-red-700">{error}</p>}
+      {error && <p className="text-xs font-semibold text-red-300">{error}</p>}
     </div>
   );
 }
