@@ -39,7 +39,7 @@ Dentro `Admin` trovi:
 - `Offerte`;
 - `Configurazione`;
 - `Operatori`;
-- stato WhatsApp.
+- collegamento WhatsApp.
 
 Le pagine pubbliche non mostrano la navigazione interna e non richiedono login:
 
@@ -51,7 +51,7 @@ Le pagine pubbliche non mostrano la navigazione interna e non richiedono login:
 
 - `Agenda`: calendario settimanale, manutenzioni da convertire in appuntamento, consigli utili con CTA e azioni commerciali.
 - `Manutenzioni`: generazione preventiva, stati, proposta cliente e link pubblico di prenotazione.
-- `Admin`: macro-area riservata con campagne offerte, configurazione, operatori e stato WhatsApp.
+- `Admin`: macro-area riservata con campagne offerte, configurazione, operatori e collegamento WhatsApp.
 - `Manuale`: guida interna consultabile dagli operatori.
 
 Queste funzioni non sostituiscono le riparazioni: lavorano in parallelo. Le riparazioni restano il flusso tecnico; agenda, manutenzioni, consigli e offerte servono a prevenire rotture, distribuire gli appuntamenti e trasformare vendite/manutenzione in azioni proattive.
@@ -352,15 +352,15 @@ L'invio WhatsApp (automatico e manuale) passa dal servizio Baileys dedicato (`wz
 
 Per collegare o ricollegare il numero:
 
-1. Apri nel browser `https://<url-servizio-wzapp-venamachine>/qr?token=<WA_API_SECRET>` (l'URL del servizio e il valore di `WA_API_SECRET` si trovano nelle variabili d'ambiente Railway del servizio `wzapp-venamachine`).
+1. Entra nell'app come admin e apri **Admin → WhatsApp**.
 2. Sul telefono con il numero WhatsApp dell'attivita: apri WhatsApp → **Impostazioni** → **Dispositivi collegati** → **Collega un dispositivo**.
-3. Inquadra il QR mostrato nella pagina col telefono.
+3. Inquadra il QR mostrato nella pagina dell'app col telefono.
 4. La pagina si aggiorna da sola e mostra "WhatsApp connesso" quando l'abbinamento e riuscito.
 5. Da quel momento gli invii (automatici sulle riparazioni e manuali dal bottone "Invia WhatsApp") partono davvero.
 
 Se il numero risulta scollegato (es. dopo un logout dal telefono, o cambio numero), basta ripetere gli stessi passi: il servizio genera un nuovo QR da scansionare.
 
-Per verificare lo stato attuale senza aprire il QR, usa da admin `GET /api/admin/whatsapp/health`: indica se il gateway e configurato e se la sessione risulta connessa (`ok: true`).
+La pagina **Admin → WhatsApp** mostra anche lo stato attuale del gateway e indica se la sessione risulta connessa.
 
 ## Stati riparazione
 
@@ -430,4 +430,4 @@ Per rendere affidabili score, agenda e manutenzioni, non lasciare vuoti questi c
 - Le proposte manutenzione usano link pubblici con token e non richiedono login cliente.
 - Le offerte pubbliche usano `/offerte/[slug]` e mostrano solo campagne pubblicate o inviate.
 - Il worker WhatsApp su Railway legge la outbox quando il provider e configurato; senza provider l'app prepara testo/link e lascia l'invio manuale all'operatore.
-- L'admin puo verificare provider e coda da `GET /api/admin/whatsapp/health`.
+- L'admin puo collegare WhatsApp Web, vedere lo stato del provider e controllare la connessione da **Admin → WhatsApp**.

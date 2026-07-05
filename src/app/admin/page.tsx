@@ -29,12 +29,11 @@ const adminCards = [
     cta: "Gestisci operatori",
   },
   {
-    href: "/api/admin/whatsapp/health",
-    title: "Stato WhatsApp",
+    href: "/admin/whatsapp",
+    title: "WhatsApp",
     icon: MessageCircle,
-    text: "Controlla configurazione OpenWA, worker e coda messaggi outbox.",
-    cta: "Controlla stato",
-    external: true,
+    text: "Collega WhatsApp Web, controlla la sessione e verifica che il servizio sia pronto agli invii.",
+    cta: "Collega numero",
   },
 ];
 
@@ -72,7 +71,6 @@ export default async function AdminPage() {
             <Link
               key={item.href}
               href={item.href}
-              target={item.external ? "_blank" : undefined}
               className="group flex min-h-[190px] flex-col rounded-2xl border border-coffee-700/50 bg-coffee-900 p-4 text-coffee-50 shadow-sm shadow-black/30 transition hover:border-arancio/60 hover:bg-coffee-800 active:scale-[0.99]"
             >
               <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-arancio text-white shadow-sm shadow-arancio/20">

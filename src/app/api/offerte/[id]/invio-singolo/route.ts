@@ -115,6 +115,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     valida_al: campagna.valida_al ?? null,
     stato: "in_coda",
     outbox: 1,
-    nota: "Invio WhatsApp accodato nella outbox. Il worker Railway lo invia quando OpenWA è configurato.",
+    nota: "Invio WhatsApp accodato nella outbox. Il worker Railway lo invia quando il servizio WhatsApp è configurato.",
   });
 }

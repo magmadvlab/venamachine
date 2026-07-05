@@ -81,7 +81,7 @@ const menuSections = [
     href: "/admin",
     title: "Admin",
     icon: Settings,
-    text: "Hub riservato con Offerte, Configurazione, Operatori e stato WhatsApp.",
+    text: "Hub riservato con Offerte, Configurazione, Operatori e collegamento WhatsApp.",
     adminOnly: true,
   },
 ];

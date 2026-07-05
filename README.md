@@ -47,7 +47,7 @@ npm run build    # build di produzione
 5. Imposta lo start command del secondo servizio su `npm run worker:whatsapp`.
 6. Imposta `NEXT_PUBLIC_APP_URL` sul dominio Railway/custom domain, cosi link e QR puntano all'URL giusto.
 7. Nel servizio worker inserisci anche `WA_GATEWAY_URL`, `WA_GATEWAY_TOKEN`, `WA_INSTANCE`, `SUPABASE_SERVICE_ROLE_KEY` e le variabili Supabase.
-8. Da admin puoi controllare lo stato provider/outbox con `GET /api/admin/whatsapp/health`.
+8. Da admin puoi collegare WhatsApp Web e controllare lo stato da `/admin/whatsapp`.
 
 Il file `railway.json` configura build e start del servizio web. Il worker usa lo stesso build, ma start command dedicato.
 
