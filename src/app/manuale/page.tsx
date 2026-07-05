@@ -31,12 +31,6 @@ const menuSections = [
     text: "Dashboard dell'officina: cerca riparazioni, apri dettagli, cambia stato e crea nuove schede.",
   },
   {
-    href: "/manuale",
-    title: "Manuale",
-    icon: BookOpen,
-    text: "Guida rapida dentro l'app: riepiloga menu, flusso consigliato, dati da compilare e regole operative.",
-  },
-  {
     href: "/nuova",
     title: "Nuova scheda",
     icon: Plus,
