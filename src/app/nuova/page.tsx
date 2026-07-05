@@ -2,12 +2,15 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import AcceptanceForm from "@/components/AcceptanceForm";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
-import type { ProfiloAttivita } from "@/lib/types";
+import type { NuovaAccettazione, ProfiloAttivita } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function NuovaScheda() {
+export default async function NuovaScheda({ searchParams }: { searchParams?: { prenotazione?: string } }) {
   let profiliAttivita: ProfiloAttivita[] = [];
+  let initialValue: Partial<NuovaAccettazione> | undefined;
+  let prenotazioneId: string | undefined;
+
   if (missingSupabaseEnv().length === 0) {
     const db = createServiceClient();
     const { data } = await db
@@ -15,6 +18,61 @@ export default async function NuovaScheda() {
       .select("id, codice, nome, caffe_giornalieri_min, caffe_giornalieri_max")
       .order("nome", { ascending: true });
     profiliAttivita = (data ?? []) as ProfiloAttivita[];
+
+    const requestedBookingId = searchParams?.prenotazione?.trim();
+    if (requestedBookingId) {
+      const { data: booking } = await db
+        .from("v_prenotazioni_agenda")
+        .select("id, cliente_id, macchina_id, descrizione, manutenzione_motivo")
+        .eq("id", requestedBookingId)
+        .maybeSingle();
+
+      if (booking?.cliente_id && booking?.macchina_id) {
+        const [{ data: cliente }, { data: macchina }] = await Promise.all([
+          db
+            .from("clienti")
+            .select("tipo, ragione_sociale, piva_cf, indirizzo, telefono, email, consenso_gdpr, canale_preferito, profilo_attivita_id, caffe_giornalieri_attesi_override, note_fedelta")
+            .eq("id", booking.cliente_id)
+            .maybeSingle(),
+          db
+            .from("macchine")
+            .select("marca, modello, colore, matricola, tipologia, categoria_utilizzo, regime_possesso")
+            .eq("id", booking.macchina_id)
+            .maybeSingle(),
+        ]);
+
+        prenotazioneId = booking.id;
+        initialValue = {
+          cliente: {
+            tipo: cliente?.tipo ?? "privato",
+            ragione_sociale: cliente?.ragione_sociale ?? "",
+            piva_cf: cliente?.piva_cf ?? "",
+            indirizzo: cliente?.indirizzo ?? "",
+            telefono: cliente?.telefono ?? "",
+            email: cliente?.email ?? "",
+            consenso_gdpr: Boolean(cliente?.consenso_gdpr),
+            canale_preferito: cliente?.canale_preferito ?? "email",
+            profilo_attivita_id: cliente?.profilo_attivita_id ?? undefined,
+            caffe_giornalieri_attesi_override: cliente?.caffe_giornalieri_attesi_override ?? undefined,
+            note_fedelta: cliente?.note_fedelta ?? undefined,
+          },
+          macchina: {
+            marca: macchina?.marca ?? "",
+            modello: macchina?.modello ?? "",
+            colore: macchina?.colore ?? "",
+            matricola: macchina?.matricola ?? "",
+            tipologia: macchina?.tipologia ?? "capsule",
+            categoria_utilizzo: macchina?.categoria_utilizzo ?? "ufficio",
+            regime_possesso: macchina?.regime_possesso ?? "proprieta_cliente",
+          },
+          scheda: {
+            accessori: [],
+            preventivo_richiesto: false,
+            difetto_cliente: booking.manutenzione_motivo ?? booking.descrizione ?? "Manutenzione ordinaria programmata",
+          },
+        };
+      }
+    }
   }
 
   return (
@@ -29,7 +87,7 @@ export default async function NuovaScheda() {
         </Link>
         <h1 className="font-display text-lg font-bold text-coffee-900 sm:text-xl">Nuova accettazione</h1>
       </header>
-      <AcceptanceForm profiliAttivita={profiliAttivita} />
+      <AcceptanceForm profiliAttivita={profiliAttivita} initialValue={initialValue} prenotazioneId={prenotazioneId} />
     </main>
   );
 }

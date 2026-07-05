@@ -123,7 +123,10 @@ function MobileNavLink({ item, pathname }: { item: any; pathname: string }) {
 }
 
 function shouldHideChrome(pathname: string) {
-  return pathname === "/login" || pathname.startsWith("/r/") || (pathname !== "/offerte" && pathname.startsWith("/offerte/"));
+  return pathname === "/login"
+    || pathname.startsWith("/r/")
+    || pathname.startsWith("/manutenzione/")
+    || (pathname !== "/offerte" && pathname.startsWith("/offerte/"));
 }
 
 export function AppChrome({ children, admin = false, incassiCount = 0 }: { children: React.ReactNode; admin?: boolean; incassiCount?: number }) {

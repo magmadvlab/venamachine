@@ -1,13 +1,13 @@
 # Vena Coffee Machine · Officina
 
 PWA per l'accettazione e il tracking delle riparazioni di macchine da caffè.
-Stack: **Next.js (App Router) + Supabase (PostgreSQL + Storage) + Resend (email)**.
+Stack: **Next.js (App Router) + Supabase (PostgreSQL + Storage) + Resend (email) + Railway worker WhatsApp**.
 
 Flusso coperto da questo scaffold:
 1. L'operatore crea una scheda di accettazione dal telefono.
 2. Se la macchina ha graffi/danni, allega una foto (caricata su Supabase Storage).
 3. Si genera la **ricevuta di deposito in PDF** (numero scheda automatico + QR verso la pagina di tracking).
-4. La ricevuta viene inviata al cliente via **email** (con PDF allegato).
+4. La ricevuta viene inviata via **email** o messa in coda **WhatsApp** in base al canale cliente.
 5. Il cliente segue lo stato (Preventivo → In lavorazione → Pronta) su una **pagina pubblica** senza login.
 
 ## 1. Database
@@ -28,7 +28,9 @@ Copia `.env.local.example` in `.env.local` e compila:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Settings → API
 - `SUPABASE_SERVICE_ROLE_KEY` — Settings → API (segreta, solo server)
 - `RESEND_API_KEY` + `MAIL_FROM` — da Resend (verifica prima il dominio per non finire in spam)
-- `NEXT_PUBLIC_APP_URL` — dominio pubblico dell'app (usato nei link/QR di tracking)
+- `NEXT_PUBLIC_APP_URL` — dominio pubblico dell'app (usato nei link/QR di tracking, agenda e CTA)
+- `OPENWA_URL`, `OPENWA_API_KEY`, `OPENWA_SESSION` — provider WhatsApp/OpenWA per il worker
+- `WHATSAPP_WORKER_BATCH_SIZE`, `WHATSAPP_WORKER_POLL_MS`, `WORKER_ID` — tuning del worker WhatsApp
 
 ## 3. Avvio
 ```bash
@@ -37,14 +39,15 @@ npm run dev      # http://localhost:3000
 npm run build    # build di produzione
 ```
 
-## 4. Deploy su Vercel
-1. Importa il repo GitHub su Vercel (Next.js viene rilevato in automatico).
-2. In **Settings → Environment Variables** inserisci le stesse chiavi del `.env.local`
-   (NON committarle nel repo).
-3. Deploy. Le route che generano il PDF girano come funzioni serverless Node
-   (hanno gia `export const runtime = "nodejs"`).
-4. Imposta `NEXT_PUBLIC_APP_URL` sul dominio Vercel (o sul dominio custom) cosi i
-   link/QR di tracking puntano all'URL giusto.
+## 4. Deploy su Railway
+1. Crea il servizio web Railway dal repo GitHub.
+2. In **Variables** inserisci le stesse chiavi del `.env.local` (NON committarle nel repo).
+3. Usa `npm run start` per il servizio web.
+4. Crea un secondo servizio Railway dallo stesso repo per WhatsApp.
+5. Imposta lo start command del secondo servizio su `npm run worker:whatsapp`.
+6. Imposta `NEXT_PUBLIC_APP_URL` sul dominio Railway/custom domain, cosi link e QR puntano all'URL giusto.
+
+Il file `railway.json` configura build e start del servizio web. Il worker usa lo stesso build, ma start command dedicato.
 
 ## Brand
 Il brand visibile dell'app e delle comunicazioni e `Vena Coffee Machine`.
@@ -57,25 +60,30 @@ src/
     page.tsx                 dashboard operatore (lista schede + stato)
     nuova/page.tsx           form di accettazione
     r/[token]/page.tsx       pagina pubblica di tracking (cliente)
-    api/riparazioni/route.ts POST: crea scheda + foto + PDF + email
+    api/riparazioni/route.ts POST: crea scheda + foto + PDF + notifica
     api/ricevuta/[id]/route.ts GET: scarica/visualizza la ricevuta PDF
   lib/
     supabase/                client browser + client server (service role)
     pdf/ricevuta.tsx         layout della ricevuta (react-pdf)
     pdf/build.ts             render PDF + QR
     email.ts                 invio via Resend
+    outbox.ts                coda messaggi server-side
+    whatsapp.ts              client OpenWA
     types.ts                 tipi + mappatura stato→stadio cliente
+scripts/
+  whatsapp-worker.mjs        worker Railway per invii WhatsApp
 supabase/                    script SQL (schema, notifiche, storage)
 ```
 
 ## Note
 - La generazione PDF gira in runtime **Node** (route con `export const runtime = "nodejs"`).
-- L'email parte solo se il cliente ha un'email. Ogni invio è loggato in tabella `notifiche`.
+- Se il cliente preferisce WhatsApp e ha telefono, la notifica entra in `messaggi_outbox` e viene processata dal worker.
+- Se il cliente preferisce email, l'invio parte via Resend. Ogni evento viene loggato in tabella `notifiche`.
 - Le icone PWA (`/icon-192.png`, `/icon-512.png`) sono da aggiungere in `public/`.
 
 ## Prossimi step (non ancora inclusi)
 - Autenticazione operatori (Supabase Auth) e Row Level Security.
 - Avanzamento stati dalla dashboard (diagnosi → preventivo → riparata → ritirata).
 - Invio preventivo con accetta/rifiuta dal cliente sulla pagina di tracking.
-- Avviso "pronta per il ritiro" via SMS (provider cloud, es. Skebby).
+- Avviso "pronta per il ritiro" via WhatsApp worker.
 - Confronto con i dati di vendita.

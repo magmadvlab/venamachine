@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, CalendarCheck, CalendarClock, Gauge, Plus, Wrench } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
-import { GenerateMaintenanceButton, MaintenanceControls } from "@/components/maintenance/MaintenanceActions";
+import { GenerateMaintenanceButton, MaintenanceControls, MaintenanceProposalButton } from "@/components/maintenance/MaintenanceActions";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +19,14 @@ const TIPO_LABELS: Record<string, string> = {
   decalcificazione: "Decalcificazione",
   controllo: "Controllo",
   rigenerazione: "Rigenerazione",
+};
+
+const PROPOSTA_LABELS: Record<string, string> = {
+  da_inviare: "Da proporre",
+  inviata: "Proposta inviata",
+  prenotata: "Prenotata",
+  scaduta: "Scaduta",
+  rifiutata: "Rifiutata",
 };
 
 function formatDate(value?: string | null) {
@@ -43,6 +51,13 @@ function priorityTone(priority?: number | null) {
   if ((priority ?? 0) >= 90) return "border-red-200 bg-red-50 text-red-800";
   if ((priority ?? 0) >= 70) return "border-amber-200 bg-amber-50 text-amber-900";
   return "border-coffee-200 bg-white text-coffee-700";
+}
+
+function proposalTone(stato?: string | null) {
+  if (stato === "prenotata") return "border-emerald-200 bg-emerald-50 text-emerald-800";
+  if (stato === "inviata") return "border-blue-200 bg-blue-50 text-blue-800";
+  if (stato === "rifiutata" || stato === "scaduta") return "border-stone-200 bg-stone-100 text-stone-600";
+  return "border-amber-200 bg-amber-50 text-amber-900";
 }
 
 export default async function ManutenzioniPage({ searchParams }: { searchParams?: { stato?: string } }) {
@@ -155,6 +170,9 @@ export default async function ManutenzioniPage({ searchParams }: { searchParams?
                     <span className={`rounded-full border px-2 py-0.5 text-xs font-bold ${priorityTone(row.priorita)}`}>
                       Priorità {row.priorita ?? "-"}
                     </span>
+                    <span className={`rounded-full border px-2 py-0.5 text-xs font-bold ${proposalTone(row.stato_proposta)}`}>
+                      {PROPOSTA_LABELS[row.stato_proposta] ?? "Da proporre"}
+                    </span>
                   </div>
                 </div>
 
@@ -174,6 +192,11 @@ export default async function ManutenzioniPage({ searchParams }: { searchParams?
                   <span>{row.categoria_utilizzo === "horeca" ? "Ho.Re.Ca." : row.categoria_utilizzo ?? "Categoria n.d."}</span>
                   <span>{row.caffe_stimati_da_ultimo_intervento ?? 0} caffè stimati</span>
                   <span>{row.giorni_da_ultimo_intervento ?? "-"} giorni da ultimo intervento</span>
+                  {row.prenotazione_inizio && (
+                    <span className="col-span-2 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 font-semibold text-emerald-800">
+                      Prenotata: {formatDate(row.prenotazione_inizio)} · {row.prenotazione_stato}
+                    </span>
+                  )}
                 </div>
 
                 <p className="mt-3 rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm text-coffee-700">{row.motivo}</p>
@@ -204,6 +227,13 @@ export default async function ManutenzioniPage({ searchParams }: { searchParams?
                     stato: row.stato,
                     data_prevista: row.data_prevista,
                     note: row.note,
+                  }}
+                />
+                <MaintenanceProposalButton
+                  item={{
+                    id: row.id,
+                    token_pubblico: row.token_pubblico,
+                    stato_proposta: row.stato_proposta,
                   }}
                 />
               </Card>

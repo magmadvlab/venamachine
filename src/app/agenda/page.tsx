@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Gauge, History, Phone, ShoppingBag, Target, TimerReset } from "lucide-react";
+import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Gauge, History, Lightbulb, Phone, ShoppingBag, Target, TimerReset } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
+import { CalendarioSettimanale } from "@/components/agenda/CalendarioSettimanale";
 import { AgendaActionControls, GenerateAgendaButton } from "@/components/commercial/AgendaActions";
+import { GenerateSuggestionsButton, SuggestionCard } from "@/components/commercial/SuggestionActions";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +71,15 @@ function dueLabel(days?: number | null) {
   return `Tra ${days}g`;
 }
 
+function startOfWeek() {
+  const date = new Date();
+  const day = date.getDay();
+  const offset = day === 0 ? -6 : 1 - day;
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + offset);
+  return date;
+}
+
 function matchesFilter(row: any, filter: string) {
   if (filter === "tutte") return true;
   if (filter === "chiuse") return row.stato === "fatta" || row.stato === "annullata";
@@ -106,16 +117,46 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
   }
 
   const db = createServiceClient();
-  const { data, error } = await db
-    .from("v_agenda_azioni_commerciali")
-    .select(`id, cliente_id, macchina_id, origine, tipo, priorita, stato, motivo, azione_consigliata,
-      data_scadenza, giorni_a_scadenza, data_completamento, esito, note, created_at, updated_at,
-      ragione_sociale, telefono, email, marca, modello, matricola, tipologia, regime_possesso,
-      categoria_utilizzo, stato_ciclo_vita, creato_da_operatore, completato_da_operatore,
-      ultimo_contatto_at, ultimo_contatto_canale, ultimo_contatto_esito, prossimo_follow_up`)
-    .order("data_scadenza", { ascending: true })
-    .order("priorita", { ascending: false })
-    .limit(300);
+  const weekStart = startOfWeek();
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 7);
+  const [
+    { data, error },
+    { data: prenotazioni },
+    { data: manutenzioniDaPrenotare },
+    { data: suggerimenti },
+  ] = await Promise.all([
+    db
+      .from("v_agenda_azioni_commerciali")
+      .select(`id, cliente_id, macchina_id, origine, tipo, priorita, stato, motivo, azione_consigliata,
+        data_scadenza, giorni_a_scadenza, data_completamento, esito, note, created_at, updated_at,
+        ragione_sociale, telefono, email, marca, modello, matricola, tipologia, regime_possesso,
+        categoria_utilizzo, stato_ciclo_vita, creato_da_operatore, completato_da_operatore,
+        ultimo_contatto_at, ultimo_contatto_canale, ultimo_contatto_esito, prossimo_follow_up`)
+      .order("data_scadenza", { ascending: true })
+      .order("priorita", { ascending: false })
+      .limit(300),
+    db
+      .from("v_prenotazioni_agenda")
+      .select("*")
+      .lt("inizio", weekEnd.toISOString())
+      .gt("fine", weekStart.toISOString())
+      .order("inizio", { ascending: true }),
+    db
+      .from("v_manutenzioni_programmate_agenda")
+      .select("id, token_pubblico, ragione_sociale, marca, modello, matricola, data_prevista, priorita, stato_proposta, motivo")
+      .in("stato", ["da_pianificare", "pianificata"])
+      .neq("stato_proposta", "prenotata")
+      .order("data_prevista", { ascending: true })
+      .limit(8),
+    db
+      .from("v_suggerimenti_agenda")
+      .select("id, stato, priorita, titolo, messaggio, cta_label, cta_href, ragione_sociale, telefono, email, consenso_marketing, marca, modello, matricola, prodotto_nome, fonte_nome, fonte_url")
+      .in("stato", ["da_preparare", "pronto", "inviato"])
+      .order("priorita", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(8),
+  ]);
 
   const allRows = data ?? [];
   const rows = allRows.filter((row: any) => matchesFilter(row, filter)).filter((row: any) => matchesSearch(row, q));
@@ -146,10 +187,73 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
       {error ? (
         <Card className="border-amber-200 bg-amber-50 text-amber-950">
           <p className="font-semibold">Agenda non ancora disponibile.</p>
-          <p className="mt-1 text-sm">Applica le migrazioni 10, 11 e 12 su Supabase, poi rigenera le azioni.</p>
+          <p className="mt-1 text-sm">Applica le migrazioni commerciali e agenda su Supabase, poi rigenera le azioni.</p>
         </Card>
       ) : (
         <>
+          <div className="mb-4 grid gap-4 xl:grid-cols-[1fr_340px]">
+            <CalendarioSettimanale initialPrenotazioni={(prenotazioni ?? []) as any} />
+            <div className="space-y-4">
+              <Card className="p-4 sm:p-5">
+                <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+                  <CalendarDays className="h-5 w-5 text-arancio" />
+                  Da convertire
+                </h2>
+                {(manutenzioniDaPrenotare ?? []).length === 0 ? (
+                  <p className="text-sm text-coffee-400">Nessuna manutenzione in attesa di proposta.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {(manutenzioniDaPrenotare ?? []).map((row: any) => (
+                      <li key={row.id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-semibold text-coffee-900">{row.ragione_sociale}</p>
+                            <p className="text-xs text-coffee-500">
+                              {[row.marca, row.modello, row.matricola].filter(Boolean).join(" · ") || "Macchina"}
+                            </p>
+                          </div>
+                          <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-coffee-700">
+                            {formatDate(row.data_prevista)}
+                          </span>
+                        </div>
+                        <p className="mt-2 line-clamp-3 text-xs leading-5 text-coffee-600">{row.motivo}</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Link href="/manutenzioni" className="rounded-full border border-coffee-200 bg-white px-3 py-1.5 text-xs font-bold text-coffee-700">
+                            Apri manutenzioni
+                          </Link>
+                          {row.token_pubblico && (
+                            <a href={`/manutenzione/${row.token_pubblico}`} target="_blank" rel="noreferrer" className="rounded-full bg-arancio px-3 py-1.5 text-xs font-bold text-white">
+                              Link cliente
+                            </a>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+
+              <Card className="p-4 sm:p-5">
+                <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                  <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+                    <Lightbulb className="h-5 w-5 text-arancio" />
+                    Consigli utili
+                  </h2>
+                  <GenerateSuggestionsButton />
+                </div>
+                {(suggerimenti ?? []).length === 0 ? (
+                  <p className="text-sm text-coffee-400">Nessun suggerimento una tantum pronto.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {(suggerimenti ?? []).map((row: any) => (
+                      <SuggestionCard key={row.id} suggestion={row} />
+                    ))}
+                  </ul>
+                )}
+              </Card>
+            </div>
+          </div>
+
           <section className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Card className="p-3">
               <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-coffee-400">
