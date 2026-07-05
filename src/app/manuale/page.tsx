@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BadgePercent,
   BarChart3,
   Bell,
   BookOpen,
@@ -14,7 +13,6 @@ import {
   Settings,
   ShoppingBag,
   Target,
-  UserRound,
   Users,
   Wrench,
 } from "lucide-react";
@@ -63,13 +61,6 @@ const menuSections = [
     text: "Catalogo con formato, caffe stimati, prezzo, margine e compatibilita con macchine.",
   },
   {
-    href: "/offerte",
-    title: "Offerte",
-    icon: BadgePercent,
-    text: "Sezione admin per campagne, volantini pubblici, PNG, foto prodotto e invio WhatsApp batch o singolo predisposto.",
-    adminOnly: true,
-  },
-  {
     href: "/agenda",
     title: "Agenda",
     icon: CalendarDays,
@@ -100,17 +91,10 @@ const menuSections = [
     text: "Schede ferme o clienti da richiamare dopo preventivi, avvisi o riparazioni completate.",
   },
   {
-    href: "/configurazione",
-    title: "Configurazione",
+    href: "/admin",
+    title: "Admin",
     icon: Settings,
-    text: "Soglie, profili attivita, regole azioni e impostazioni score modificabili dall'app.",
-    adminOnly: true,
-  },
-  {
-    href: "/admin/operatori",
-    title: "Operatori",
-    icon: UserRound,
-    text: "Sezione admin per creare operatori, vedere accessi abilitati e usare il reset dati operativo.",
+    text: "Hub riservato con Offerte, Configurazione, Operatori e stato WhatsApp.",
     adminOnly: true,
   },
 ];

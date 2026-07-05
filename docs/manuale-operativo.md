@@ -32,9 +32,14 @@ La navigazione principale e nella barra laterale su desktop e nella barra bassa 
 Le voci admin o di servizio sono:
 
 - `Nuova scheda`
-- `Offerte`
-- `Configurazione`
-- `Operatori`
+- `Admin`
+
+Dentro `Admin` trovi:
+
+- `Offerte`;
+- `Configurazione`;
+- `Operatori`;
+- stato WhatsApp/OpenWA.
 
 Le pagine pubbliche non mostrano la navigazione interna e non richiedono login:
 
@@ -46,7 +51,7 @@ Le pagine pubbliche non mostrano la navigazione interna e non richiedono login:
 
 - `Agenda`: calendario settimanale, manutenzioni da convertire in appuntamento, consigli utili con CTA e azioni commerciali.
 - `Manutenzioni`: generazione preventiva, stati, proposta cliente e link pubblico di prenotazione.
-- `Offerte`: area admin per campagne/volantini, pagina pubblica, PNG, invio WhatsApp batch o singolo predisposto.
+- `Admin`: macro-area riservata con campagne offerte, configurazione, operatori e stato WhatsApp/OpenWA.
 - `Manuale`: guida interna consultabile dagli operatori.
 
 Queste funzioni non sostituiscono le riparazioni: lavorano in parallelo. Le riparazioni restano il flusso tecnico; agenda, manutenzioni, consigli e offerte servono a prevenire rotture, distribuire gli appuntamenti e trasformare vendite/manutenzione in azioni proattive.

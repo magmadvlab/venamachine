@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BadgePercent,
   Banknote,
   BarChart3,
   BookOpen,
@@ -17,7 +16,6 @@ import {
   Settings,
   Target,
   Users,
-  UserRound,
   Wrench,
   X,
 } from "lucide-react";
@@ -40,9 +38,7 @@ const operatorUtilityLinks = [
 ];
 
 const adminUtilityLinks = [
-  { href: "/offerte", label: "Offerte", icon: BadgePercent },
-  { href: "/configurazione", label: "Configurazione", icon: Settings },
-  { href: "/admin/operatori", label: "Operatori", icon: UserRound },
+  { href: "/admin", label: "Admin", icon: Settings },
 ];
 
 const mobilePrimaryLinks = [
