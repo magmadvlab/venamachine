@@ -18,13 +18,77 @@ import { isLegacyRepairResidue } from "@/lib/legacy-repairs";
 
 export const dynamic = "force-dynamic";
 
+const FULL_REPAIR_SELECT = `id, numero_scheda, token_pubblico, stato, data_ingresso, data_riparazione, data_avviso_cliente, data_ritiro,
+  difetto_cliente, diagnosi_tecnico, stato_estetico, accessori, preventivo_richiesto, spesa_max_autorizzata, importo_preventivo, importo_finale,
+  stato_pagamento, metodo_pagamento, data_pagamento,
+  cliente:clienti(ragione_sociale, tipo, piva_cf, indirizzo, telefono, email, canale_preferito),
+  macchina:macchine(id, marca, modello, matricola, tipologia, categoria_utilizzo, colore, regime_possesso),
+  operatore:operatori(nome)`;
+
+const COMPAT_REPAIR_SELECT = `id, numero_scheda, token_pubblico, stato, data_ingresso, data_riparazione, data_avviso_cliente, data_ritiro,
+  difetto_cliente, diagnosi_tecnico, stato_estetico, accessori, preventivo_richiesto, spesa_max_autorizzata, importo_preventivo, importo_finale,
+  cliente:clienti(ragione_sociale, tipo, piva_cf, indirizzo, telefono, email),
+  macchina:macchine(id, marca, modello, matricola, tipologia, colore, regime_possesso),
+  operatore:operatori(nome)`;
+
 function field(label: string, value?: string | number | null) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-coffee-900">{value || "—"}</p>
+      <p className="mt-1 text-sm font-semibold text-coffee-50">{value || "—"}</p>
     </div>
   );
+}
+
+function normalizeDetailRow(row: any, options?: { limitedColumns?: boolean }) {
+  const cliente = Array.isArray(row.cliente) ? row.cliente[0] : row.cliente;
+  const macchina = Array.isArray(row.macchina) ? row.macchina[0] : row.macchina;
+  const operatore = Array.isArray(row.operatore) ? row.operatore[0] : row.operatore;
+
+  return {
+    ...row,
+    __limitedColumns: Boolean(options?.limitedColumns),
+    stato_pagamento: row.stato_pagamento ?? null,
+    metodo_pagamento: row.metodo_pagamento ?? null,
+    data_pagamento: row.data_pagamento ?? null,
+    cliente: cliente ? { canale_preferito: null, ...cliente } : cliente,
+    macchina: macchina ? { categoria_utilizzo: null, ...macchina } : macchina,
+    operatore,
+  };
+}
+
+async function loadRepairDetail(db: any, id: string) {
+  const full = await db
+    .from("riparazioni")
+    .select(FULL_REPAIR_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (full.data) return normalizeDetailRow(full.data);
+  if (!full.error) return null;
+
+  console.warn("Dettaglio riparazione: query completa fallita, uso fallback compatibile.", {
+    id,
+    code: full.error.code,
+    message: full.error.message,
+  });
+
+  const compat = await db
+    .from("riparazioni")
+    .select(COMPAT_REPAIR_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (compat.error) {
+    console.error("Dettaglio riparazione: anche la query compatibile e' fallita.", {
+      id,
+      code: compat.error.code,
+      message: compat.error.message,
+    });
+    return null;
+  }
+
+  return compat.data ? normalizeDetailRow(compat.data, { limitedColumns: true }) : null;
 }
 
 export default async function DettaglioRiparazione({ params }: { params: { id: string } }) {
@@ -33,22 +97,14 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
   if (isLegacyRepairResidue(params.id)) notFound();
 
   const db = createServiceClient();
-  const { data } = await db
-    .from("riparazioni")
-    .select(`id, numero_scheda, token_pubblico, stato, data_ingresso, data_riparazione, data_avviso_cliente, data_ritiro,
-      difetto_cliente, diagnosi_tecnico, stato_estetico, accessori, preventivo_richiesto, spesa_max_autorizzata, importo_preventivo, importo_finale,
-      stato_pagamento, metodo_pagamento, data_pagamento,
-      cliente:clienti(ragione_sociale, tipo, piva_cf, indirizzo, telefono, email, canale_preferito),
-      macchina:macchine(id, marca, modello, matricola, tipologia, categoria_utilizzo, colore, regime_possesso),
-      operatore:operatori(nome)`)
-    .eq("id", params.id)
-    .single();
+  const data = await loadRepairDetail(db, params.id);
 
   if (!data) notFound();
 
-  const cliente: any = Array.isArray(data.cliente) ? data.cliente[0] : data.cliente;
-  const macchina: any = Array.isArray(data.macchina) ? data.macchina[0] : data.macchina;
-  const operatore: any = Array.isArray(data.operatore) ? data.operatore[0] : data.operatore;
+  const cliente: any = data.cliente;
+  const macchina: any = data.macchina;
+  const operatore: any = data.operatore;
+  const paymentEnabled = !data.__limitedColumns;
   const stadio = stadioCliente(data.stato as StatoRiparazione);
   const macchinaLabel = [macchina?.marca, macchina?.modello, macchina?.matricola].filter(Boolean).join(" ");
   const trackingUrl = `${getPublicAppUrl()}/r/${data.token_pubblico}`;
@@ -100,7 +156,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
         </Link>
         <div className="min-w-0">
           <p className="font-mono text-sm font-bold text-arancio-dark">{data.numero_scheda}</p>
-          <h1 className="font-display text-xl font-bold text-coffee-900">Dettaglio assistenza</h1>
+          <h1 className="font-display text-xl font-bold text-coffee-50">Dettaglio assistenza</h1>
         </div>
         <Badge stadio={stadio} className="ml-auto" />
       </header>
@@ -121,7 +177,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
           />
 
           <Card className="sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Cliente</h2>
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Cliente</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {field("Nome / Ragione sociale", cliente?.ragione_sociale)}
               {field("Tipo", cliente?.tipo)}
@@ -134,7 +190,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
           </Card>
 
           <Card className="sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Macchina</h2>
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Macchina</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {field("Marca", macchina?.marca)}
               {field("Modello", macchina?.modello)}
@@ -156,7 +212,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
           </Card>
 
           <Card className="sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Intervento</h2>
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Intervento</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {field("Ingresso", new Date(data.data_ingresso).toLocaleDateString("it-IT"))}
               {field("Riparazione", data.data_riparazione ? new Date(data.data_riparazione).toLocaleDateString("it-IT") : null)}
@@ -195,12 +251,13 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
               statoPagamento={(data as any).stato_pagamento}
               metodoPagamento={(data as any).metodo_pagamento}
               dataPagamento={(data as any).data_pagamento}
+              paymentEnabled={paymentEnabled}
             />
             {data.stato === "attesa_preventivo" && <QuoteOutcome id={data.id} />}
           </Card>
 
           <Card className="sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Foto</h2>
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Foto</h2>
             {foto.length === 0 ? (
               <p className="text-sm text-coffee-400">Nessuna foto registrata.</p>
             ) : (
@@ -228,7 +285,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
           </Card>
 
           <Card className="sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Storico stessa macchina</h2>
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Storico stessa macchina</h2>
             {(storico ?? []).length === 0 ? (
               <p className="text-sm text-coffee-400">Nessun altro intervento registrato.</p>
             ) : (
@@ -237,7 +294,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
                   const storicoOperatore = Array.isArray(r.operatore) ? r.operatore[0] : r.operatore;
                   return (
                     <li key={r.id} className="py-3 text-sm">
-                      <Link href={`/riparazioni/${r.id}`} className="font-mono text-xs font-bold text-coffee-700 underline underline-offset-2">
+                      <Link href={`/riparazioni/${r.id}`} className="font-mono text-xs font-bold text-arancio underline underline-offset-2">
                         {r.numero_scheda}
                       </Link>
                       <span className="ml-2 text-coffee-400">{new Date(r.data_ingresso).toLocaleDateString("it-IT")}</span>
@@ -247,7 +304,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
                         </span>
                       )}
                       {storicoOperatore?.nome && <p className="mt-1 text-xs font-semibold text-coffee-500">Operatore: {storicoOperatore.nome}</p>}
-                      <p className="mt-1 text-coffee-700">{r.difetto_cliente || "Difetto non indicato"}</p>
+                      <p className="mt-1 text-coffee-100">{r.difetto_cliente || "Difetto non indicato"}</p>
                       {r.diagnosi_tecnico && <p className="mt-1 text-coffee-400">Fatto: {r.diagnosi_tecnico}</p>}
                     </li>
                   );
@@ -259,16 +316,16 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
 
         <aside className="space-y-4">
           <Card className="sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Azioni</h2>
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Azioni</h2>
             <StatusControl id={data.id} stato={data.stato as StatoRiparazione} />
             {cliente?.canale_preferito === "whatsapp" && cliente?.telefono && (
               <SendWhatsAppButton id={data.id} defaultTesto={defaultTestoWhatsApp} />
             )}
             <div className="mt-4 grid gap-2 text-sm">
-              <a href={`/api/ricevuta/${data.id}`} target="_blank" className="rounded-lg border border-coffee-200 px-3 py-2 font-semibold text-coffee-700">
+              <a href={`/api/ricevuta/${data.id}`} target="_blank" className="rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
                 Apri ricevuta PDF
               </a>
-              <a href={`/r/${data.token_pubblico}`} target="_blank" className="rounded-lg border border-coffee-200 px-3 py-2 font-semibold text-coffee-700">
+              <a href={`/r/${data.token_pubblico}`} target="_blank" className="rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
                 Apri pagina cliente
               </a>
               {admin && (
@@ -282,16 +339,16 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
           </Card>
 
           <Card className="sm:p-5">
-            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-900">Notifiche</h2>
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Notifiche</h2>
             {(notifiche ?? []).length === 0 ? (
               <p className="text-sm text-coffee-400">Nessuna notifica registrata.</p>
             ) : (
               <ul className="space-y-3">
                 {(notifiche ?? []).map((n: any) => (
-                  <li key={n.id} className="rounded-lg border border-coffee-100 p-3 text-sm">
+                  <li key={n.id} className="rounded-lg border border-coffee-700 bg-coffee-800 p-3 text-sm">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-coffee-700">{n.tipo} · {n.canale}</span>
-                      <span className="rounded-full bg-coffee-50 px-2 py-0.5 text-xs font-semibold text-coffee-600">{n.stato_invio}</span>
+                      <span className="font-semibold text-coffee-100">{n.tipo} · {n.canale}</span>
+                      <span className="rounded-full bg-coffee-950 px-2 py-0.5 text-xs font-semibold text-coffee-200">{n.stato_invio}</span>
                     </div>
                     <p className="mt-1 text-xs text-coffee-400">{n.destinatario}</p>
                     <p className="mt-1 text-xs text-coffee-400">
