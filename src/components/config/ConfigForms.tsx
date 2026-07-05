@@ -6,6 +6,7 @@ import { Loader2, Save } from "lucide-react";
 
 const inputCls = "w-full rounded-xl border border-coffee-200 bg-white px-3 py-2 text-sm text-coffee-900";
 const labelCls = "text-xs font-semibold uppercase tracking-wide text-coffee-400";
+const helpCls = "mt-1 block text-[11px] leading-4 text-coffee-500";
 
 async function saveConfig(payload: Record<string, unknown>) {
   const res = await fetch("/api/configurazione", {
@@ -75,13 +76,37 @@ export function MachineCategoryConfigForm({ row }: { row: any }) {
       className="space-y-3"
     >
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <label><span className={labelCls}>Nome</span><input name="nome" defaultValue={row.nome ?? ""} className={inputCls} /></label>
-        <label><span className={labelCls}>Min anno</span><input name="consumo_annuo_min" type="number" defaultValue={row.consumo_annuo_min ?? 0} className={inputCls} /></label>
-        <label><span className={labelCls}>Max anno</span><input name="consumo_annuo_max" type="number" defaultValue={row.consumo_annuo_max ?? 0} className={inputCls} /></label>
-        <label><span className={labelCls}>Vita caffè</span><input name="vita_utile_caffe_stimata" type="number" defaultValue={row.vita_utile_caffe_stimata ?? ""} className={inputCls} /></label>
-        <label><span className={labelCls}>Manut. ogni</span><input name="manutenzione_ogni_caffe" type="number" defaultValue={row.manutenzione_ogni_caffe ?? ""} className={inputCls} /></label>
+        <label className="block">
+          <span className={labelCls}>Nome</span>
+          <input name="nome" defaultValue={row.nome ?? ""} className={inputCls} />
+          <span className={helpCls}>Nome leggibile della fascia, es. Casa, Ufficio o Ho.Re.Ca.</span>
+        </label>
+        <label className="block">
+          <span className={labelCls}>Min anno</span>
+          <input name="consumo_annuo_min" type="number" defaultValue={row.consumo_annuo_min ?? 0} className={inputCls} />
+          <span className={helpCls}>Numero minimo di caffè annui per entrare in questa fascia.</span>
+        </label>
+        <label className="block">
+          <span className={labelCls}>Max anno</span>
+          <input name="consumo_annuo_max" type="number" defaultValue={row.consumo_annuo_max ?? 0} className={inputCls} />
+          <span className={helpCls}>Numero massimo di caffè annui prima di passare alla fascia successiva.</span>
+        </label>
+        <label className="block">
+          <span className={labelCls}>Vita caffè</span>
+          <input name="vita_utile_caffe_stimata" type="number" defaultValue={row.vita_utile_caffe_stimata ?? ""} className={inputCls} />
+          <span className={helpCls}>Stima dei caffè totali prima che la macchina sia a fine ciclo o richieda attenzione.</span>
+        </label>
+        <label className="block">
+          <span className={labelCls}>Manut. ogni</span>
+          <input name="manutenzione_ogni_caffe" type="number" defaultValue={row.manutenzione_ogni_caffe ?? ""} className={inputCls} />
+          <span className={helpCls}>Ogni quanti caffè proporre una manutenzione ordinaria.</span>
+        </label>
       </div>
-      <textarea name="note" defaultValue={row.note ?? ""} rows={2} className={inputCls} />
+      <label className="block">
+        <span className={labelCls}>Note operative</span>
+        <textarea name="note" defaultValue={row.note ?? ""} rows={2} className={inputCls} />
+        <span className={helpCls}>Scrivi quando usare questa fascia e cosa controllare se il cliente supera o scende sotto i valori.</span>
+      </label>
       <Feedback message={save.message} error={save.error} />
       <SaveButton pending={save.pending} />
     </form>
@@ -105,16 +130,39 @@ export function ActivityProfileConfigForm({ row }: { row: any }) {
       className="space-y-3"
     >
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <label className="sm:col-span-2"><span className={labelCls}>Nome</span><input name="nome" defaultValue={row.nome ?? ""} className={inputCls} /></label>
-        <label><span className={labelCls}>Min giorno</span><input name="caffe_giornalieri_min" type="number" defaultValue={row.caffe_giornalieri_min ?? 0} className={inputCls} /></label>
-        <label><span className={labelCls}>Max giorno</span><input name="caffe_giornalieri_max" type="number" defaultValue={row.caffe_giornalieri_max ?? 0} className={inputCls} /></label>
-        <label className="flex items-end gap-2 rounded-xl border border-coffee-100 bg-coffee-50 px-3 py-2 text-sm font-semibold text-coffee-800">
-          <input name="stagionale" type="checkbox" defaultChecked={Boolean(row.stagionale)} className="h-5 w-5 accent-arancio" />
-          Stagionale
+        <label className="block sm:col-span-2">
+          <span className={labelCls}>Nome</span>
+          <input name="nome" defaultValue={row.nome ?? ""} className={inputCls} />
+          <span className={helpCls}>Nome del comportamento cliente, es. basso consumo, ufficio regolare, stagionale.</span>
+        </label>
+        <label className="block">
+          <span className={labelCls}>Min giorno</span>
+          <input name="caffe_giornalieri_min" type="number" defaultValue={row.caffe_giornalieri_min ?? 0} className={inputCls} />
+          <span className={helpCls}>Consumo minimo giornaliero atteso per questo profilo.</span>
+        </label>
+        <label className="block">
+          <span className={labelCls}>Max giorno</span>
+          <input name="caffe_giornalieri_max" type="number" defaultValue={row.caffe_giornalieri_max ?? 0} className={inputCls} />
+          <span className={helpCls}>Consumo massimo giornaliero atteso prima di considerare un profilo più intenso.</span>
+        </label>
+        <label className="flex flex-col justify-end rounded-xl border border-coffee-100 bg-coffee-50 px-3 py-2 text-sm font-semibold text-coffee-800">
+          <span className="flex items-center gap-2">
+            <input name="stagionale" type="checkbox" defaultChecked={Boolean(row.stagionale)} className="h-5 w-5 accent-arancio" />
+            Stagionale
+          </span>
+          <span className={helpCls}>Spunta se il consumo cambia molto in alcuni mesi.</span>
         </label>
       </div>
-      <input name="mesi_alta_stagione" defaultValue={(row.mesi_alta_stagione ?? []).join(", ")} placeholder="Mesi alta stagione: 6, 7, 8" className={inputCls} />
-      <textarea name="note" defaultValue={row.note ?? ""} rows={2} className={inputCls} />
+      <label className="block">
+        <span className={labelCls}>Mesi alta stagione</span>
+        <input name="mesi_alta_stagione" defaultValue={(row.mesi_alta_stagione ?? []).join(", ")} placeholder="6, 7, 8" className={inputCls} />
+        <span className={helpCls}>Inserisci i mesi numerici separati da virgola, es. 6, 7, 8.</span>
+      </label>
+      <label className="block">
+        <span className={labelCls}>Note operative</span>
+        <textarea name="note" defaultValue={row.note ?? ""} rows={2} className={inputCls} />
+        <span className={helpCls}>Indica come interpretare il profilo e quando contattare il cliente.</span>
+      </label>
       <Feedback message={save.message} error={save.error} />
       <SaveButton pending={save.pending} />
     </form>
@@ -141,19 +189,54 @@ export function ActionRuleConfigForm({ row }: { row: any }) {
       className="space-y-3"
     >
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <label className="sm:col-span-2"><span className={labelCls}>Nome</span><input name="nome" defaultValue={row.nome ?? ""} className={inputCls} /></label>
-        <label><span className={labelCls}>Priorità</span><input name="priorita_base" type="number" defaultValue={row.priorita_base ?? 50} className={inputCls} /></label>
-        <label><span className={labelCls}>Scadenza g.</span><input name="giorni_scadenza" type="number" defaultValue={row.giorni_scadenza ?? 7} className={inputCls} /></label>
-        <label><span className={labelCls}>Categoria</span><input name="categoria_utilizzo" defaultValue={row.categoria_utilizzo ?? ""} placeholder="casa/ufficio/horeca" className={inputCls} /></label>
-        <label><span className={labelCls}>Regime</span><input name="regime_possesso" defaultValue={row.regime_possesso ?? ""} placeholder="comodato_uso" className={inputCls} /></label>
-        <label><span className={labelCls}>Classe rischio</span><input name="classe_rischio" defaultValue={row.classe_rischio ?? ""} className={inputCls} /></label>
-        <label><span className={labelCls}>Azione</span><input name="azione_generata" defaultValue={row.azione_generata ?? ""} className={inputCls} /></label>
+        <label className="block sm:col-span-2">
+          <span className={labelCls}>Nome</span>
+          <input name="nome" defaultValue={row.nome ?? ""} className={inputCls} />
+          <span className={helpCls}>Titolo chiaro della regola, leggibile anche da chi non conosce la configurazione.</span>
+        </label>
+        <label className="block">
+          <span className={labelCls}>Priorità</span>
+          <input name="priorita_base" type="number" defaultValue={row.priorita_base ?? 50} className={inputCls} />
+          <span className={helpCls}>Più è alta, più l'azione compare prima nelle priorità operative.</span>
+        </label>
+        <label className="block">
+          <span className={labelCls}>Scadenza g.</span>
+          <input name="giorni_scadenza" type="number" defaultValue={row.giorni_scadenza ?? 7} className={inputCls} />
+          <span className={helpCls}>Giorni entro cui l'azione dovrebbe essere gestita.</span>
+        </label>
+        <label className="block">
+          <span className={labelCls}>Categoria</span>
+          <input name="categoria_utilizzo" defaultValue={row.categoria_utilizzo ?? ""} placeholder="casa/ufficio/horeca" className={inputCls} />
+          <span className={helpCls}>Lascia vuoto se vale per tutte; altrimenti usa casa, ufficio o horeca.</span>
+        </label>
+        <label className="block">
+          <span className={labelCls}>Regime</span>
+          <input name="regime_possesso" defaultValue={row.regime_possesso ?? ""} placeholder="comodato_uso" className={inputCls} />
+          <span className={helpCls}>Lascia vuoto se vale per tutti; es. comodato_uso, proprieta, noleggio.</span>
+        </label>
+        <label className="block">
+          <span className={labelCls}>Classe rischio</span>
+          <input name="classe_rischio" defaultValue={row.classe_rischio ?? ""} className={inputCls} />
+          <span className={helpCls}>Usa la classe cliente/macchina da intercettare, es. alto, medio, basso.</span>
+        </label>
+        <label className="block">
+          <span className={labelCls}>Azione</span>
+          <input name="azione_generata" defaultValue={row.azione_generata ?? ""} className={inputCls} />
+          <span className={helpCls}>Nome dell'azione prodotta, es. manutenzione, riordino, ricontatto.</span>
+        </label>
       </div>
-      <label className="flex items-center gap-2 rounded-xl border border-coffee-100 bg-coffee-50 px-3 py-2 text-sm font-semibold text-coffee-800">
-        <input name="attiva" type="checkbox" defaultChecked={Boolean(row.attiva)} className="h-5 w-5 accent-arancio" />
-        Regola attiva
+      <label className="flex flex-col rounded-xl border border-coffee-100 bg-coffee-50 px-3 py-2 text-sm font-semibold text-coffee-800">
+        <span className="flex items-center gap-2">
+          <input name="attiva" type="checkbox" defaultChecked={Boolean(row.attiva)} className="h-5 w-5 accent-arancio" />
+          Regola attiva
+        </span>
+        <span className={helpCls}>Disattiva per sospendere la regola senza cancellarla.</span>
       </label>
-      <textarea name="note" defaultValue={row.note ?? ""} rows={2} className={inputCls} />
+      <label className="block">
+        <span className={labelCls}>Note operative</span>
+        <textarea name="note" defaultValue={row.note ?? ""} rows={2} className={inputCls} />
+        <span className={helpCls}>Spiega quando usare la regola e cosa deve fare l'operatore dopo la generazione.</span>
+      </label>
       <Feedback message={save.message} error={save.error} />
       <SaveButton pending={save.pending} />
     </form>
@@ -174,10 +257,22 @@ export function ScoreSettingConfigForm({ row }: { row: any }) {
       className="space-y-3"
     >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-[160px_1fr]">
-        <label><span className={labelCls}>Valore num.</span><input name="valore_numeric" type="number" step="0.01" defaultValue={row.valore_numeric ?? ""} className={inputCls} /></label>
-        <label><span className={labelCls}>Valore testo</span><input name="valore_text" defaultValue={row.valore_text ?? ""} className={inputCls} /></label>
+        <label className="block">
+          <span className={labelCls}>Valore num.</span>
+          <input name="valore_numeric" type="number" step="0.01" defaultValue={row.valore_numeric ?? ""} className={inputCls} />
+          <span className={helpCls}>Numero usato nei calcoli di score o soglia. Modifica solo se vuoi cambiare il peso.</span>
+        </label>
+        <label className="block">
+          <span className={labelCls}>Valore testo</span>
+          <input name="valore_text" defaultValue={row.valore_text ?? ""} className={inputCls} />
+          <span className={helpCls}>Testo alternativo quando la regola non usa un numero.</span>
+        </label>
       </div>
-      <textarea name="descrizione" defaultValue={row.descrizione ?? ""} rows={2} className={inputCls} />
+      <label className="block">
+        <span className={labelCls}>Descrizione</span>
+        <textarea name="descrizione" defaultValue={row.descrizione ?? ""} rows={2} className={inputCls} />
+        <span className={helpCls}>Descrivi a cosa serve questo parametro e quale effetto produce se viene cambiato.</span>
+      </label>
       <Feedback message={save.message} error={save.error} />
       <SaveButton pending={save.pending} />
     </form>
