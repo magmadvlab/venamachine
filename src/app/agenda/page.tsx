@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Gauge, History, Phone, ShoppingBag, Target, TimerReset } from "lucide-react";
+import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Gauge, History, Lightbulb, Phone, ShoppingBag, Target, TimerReset } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 import { CalendarioSettimanale } from "@/components/agenda/CalendarioSettimanale";
 import { AgendaActionControls, GenerateAgendaButton } from "@/components/commercial/AgendaActions";
+import { GenerateSuggestionsButton, SuggestionCard } from "@/components/commercial/SuggestionActions";
 
 export const dynamic = "force-dynamic";
 
@@ -123,6 +124,7 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
     { data, error },
     { data: prenotazioni },
     { data: manutenzioniDaPrenotare },
+    { data: suggerimenti },
   ] = await Promise.all([
     db
       .from("v_agenda_azioni_commerciali")
@@ -146,6 +148,13 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
       .in("stato", ["da_pianificare", "pianificata"])
       .neq("stato_proposta", "prenotata")
       .order("data_prevista", { ascending: true })
+      .limit(8),
+    db
+      .from("v_suggerimenti_agenda")
+      .select("id, stato, priorita, titolo, messaggio, cta_label, cta_href, ragione_sociale, telefono, email, consenso_marketing, marca, modello, matricola, prodotto_nome, fonte_nome, fonte_url")
+      .in("stato", ["da_preparare", "pronto", "inviato"])
+      .order("priorita", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(8),
   ]);
 
@@ -184,44 +193,65 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
         <>
           <div className="mb-4 grid gap-4 xl:grid-cols-[1fr_340px]">
             <CalendarioSettimanale initialPrenotazioni={(prenotazioni ?? []) as any} />
-            <Card className="p-4 sm:p-5">
-              <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
-                <CalendarDays className="h-5 w-5 text-arancio" />
-                Da convertire
-              </h2>
-              {(manutenzioniDaPrenotare ?? []).length === 0 ? (
-                <p className="text-sm text-coffee-400">Nessuna manutenzione in attesa di proposta.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {(manutenzioniDaPrenotare ?? []).map((row: any) => (
-                    <li key={row.id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="font-semibold text-coffee-900">{row.ragione_sociale}</p>
-                          <p className="text-xs text-coffee-500">
-                            {[row.marca, row.modello, row.matricola].filter(Boolean).join(" · ") || "Macchina"}
-                          </p>
+            <div className="space-y-4">
+              <Card className="p-4 sm:p-5">
+                <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+                  <CalendarDays className="h-5 w-5 text-arancio" />
+                  Da convertire
+                </h2>
+                {(manutenzioniDaPrenotare ?? []).length === 0 ? (
+                  <p className="text-sm text-coffee-400">Nessuna manutenzione in attesa di proposta.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {(manutenzioniDaPrenotare ?? []).map((row: any) => (
+                      <li key={row.id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-semibold text-coffee-900">{row.ragione_sociale}</p>
+                            <p className="text-xs text-coffee-500">
+                              {[row.marca, row.modello, row.matricola].filter(Boolean).join(" · ") || "Macchina"}
+                            </p>
+                          </div>
+                          <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-coffee-700">
+                            {formatDate(row.data_prevista)}
+                          </span>
                         </div>
-                        <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-coffee-700">
-                          {formatDate(row.data_prevista)}
-                        </span>
-                      </div>
-                      <p className="mt-2 line-clamp-3 text-xs leading-5 text-coffee-600">{row.motivo}</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <Link href="/manutenzioni" className="rounded-full border border-coffee-200 bg-white px-3 py-1.5 text-xs font-bold text-coffee-700">
-                          Apri manutenzioni
-                        </Link>
-                        {row.token_pubblico && (
-                          <a href={`/manutenzione/${row.token_pubblico}`} target="_blank" rel="noreferrer" className="rounded-full bg-arancio px-3 py-1.5 text-xs font-bold text-white">
-                            Link cliente
-                          </a>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
+                        <p className="mt-2 line-clamp-3 text-xs leading-5 text-coffee-600">{row.motivo}</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Link href="/manutenzioni" className="rounded-full border border-coffee-200 bg-white px-3 py-1.5 text-xs font-bold text-coffee-700">
+                            Apri manutenzioni
+                          </Link>
+                          {row.token_pubblico && (
+                            <a href={`/manutenzione/${row.token_pubblico}`} target="_blank" rel="noreferrer" className="rounded-full bg-arancio px-3 py-1.5 text-xs font-bold text-white">
+                              Link cliente
+                            </a>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+
+              <Card className="p-4 sm:p-5">
+                <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                  <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
+                    <Lightbulb className="h-5 w-5 text-arancio" />
+                    Consigli utili
+                  </h2>
+                  <GenerateSuggestionsButton />
+                </div>
+                {(suggerimenti ?? []).length === 0 ? (
+                  <p className="text-sm text-coffee-400">Nessun suggerimento una tantum pronto.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {(suggerimenti ?? []).map((row: any) => (
+                      <SuggestionCard key={row.id} suggestion={row} />
+                    ))}
+                  </ul>
+                )}
+              </Card>
+            </div>
           </div>
 
           <section className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
