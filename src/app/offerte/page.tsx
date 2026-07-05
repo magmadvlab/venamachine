@@ -99,6 +99,19 @@ export default async function OffertePage() {
         </span>
       </header>
 
+      <Card className="mb-4 border-blue-200 bg-blue-50 p-4 text-blue-950">
+        <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
+          <Megaphone className="h-5 w-5" />
+          Come preparare un'offerta
+        </h2>
+        <div className="mt-3 grid gap-2 text-sm leading-6 md:grid-cols-4">
+          <p><strong>1.</strong> Crea il volantino con titolo, descrizione e validita.</p>
+          <p><strong>2.</strong> Aggiungi prodotti/foto dal wizard e controlla l'anteprima PNG.</p>
+          <p><strong>3.</strong> Pubblica la campagna per rendere visibile `/offerte/[slug]`.</p>
+          <p><strong>4.</strong> Usa batch o invio singolo: i messaggi entrano nella outbox WhatsApp.</p>
+        </div>
+      </Card>
+
       <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
         <aside>
           <Card className="p-4 sm:p-5">
@@ -109,7 +122,7 @@ export default async function OffertePage() {
             <OfferCampaignForm />
           </Card>
           <Card className="mt-4 border-amber-200 bg-amber-50 text-sm text-amber-950">
-            Il batch usa solo clienti con telefono e consenso marketing. Il provider WhatsApp reale va collegato prima dell'invio automatico.
+            Il batch usa solo clienti con telefono e consenso marketing. Se il worker WhatsApp e configurato su Railway, gli invii vengono processati dalla outbox; altrimenti resta disponibile il messaggio/link manuale.
           </Card>
         </aside>
 
@@ -192,6 +205,9 @@ export default async function OffertePage() {
                     campaignValida_al={campagna.valida_al}
                     offertaUrl={publicUrl}
                   />
+                  <p className="mt-3 rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-xs leading-5 text-coffee-600">
+                    Sequenza pratica: aggiungi almeno una riga offerta, controlla `Anteprima`, pubblica, poi prepara batch o invio singolo. Gli invii non partono verso clienti senza consenso marketing.
+                  </p>
                 </Card>
               );
             })

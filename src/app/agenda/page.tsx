@@ -191,6 +191,18 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
         </Card>
       ) : (
         <>
+          <Card className="mb-4 border-blue-200 bg-blue-50 p-4 text-blue-950">
+            <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
+              <Lightbulb className="h-5 w-5" />
+              Come usare l'agenda oggi
+            </h2>
+            <div className="mt-3 grid gap-2 text-sm leading-6 md:grid-cols-3">
+              <p><strong>1.</strong> Controlla il calendario per evitare sovrapposizioni e giornate troppo piene.</p>
+              <p><strong>2.</strong> In `Da convertire` apri la manutenzione e invia al cliente il link di prenotazione.</p>
+              <p><strong>3.</strong> Usa `Consigli utili` solo quando il messaggio e pertinente, poi segna inviato, convertito o scartato.</p>
+            </div>
+          </Card>
+
           <div className="mb-4 grid gap-4 xl:grid-cols-[1fr_340px]">
             <CalendarioSettimanale initialPrenotazioni={(prenotazioni ?? []) as any} />
             <div className="space-y-4">
@@ -199,6 +211,9 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
                   <CalendarDays className="h-5 w-5 text-arancio" />
                   Da convertire
                 </h2>
+                <p className="mb-3 text-xs leading-5 text-coffee-500">
+                  Sono manutenzioni gia calcolate dal sistema: l'obiettivo e trasformarle in appuntamenti ordinati prima che la macchina si rompa.
+                </p>
                 {(manutenzioniDaPrenotare ?? []).length === 0 ? (
                   <p className="text-sm text-coffee-400">Nessuna manutenzione in attesa di proposta.</p>
                 ) : (
@@ -241,6 +256,9 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
                   </h2>
                   <GenerateSuggestionsButton />
                 </div>
+                <p className="mb-3 text-xs leading-5 text-coffee-500">
+                  Messaggi una tantum: copia il testo, invialo dal canale corretto e usa la CTA solo se coerente con macchina e consumi.
+                </p>
                 {(suggerimenti ?? []).length === 0 ? (
                   <p className="text-sm text-coffee-400">Nessun suggerimento una tantum pronto.</p>
                 ) : (

@@ -111,6 +111,19 @@ export default async function ManutenzioniPage({ searchParams }: { searchParams?
         <GenerateMaintenanceButton />
       </header>
 
+      <Card className="mb-4 border-emerald-200 bg-emerald-50 p-4 text-emerald-950">
+        <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
+          <CalendarCheck className="h-5 w-5" />
+          Percorso consigliato
+        </h2>
+        <div className="mt-3 grid gap-2 text-sm leading-6 md:grid-cols-4">
+          <p><strong>1.</strong> Clicca `Genera manutenzioni` per aggiornare la lista dalle vendite e dallo storico.</p>
+          <p><strong>2.</strong> Parti da scadute e prioritarie: sono quelle che rischiano di diventare rotture.</p>
+          <p><strong>3.</strong> Clicca `Prepara proposta` e copia il testo/link da inviare al cliente.</p>
+          <p><strong>4.</strong> Quando il cliente prenota, l'appuntamento compare in Agenda; a lavoro fatto segna `Fatta`.</p>
+        </div>
+      </Card>
+
       <section className="mb-4 grid grid-cols-3 gap-2">
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Attive</p>
@@ -200,6 +213,11 @@ export default async function ManutenzioniPage({ searchParams }: { searchParams?
                 </div>
 
                 <p className="mt-3 rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm text-coffee-700">{row.motivo}</p>
+                {row.stato_proposta !== "prenotata" && (
+                  <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+                    Prossimo passo: prepara la proposta e manda il link al cliente, cosi sceglie uno slot senza telefonate avanti e indietro.
+                  </p>
+                )}
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Link href={`/macchine/${row.macchina_id}`} className="inline-flex items-center gap-1.5 rounded-full border border-coffee-200 bg-white px-3 py-2 text-xs font-semibold text-coffee-700">
