@@ -4,7 +4,15 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Send } from "lucide-react";
 
-export function SendWhatsAppButton({ id, defaultTesto }: { id: string; defaultTesto: string }) {
+export function SendWhatsAppButton({
+  id,
+  defaultTesto,
+  sendUrl,
+}: {
+  id: string;
+  defaultTesto: string;
+  sendUrl?: string;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -14,7 +22,7 @@ export function SendWhatsAppButton({ id, defaultTesto }: { id: string; defaultTe
   function invia() {
     setError(null);
     startTransition(async () => {
-      const res = await fetch(`/api/riparazioni/${id}/whatsapp`, {
+      const res = await fetch(sendUrl ?? `/api/riparazioni/${id}/whatsapp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ testo }),

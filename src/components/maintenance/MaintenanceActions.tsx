@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Check, Copy, ExternalLink, Loader2, RefreshCw, Save, Send, X } from "lucide-react";
+import { SendWhatsAppButton } from "@/components/SendWhatsAppButton";
 
 async function requestJson(method: "POST" | "PATCH", body?: Record<string, unknown>) {
   const res = await fetch("/api/manutenzioni", {
@@ -149,7 +150,18 @@ export function MaintenanceControls({ item }: { item: { id: string; stato: strin
   );
 }
 
-export function MaintenanceProposalButton({ item }: { item: { id: string; token_pubblico?: string | null; stato_proposta?: string | null } }) {
+export function MaintenanceProposalButton({
+  item,
+}: {
+  item: {
+    id: string;
+    token_pubblico?: string | null;
+    stato_proposta?: string | null;
+    canale_preferito?: string | null;
+    telefono?: string | null;
+    whatsappTesto?: string | null;
+  };
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
@@ -179,18 +191,23 @@ export function MaintenanceProposalButton({ item }: { item: { id: string; token_
     setCopied(true);
   }
 
+  const prenotata = item.stato_proposta === "prenotata";
+  const whatsappAvailable = item.canale_preferito === "whatsapp" && Boolean(item.telefono) && Boolean(item.whatsappTesto);
+
   return (
     <div className="mt-3 rounded-xl border border-coffee-100 bg-coffee-50 p-3">
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={prepare}
-          disabled={isPending || item.stato_proposta === "prenotata"}
-          className="inline-flex items-center gap-1.5 rounded-full bg-arancio px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          Prepara proposta
-        </button>
+        {!whatsappAvailable && (
+          <button
+            type="button"
+            onClick={prepare}
+            disabled={isPending || prenotata}
+            className="inline-flex items-center gap-1.5 rounded-full bg-arancio px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Prepara proposta
+          </button>
+        )}
         {item.token_pubblico && (
           <a
             href={`/manutenzione/${item.token_pubblico}`}
@@ -212,6 +229,13 @@ export function MaintenanceProposalButton({ item }: { item: { id: string; token_
           </button>
         )}
       </div>
+      {whatsappAvailable && !prenotata && (
+        <SendWhatsAppButton
+          id={item.id}
+          sendUrl={`/api/manutenzioni/${item.id}/whatsapp`}
+          defaultTesto={item.whatsappTesto ?? ""}
+        />
+      )}
       {message && (
         <textarea
           readOnly

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, CalendarCheck, CalendarClock, Gauge, Plus, Wrench } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { buildMaintenanceProposalMessage } from "@/lib/maintenance-proposal";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 import { GenerateMaintenanceButton, MaintenanceControls, MaintenanceProposalButton } from "@/components/maintenance/MaintenanceActions";
 
@@ -87,7 +88,23 @@ export default async function ManutenzioniPage({ searchParams }: { searchParams?
   }
 
   const { data: manutenzioni } = await query;
-  const rows = manutenzioni ?? [];
+  const rows = await Promise.all((manutenzioni ?? []).map(async (row: any) => {
+    if (row.canale_preferito !== "whatsapp" || !row.telefono || !row.token_pubblico || row.stato_proposta === "prenotata") {
+      return row;
+    }
+
+    const macchinaLabel = [row.marca, row.modello, row.matricola].filter(Boolean).join(" ");
+    const proposal = await buildMaintenanceProposalMessage({
+      db,
+      ragioneSociale: row.ragione_sociale,
+      macchinaLabel,
+      motivo: row.motivo,
+      tokenPubblico: row.token_pubblico,
+      durataStimataMinuti: row.durata_stimata_minuti,
+    });
+
+    return { ...row, whatsappTesto: proposal.message };
+  }));
   const attive = rows.filter((row: any) => ["da_pianificare", "pianificata"].includes(row.stato)).length;
   const scadute = rows.filter((row: any) => ["da_pianificare", "pianificata"].includes(row.stato) && Number(row.giorni_a_scadenza ?? 0) < 0).length;
   const prioritarie = rows.filter((row: any) => Number(row.priorita ?? 0) >= 80).length;
@@ -119,7 +136,7 @@ export default async function ManutenzioniPage({ searchParams }: { searchParams?
         <div className="mt-3 grid gap-2 text-sm leading-6 md:grid-cols-4">
           <p><strong>1.</strong> Clicca `Genera manutenzioni` per aggiornare la lista dalle vendite e dallo storico.</p>
           <p><strong>2.</strong> Parti da scadute e prioritarie: sono quelle che rischiano di diventare rotture.</p>
-          <p><strong>3.</strong> Clicca `Prepara proposta` e copia il testo/link da inviare al cliente.</p>
+          <p><strong>3.</strong> Se il cliente usa WhatsApp, invia il messaggio dalla card; altrimenti usa `Prepara proposta` e copia il testo/link.</p>
           <p><strong>4.</strong> Quando il cliente prenota, l'appuntamento compare in Agenda; a lavoro fatto segna `Fatta`.</p>
         </div>
       </Card>
@@ -215,7 +232,7 @@ export default async function ManutenzioniPage({ searchParams }: { searchParams?
                 <p className="mt-3 rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm text-coffee-700">{row.motivo}</p>
                 {row.stato_proposta !== "prenotata" && (
                   <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
-                    Prossimo passo: prepara la proposta e manda il link al cliente, cosi sceglie uno slot senza telefonate avanti e indietro.
+                    Prossimo passo: invia la proposta WhatsApp o prepara il testo manuale, cosi il cliente sceglie uno slot senza telefonate avanti e indietro.
                   </p>
                 )}
 
@@ -252,6 +269,9 @@ export default async function ManutenzioniPage({ searchParams }: { searchParams?
                     id: row.id,
                     token_pubblico: row.token_pubblico,
                     stato_proposta: row.stato_proposta,
+                    canale_preferito: row.canale_preferito,
+                    telefono: row.telefono,
+                    whatsappTesto: row.whatsappTesto,
                   }}
                 />
               </Card>

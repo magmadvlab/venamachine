@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { findBestAvailableSlot, formatSlotDate } from "@/lib/agenda";
-import { getPublicAppUrl } from "@/lib/app-url";
+import { buildMaintenanceProposalMessage } from "@/lib/maintenance-proposal";
 import { getSessionOperatore } from "@/lib/operator-server";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
@@ -65,19 +64,19 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
   const cliente: any = one(data.cliente);
   const macchina: any = one(data.macchina);
-  const url = `${getPublicAppUrl()}/manutenzione/${data.token_pubblico}`;
-  const slot = await findBestAvailableSlot(db, Number(data.durata_stimata_minuti ?? 60));
-  const slotText = slot ? ` Primo slot utile: ${formatSlotDate(slot.startAt)}.` : "";
   const machineLabel = [macchina?.marca, macchina?.modello, macchina?.matricola].filter(Boolean).join(" ");
-  const message = [
-    `Ciao ${cliente?.ragione_sociale ?? ""}, per la tua macchina${machineLabel ? ` ${machineLabel}` : ""} e consigliata una manutenzione ordinaria.`,
-    data.motivo,
-    `${slotText} Puoi scegliere l'orario qui: ${url}`,
-  ].filter(Boolean).join("\n");
+  const proposal = await buildMaintenanceProposalMessage({
+    db,
+    ragioneSociale: cliente?.ragione_sociale,
+    macchinaLabel: machineLabel,
+    motivo: data.motivo,
+    tokenPubblico: data.token_pubblico,
+    durataStimataMinuti: data.durata_stimata_minuti,
+  });
 
   return NextResponse.json({
-    url,
-    message,
-    slot,
+    url: proposal.url,
+    message: proposal.message,
+    slot: proposal.slot,
   });
 }
