@@ -39,7 +39,7 @@ Dentro `Admin` trovi:
 - `Offerte`;
 - `Configurazione`;
 - `Operatori`;
-- stato WhatsApp/OpenWA.
+- stato WhatsApp.
 
 Le pagine pubbliche non mostrano la navigazione interna e non richiedono login:
 
@@ -51,7 +51,7 @@ Le pagine pubbliche non mostrano la navigazione interna e non richiedono login:
 
 - `Agenda`: calendario settimanale, manutenzioni da convertire in appuntamento, consigli utili con CTA e azioni commerciali.
 - `Manutenzioni`: generazione preventiva, stati, proposta cliente e link pubblico di prenotazione.
-- `Admin`: macro-area riservata con campagne offerte, configurazione, operatori e stato WhatsApp/OpenWA.
+- `Admin`: macro-area riservata con campagne offerte, configurazione, operatori e stato WhatsApp.
 - `Manuale`: guida interna consultabile dagli operatori.
 
 Queste funzioni non sostituiscono le riparazioni: lavorano in parallelo. Le riparazioni restano il flusso tecnico; agenda, manutenzioni, consigli e offerte servono a prevenire rotture, distribuire gli appuntamenti e trasformare vendite/manutenzione in azioni proattive.
@@ -230,7 +230,7 @@ Nel frontend l'admin vede:
 - invio singolo verso un cliente marketing;
 - wizard per caricare foto, generare anteprima PNG e scaricare il volantino.
 
-Il batch WhatsApp prepara gli invii per tutti i clienti con telefono e consenso marketing attivo. Dalla stessa campagna puoi anche preparare l'invio singolo a un cliente specifico. Gli invii vengono registrati nella tabella `campagne_offerte_invii` e accodati anche in `messaggi_outbox`; il worker WhatsApp su Railway li invia quando OpenWA e configurato.
+Il batch WhatsApp prepara gli invii per tutti i clienti con telefono e consenso marketing attivo. Dalla stessa campagna puoi anche preparare l'invio singolo a un cliente specifico. Gli invii vengono registrati nella tabella `campagne_offerte_invii` e accodati anche in `messaggi_outbox`; il worker WhatsApp su Railway li invia quando il servizio WhatsApp Baileys e configurato.
 
 ### Agenda
 

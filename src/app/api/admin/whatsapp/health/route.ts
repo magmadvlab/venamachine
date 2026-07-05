@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
-import { getOpenWaHealth, openWaConfigured } from "@/lib/whatsapp-gateway";
+import { getWhatsAppHealth, whatsappConfigured } from "@/lib/whatsapp-gateway";
 
 export const runtime = "nodejs";
 
@@ -33,8 +33,8 @@ export async function GET() {
 
   return NextResponse.json({
     checkedAt: new Date().toISOString(),
-    configured: openWaConfigured(),
-    openwa: await getOpenWaHealth(),
+    configured: whatsappConfigured(),
+    whatsapp: await getWhatsAppHealth(),
     outbox,
     worker: {
       id: process.env.WORKER_ID ?? null,

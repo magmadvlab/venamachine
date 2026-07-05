@@ -102,7 +102,7 @@ async function markSent(row, providerMsgId) {
         payload: {
           ...(row.payload ?? {}),
           outboxId: row.id,
-          provider: "openwa",
+          provider: "baileys",
           providerMsgId,
         },
       })
@@ -144,7 +144,7 @@ async function markFailed(row, error) {
         payload: {
           ...(row.payload ?? {}),
           outboxId: row.id,
-          provider: "openwa",
+          provider: "baileys",
           errore: message,
         },
       })

@@ -1,110 +1,70 @@
-type OpenWaConfig = {
+type WhatsAppConfig = {
   url: string;
-  apiKey: string;
-  session: string;
+  token: string;
+  instance: string;
 };
 
 function configured(value?: string) {
   return Boolean(value && value.trim());
 }
 
-export function getOpenWaConfig(): OpenWaConfig | null {
-  const url = process.env.OPENWA_URL;
-  const apiKey = process.env.OPENWA_API_KEY;
-  const session = process.env.OPENWA_SESSION;
-  if (!configured(url) || !configured(apiKey) || !configured(session)) return null;
+export function getWhatsAppConfig(): WhatsAppConfig | null {
+  const url = process.env.WA_GATEWAY_URL;
+  const token = process.env.WA_GATEWAY_TOKEN;
+  const instance = process.env.WA_INSTANCE;
+  if (!configured(url) || !configured(token) || !configured(instance)) return null;
   return {
     url: url!.replace(/\/+$/, ""),
-    apiKey: apiKey!,
-    session: session!,
+    token: token!,
+    instance: instance!,
   };
 }
 
-export function openWaConfigured() {
-  return Boolean(getOpenWaConfig());
+export function whatsappConfigured() {
+  return Boolean(getWhatsAppConfig());
 }
 
-export function whatsappChatId(phone: string) {
-  return `${String(phone).replace(/\D/g, "")}@c.us`;
-}
-
-async function openWaFetch(path: string, init?: RequestInit) {
-  const config = getOpenWaConfig();
-  if (!config) throw new Error("OpenWA non configurato");
-
-  const res = await fetch(`${config.url}${path}`, {
-    ...init,
-    headers: {
-      "X-API-Key": config.apiKey,
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-  });
-  const text = await res.text().catch(() => "");
-  let body: any = null;
-  try {
-    body = text ? JSON.parse(text) : null;
-  } catch {
-    body = text;
-  }
-  if (!res.ok) throw new Error(`OpenWA ${res.status}: ${text}`);
-  return body;
-}
-
-export async function sendOpenWaText(opts: { to: string; text: string }) {
-  const config = getOpenWaConfig();
-  if (!config) throw new Error("OpenWA non configurato");
-
-  const body = await openWaFetch("/messages/send-text", {
-    method: "POST",
-    body: JSON.stringify({
-      sessionId: config.session,
-      chatId: whatsappChatId(opts.to),
-      text: opts.text,
-    }),
-  });
-
-  return body?.id ?? body?.messageId ?? body?.data?.id ?? null;
-}
-
-export async function getOpenWaHealth() {
-  const config = getOpenWaConfig();
+export async function getWhatsAppHealth() {
+  const config = getWhatsAppConfig();
   if (!config) {
     return {
       configured: false,
       ok: false,
-      error: "Variabili OPENWA_URL, OPENWA_API_KEY o OPENWA_SESSION mancanti",
+      error: "Variabili WA_GATEWAY_URL, WA_GATEWAY_TOKEN o WA_INSTANCE mancanti",
     };
   }
 
-  const candidates = [
-    `/sessions/${encodeURIComponent(config.session)}`,
-    `/session/${encodeURIComponent(config.session)}`,
-    "/health",
-  ];
-
-  for (const path of candidates) {
+  try {
+    const res = await fetch(`${config.url}/status/${encodeURIComponent(config.instance)}`, {
+      headers: { "X-API-Key": config.token },
+    });
+    const text = await res.text().catch(() => "");
+    let body: any = null;
     try {
-      const body = await openWaFetch(path, { method: "GET" });
+      body = text ? JSON.parse(text) : null;
+    } catch {
+      body = text;
+    }
+    if (!res.ok) {
       return {
         configured: true,
-        ok: true,
-        endpoint: path,
-        session: config.session,
-        body,
+        ok: false,
+        instance: config.instance,
+        error: `WhatsApp gateway ${res.status}: ${text}`,
       };
-    } catch (error: any) {
-      if (path === candidates[candidates.length - 1]) {
-        return {
-          configured: true,
-          ok: false,
-          endpoint: path,
-          session: config.session,
-          error: String(error?.message || error),
-        };
-      }
     }
+    return {
+      configured: true,
+      ok: body?.state === "open",
+      instance: config.instance,
+      body,
+    };
+  } catch (error: any) {
+    return {
+      configured: true,
+      ok: false,
+      instance: config.instance,
+      error: String(error?.message || error),
+    };
   }
-
-  return { configured: true, ok: false, session: config.session };
 }
