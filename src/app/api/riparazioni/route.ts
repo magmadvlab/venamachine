@@ -244,8 +244,7 @@ export async function POST(req: Request) {
     });
   }
 
-  // 5) PDF + notifica. Per ora l'unico provider attivo è email;
-  // WhatsApp/SMS sono predisposti e tracciati come non configurati.
+  // 5) PDF + notifica. Email parte subito; WhatsApp passa dalla outbox worker.
   const appUrl = getPublicAppUrl();
   const trackingUrl = `${appUrl}/r/${rip!.token_pubblico}`;
   let emailInviata = false;

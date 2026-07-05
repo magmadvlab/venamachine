@@ -4,6 +4,10 @@ export function getPublicAppUrl() {
     return configured.replace(/\/+$/, "");
   }
 
+  if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+    return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`.replace(/\/+$/, "");
+  }
+
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`.replace(/\/+$/, "");
   }

@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "worker:whatsapp": "node scripts/whatsapp-worker.mjs",
     "lint": "next lint"
   },
   "dependencies": {
