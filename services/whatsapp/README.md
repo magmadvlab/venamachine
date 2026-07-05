@@ -11,7 +11,7 @@ Single-tenant: una sola istanza (`WA_DEFAULT_INSTANCE=default`).
 - QR: `/qr` (aperto da browser, autenticato con `?token=<WA_API_SECRET>`)
 - Status: `/status`
 - Invio generico: `POST /send`
-- Invio compatibile OpenWA (usato da src/lib/whatsapp.ts): `POST /api/sessions/<instance>/messages/send-text`
+- Invio testo usato dall'app: `POST /api/sessions/<instance>/messages/send-text`
 
 ## Env Railway
 

@@ -1,5 +1,5 @@
 // Client per il servizio WhatsApp Baileys dedicato (services/whatsapp/).
-// Endpoint compatibile OpenWA: POST {WA_GATEWAY_URL}/api/sessions/{WA_INSTANCE}/messages/send-text
+// Endpoint HTTP del servizio Baileys: POST {WA_GATEWAY_URL}/api/sessions/{WA_INSTANCE}/messages/send-text
 
 export function isWhatsAppConfigured(): boolean {
   return !!(process.env.WA_GATEWAY_URL && process.env.WA_GATEWAY_TOKEN && process.env.WA_INSTANCE);
