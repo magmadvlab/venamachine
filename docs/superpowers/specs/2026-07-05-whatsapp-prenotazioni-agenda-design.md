@@ -44,39 +44,92 @@ notifiche in questo spec.
 
 ## Nuova funzione di notifica
 
-In `src/lib/notifications.ts`, nuova funzione esportata:
+**Correzione rispetto alla prima stesura di questo spec:** `NotificaBase`
+(usato da `notificaAggiornamentoStato`/`notificaRicevuta`/
+`notificaSollecitoRitiro`/`notificaManuale` in `src/lib/notifications.ts`)
+richiede sempre un `riparazioneId: string` non opzionale, perché quelle
+funzioni loggano anche nella tabella `notifiche` (colonna `riparazione_id not
+null`). Una prenotazione spesso **non ha ancora** una riparazione collegata
+(`prenotazioni.riparazione_id` è nullable, valorizzato solo più avanti se da
+quella prenotazione nasce un intervento). Quindi `notificaPrenotazione` non
+riusa `NotificaBase`/`queueWhatsAppNotification`/`logNotifica`: chiama
+`queueMessage` (`src/lib/outbox.ts`) direttamente, esattamente come già fanno
+le route `POST /api/clienti/[id]/whatsapp` e (per i Suggerimenti)
+`POST /api/suggerimenti/[id]/whatsapp` — nessun log nella tabella `notifiche`,
+solo in `messaggi_outbox`.
+
+In `src/lib/notifications.ts`, nuova funzione esportata (tipo locale, non
+`NotificaBase`):
 
 ```ts
-export async function notificaPrenotazione(opts: NotificaBase & {
+export async function notificaPrenotazione(opts: {
+  db: DbClient;
+  cliente: ClienteContatto;
+  clienteId: string;
+  prenotazioneId: string;
   tipo: "confermata" | "annullata";
   titolo: string;      // es. "Decalcificazione - Saeco Xelsis"
   inizio: string;      // ISO datetime dello slot (prenotazioni.inizio)
   tokenPubblico: string;
-})
+}) {
+  const canaleRichiesto = canalePreferito(opts.cliente);
+  const telefono = telefonoDestinatario(opts.cliente);
+  const email = emailDestinatario(opts.cliente);
+  const trackingUrl = `${getPublicAppUrl()}/prenotazioni/${opts.tokenPubblico}`;
+  const inizioFormattato = formatSlotDate(opts.inizio);
+  const etichetta = opts.tipo === "confermata" ? "confermata" : "annullata";
+
+  if (canaleRichiesto === "whatsapp" && telefono) {
+    await queueMessage({
+      db: opts.db,
+      canale: "whatsapp",
+      tipo: `prenotazione_${opts.tipo}`,
+      destinatario: telefono,
+      testo: [
+        "Vena Coffee Machine",
+        `Prenotazione ${etichetta}: ${inizioFormattato}`,
+        opts.titolo,
+        `Dettagli: ${trackingUrl}`,
+      ].join("\n"),
+      sourceTable: "prenotazioni",
+      sourceId: opts.prenotazioneId,
+      clienteId: opts.clienteId,
+      dedupeSource: true,
+    });
+    return { canale: "whatsapp" as const, inviata: false };
+  }
+
+  if (!email) return { canale: null, inviata: false };
+
+  try {
+    if (opts.tipo === "confermata") {
+      await inviaConfermaPrenotazione({ to: email, titolo: opts.titolo, inizio: inizioFormattato, trackingUrl });
+    } else {
+      await inviaAnnulloPrenotazione({ to: email, titolo: opts.titolo, inizio: inizioFormattato, trackingUrl });
+    }
+    return { canale: "email" as const, inviata: true };
+  } catch (err: any) {
+    console.error("notificaPrenotazione: invio email fallito", { prenotazioneId: opts.prenotazioneId, err: String(err?.message || err) });
+    return { canale: "email" as const, inviata: false };
+  }
+}
 ```
 
-Segue lo stesso pattern delle funzioni esistenti (`notificaAggiornamentoStato`,
-`notificaRicevuta`, `notificaSollecitoRitiro`):
+`formatSlotDate` viene importato da `@/lib/agenda` (già usato identicamente in
+`src/lib/maintenance-proposal.ts` per formattare gli slot in italiano — nessuna
+nuova utility di formattazione data da scrivere). `canalePreferito`,
+`telefonoDestinatario`, `emailDestinatario`, `ClienteContatto` sono gli helper
+già esistenti in `notifications.ts`, riusati senza modifiche.
 
-- se `canale_preferito(cliente) === "whatsapp"` e c'è telefono → coda
-  WhatsApp tramite `queueWhatsAppNotification` (tipo `"prenotazione_confermata"`
-  o `"prenotazione_annullata"`);
-- altrimenti, se c'è email → fallback email (vedi sotto);
-- se manca il destinatario per il canale richiesto → nessun invio, nessun
-  errore sollevato (stesso comportamento già esistente per gli altri casi).
+`dedupeSource: true` evita di accodare due volte lo stesso messaggio se la
+route viene chiamata più volte per errore (stesso pattern già usato per
+Offerte e Manutenzioni).
 
-Testo WhatsApp, generato internamente da `notificaPrenotazione` in base a
-`opts.tipo`:
-
-```
-Vena Coffee Machine
-Prenotazione confermata: {inizio formattato in italiano, es. "mar 8 lug ore 10:00"}
-{titolo}
-Dettagli: {getPublicAppUrl()}/prenotazioni/{tokenPubblico}
-```
-
-Per l'annullo, stessa struttura con `Prenotazione annullata:` al posto di
-`Prenotazione confermata:`.
+Se l'invio email fallisce, la funzione non solleva un errore verso il
+chiamante (logga solo su console) — coerente con la scelta di non bloccare la
+risposta HTTP della route prenotazioni per un problema del provider email,
+che è un side-effect secondario rispetto alla creazione/conferma della
+prenotazione stessa.
 
 ## Email di fallback
 
@@ -101,7 +154,7 @@ route eseguono una query aggiuntiva (solo quando la condizione di trigger
 sopra è vera) per recuperare:
 
 ```sql
-select id, titolo, inizio, token_pubblico,
+select id, titolo, inizio, token_pubblico, cliente_id,
   cliente:clienti(telefono, email, canale_preferito)
 from prenotazioni
 where id = :id
@@ -141,8 +194,9 @@ Nessun test automatico in questo repo (nessun test runner configurato).
 Verifica manuale in dev:
 
 1. Creare una prenotazione da operatore (`origine: "operatore"`) → deve
-   comparire subito una riga in `messaggi_outbox`/`notifiche` di tipo
-   `prenotazione_confermata`.
+   comparire subito una riga in `messaggi_outbox` di tipo
+   `prenotazione_confermata` (`source_table = "prenotazioni"`). Nessuna riga
+   in `notifiche` (tabella specifica delle riparazioni, non toccata qui).
 2. Creare una richiesta pubblica (`origine: "pubblica"`, `stato:
    "richiesta"`) → nessuna notifica finché resta in sospeso.
 3. Confermare quella richiesta da operatore (`PATCH` con `stato:
