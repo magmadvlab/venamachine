@@ -33,6 +33,7 @@ const primaryLinks = [
   { href: "/dashboard-commerciale", label: "Report", icon: BarChart3 },
   { href: "/manuale", label: "Manuale", icon: BookOpen },
   { href: "/notifiche", label: "Notifiche", icon: Bell },
+  { href: "/incassi", label: "Incassi", icon: Banknote },
 ];
 
 const operatorUtilityLinks = [
@@ -57,6 +58,7 @@ const baseMobileMoreLinks = [
   primaryLinks[5], // Prodotti
   primaryLinks[7], // Manuale
   primaryLinks[8], // Notifiche
+  primaryLinks[9], // Incassi
 ];
 
 function isActive(pathname: string, href: string) {
