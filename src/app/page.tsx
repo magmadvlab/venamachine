@@ -1,80 +1,23 @@
 import Link from "next/link";
-import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
-import { type RiparazioneRow } from "@/lib/types";
-import { getPublicAppUrl } from "@/lib/app-url";
-import { stadioCliente } from "@/lib/types";
+import { ArrowRight, BarChart3, CalendarDays, ClipboardList, Search, Wrench } from "lucide-react";
 import { BrandHeader } from "@/components/BrandHeader";
 import { Card } from "@/components/ui/Card";
-import { RepairList } from "@/components/RepairList";
-import { Search, Plus } from "lucide-react";
+import { NuovaSchedaButton } from "@/components/NuovaSchedaButton";
+import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { getSessionOperatore } from "@/lib/operator-server";
-import { isLegacyRepairResidue } from "@/lib/legacy-repairs";
-
-function NuovaSchedaButton() {
-  return (
-    <Link
-      href="/nuova"
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-arancio px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-arancio-dark active:scale-95"
-    >
-      <Plus className="h-4 w-4 shrink-0" />
-      <span className="hidden sm:inline">Nuova scheda</span>
-      <span className="sm:hidden">Nuova</span>
-    </Link>
-  );
-}
 
 export const dynamic = "force-dynamic";
 
-const RIPARAZIONI_SELECT = `id, numero_scheda, token_pubblico, stato, data_ingresso, difetto_cliente, stato_estetico, importo_preventivo,
-  cliente:clienti(ragione_sociale, email, telefono, piva_cf, canale_preferito),
-  macchina:macchine(marca, modello, matricola, tipologia, colore, regime_possesso)`;
+const HUB_LINKS = [
+  { href: "/schede", label: "Schede", description: "Riparazioni aperte da lavorare", icon: ClipboardList },
+  { href: "/agenda", label: "Agenda", description: "Prenotazioni e conversione", icon: CalendarDays },
+  { href: "/manutenzioni", label: "Manutenzioni", description: "Coda prevenzione", icon: Wrench },
+  { href: "/dashboard-commerciale", label: "Report", description: "Vendite e andamento", icon: BarChart3 },
+];
 
-function buildWhatsappTesto(row: { numero_scheda: string; stato: string; token_pubblico: string; macchina: any }) {
-  const stadio = stadioCliente(row.stato as any);
-  const macchinaLabel = [row.macchina?.marca, row.macchina?.modello, row.macchina?.matricola].filter(Boolean).join(" ");
-  const trackingUrl = `${getPublicAppUrl()}/r/${row.token_pubblico}`;
-  return [
-    "Vena Coffee Machine",
-    `Aggiornamento scheda ${row.numero_scheda}: ${stadio}.`,
-    macchinaLabel ? `Macchina: ${macchinaLabel}` : null,
-    `Dettagli: ${trackingUrl}`,
-  ].filter(Boolean).join("\n");
-}
-
-function normalizeRows(data: any[] | null): RiparazioneRow[] {
-  return (data ?? []).map((r: any) => {
-    const cliente = Array.isArray(r.cliente) ? r.cliente[0] : r.cliente;
-    const macchina = Array.isArray(r.macchina) ? r.macchina[0] : r.macchina;
-    return {
-      ...r,
-      cliente,
-      macchina,
-      whatsappTesto: buildWhatsappTesto({ numero_scheda: r.numero_scheda, stato: r.stato, token_pubblico: r.token_pubblico, macchina }),
-    };
-  }) as RiparazioneRow[];
-}
-
-function rowMatchesSearch(row: RiparazioneRow, query: string) {
-  const haystack = [
-    row.numero_scheda,
-    row.cliente?.ragione_sociale,
-    row.cliente?.email,
-    row.cliente?.telefono,
-    row.cliente?.piva_cf,
-    row.macchina?.marca,
-    row.macchina?.modello,
-    row.macchina?.matricola,
-    row.macchina?.colore,
-    row.difetto_cliente,
-  ].filter(Boolean).join(" ").toLowerCase();
-
-  return haystack.includes(query.toLowerCase());
-}
-
-export default async function Dashboard({ searchParams }: { searchParams?: { q?: string } }) {
+export default async function DashboardPage() {
   const missingEnv = missingSupabaseEnv();
-  const q = searchParams?.q?.trim() ?? "";
 
   if (missingEnv.length > 0) {
     return (
@@ -99,16 +42,6 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
   }
 
   const db = createServiceClient();
-  const { data } = await db
-    .from("riparazioni")
-    .select(RIPARAZIONI_SELECT)
-    .order("data_ingresso", { ascending: false })
-    .limit(q ? 1000 : 100);
-
-  const righe = normalizeRows(data)
-    .filter((r) => !isLegacyRepairResidue(r.id))
-    .filter((r) => !q || rowMatchesSearch(r, q));
-
   const user = await getCurrentUser();
   const admin = isAdminEmail(user?.email);
   const operatore = await getSessionOperatore(db);
@@ -126,40 +59,45 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
         )}
       </p>
 
-      <form className="mb-4" action="/">
-        <label className="sr-only" htmlFor="q">Cerca</label>
+      <form className="mb-6" action="/clienti">
+        <label className="sr-only" htmlFor="q">Cerca cliente</label>
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-coffee-400" />
             <input
               id="q"
               name="q"
-              defaultValue={q}
-              placeholder="Cerca cliente, telefono, matricola, marca, scheda"
+              placeholder="Cerca cliente per nome, telefono, P.IVA"
               className="w-full rounded-full border border-coffee-700 bg-coffee-800 py-3 pl-9 pr-3 text-base text-coffee-50 placeholder:text-coffee-400 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20 sm:py-2.5 sm:text-sm"
             />
           </div>
           <button className="rounded-full bg-arancio px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-arancio-dark active:scale-95 sm:py-2.5">
             Cerca
           </button>
-          {q && (
-            <Link
-              href="/"
-              className="rounded-full border border-coffee-700 bg-coffee-800 px-4 py-3 text-sm font-semibold text-coffee-200 active:scale-95 sm:py-2.5"
-            >
-              Reset
-            </Link>
-          )}
         </div>
       </form>
 
-      {q && (
-        <p className="mb-3 text-sm text-coffee-400">
-          {righe.length} risultat{righe.length === 1 ? "o" : "i"} per "{q}"
-        </p>
-      )}
-
-      <RepairList righe={righe} admin={admin} />
+      <div className="grid gap-3 sm:grid-cols-2">
+        {HUB_LINKS.map((hub) => {
+          const Icon = hub.icon;
+          return (
+            <Link key={hub.href} href={hub.href}>
+              <Card className="flex items-center justify-between gap-3 transition active:scale-95">
+                <span className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-arancio/15 text-arancio">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span>
+                    <span className="block font-display text-base font-bold text-coffee-50">{hub.label}</span>
+                    <span className="block text-xs text-coffee-400">{hub.description}</span>
+                  </span>
+                </span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-coffee-400" />
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
     </main>
   );
 }
