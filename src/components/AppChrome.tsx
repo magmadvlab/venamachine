@@ -125,6 +125,7 @@ function shouldHideChrome(pathname: string) {
   return pathname === "/login"
     || pathname.startsWith("/r/")
     || pathname.startsWith("/manutenzione/")
+    || pathname.startsWith("/prenotazioni/")
     || (pathname !== "/offerte" && pathname.startsWith("/offerte/"));
 }
 
