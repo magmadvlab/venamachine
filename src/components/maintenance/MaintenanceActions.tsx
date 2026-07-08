@@ -52,7 +52,7 @@ export function GenerateMaintenanceButton() {
         className="inline-flex h-10 items-center gap-2 rounded-full bg-arancio px-4 text-sm font-semibold text-white shadow-sm active:scale-95 disabled:opacity-60"
       >
         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-        Genera manutenzioni
+        Aggiorna manutenzioni
       </button>
       {message && <p className="text-xs font-semibold text-emerald-700">{message}</p>}
       {error && <p className="max-w-xs text-xs font-semibold text-red-700">{error}</p>}

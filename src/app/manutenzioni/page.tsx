@@ -134,7 +134,7 @@ export default async function ManutenzioniPage({ searchParams }: { searchParams?
           Percorso consigliato
         </h2>
         <div className="mt-3 grid gap-2 text-sm leading-6 md:grid-cols-4">
-          <p><strong>1.</strong> Clicca `Genera manutenzioni` per aggiornare la lista dalle vendite e dallo storico.</p>
+          <p><strong>1.</strong> Clicca `Aggiorna manutenzioni` per ricalcolare la lista dalle vendite e dallo storico.</p>
           <p><strong>2.</strong> Parti da scadute e prioritarie: sono quelle che rischiano di diventare rotture.</p>
           <p><strong>3.</strong> Se il cliente usa WhatsApp, invia il messaggio dalla card; altrimenti usa `Prepara proposta` e copia il testo/link.</p>
           <p><strong>4.</strong> Quando il cliente prenota, l'appuntamento compare in Agenda; a lavoro fatto segna `Fatta`.</p>

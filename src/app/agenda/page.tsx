@@ -5,6 +5,8 @@ import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 import { CalendarioSettimanale } from "@/components/agenda/CalendarioSettimanale";
 import { AgendaActionControls, GenerateAgendaButton } from "@/components/commercial/AgendaActions";
 import { GenerateSuggestionsButton, SuggestionCard } from "@/components/commercial/SuggestionActions";
+import { SendWhatsAppButton } from "@/components/SendWhatsAppButton";
+import { buildMaintenanceProposalMessage } from "@/lib/maintenance-proposal";
 
 export const dynamic = "force-dynamic";
 
@@ -144,7 +146,7 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
       .order("inizio", { ascending: true }),
     db
       .from("v_manutenzioni_programmate_agenda")
-      .select("id, token_pubblico, ragione_sociale, marca, modello, matricola, data_prevista, priorita, stato_proposta, motivo")
+      .select("id, cliente_id, token_pubblico, ragione_sociale, marca, modello, matricola, data_prevista, priorita, stato_proposta, motivo, durata_stimata_minuti, telefono, canale_preferito")
       .in("stato", ["da_pianificare", "pianificata"])
       .neq("stato_proposta", "prenotata")
       .order("data_prevista", { ascending: true })
@@ -160,6 +162,19 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
 
   const allRows = data ?? [];
   const rows = allRows.filter((row: any) => matchesFilter(row, filter)).filter((row: any) => matchesSearch(row, q));
+  const manutenzioniConTesto = await Promise.all((manutenzioniDaPrenotare ?? []).map(async (row: any) => {
+    if (row.canale_preferito !== "whatsapp" || !row.telefono || !row.token_pubblico) return row;
+    const macchinaLabel = [row.marca, row.modello, row.matricola].filter(Boolean).join(" ");
+    const proposal = await buildMaintenanceProposalMessage({
+      db,
+      ragioneSociale: row.ragione_sociale,
+      macchinaLabel,
+      motivo: row.motivo,
+      tokenPubblico: row.token_pubblico,
+      durataStimataMinuti: row.durata_stimata_minuti,
+    });
+    return { ...row, whatsappTesto: proposal.message };
+  }));
   const activeCount = allRows.filter((row: any) => matchesFilter(row, "attive")).length;
   const overdueCount = allRows.filter((row: any) => matchesFilter(row, "attive") && Number(row.giorni_a_scadenza ?? 999) < 0).length;
   const todayCount = allRows.filter((row: any) => matchesFilter(row, "attive") && Number(row.giorni_a_scadenza ?? 999) === 0).length;
@@ -214,11 +229,11 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
                 <p className="mb-3 text-xs leading-5 text-coffee-500">
                   Sono manutenzioni gia calcolate dal sistema: l'obiettivo e trasformarle in appuntamenti ordinati prima che la macchina si rompa.
                 </p>
-                {(manutenzioniDaPrenotare ?? []).length === 0 ? (
+                {manutenzioniConTesto.length === 0 ? (
                   <p className="text-sm text-coffee-400">Nessuna manutenzione in attesa di proposta.</p>
                 ) : (
                   <ul className="space-y-3">
-                    {(manutenzioniDaPrenotare ?? []).map((row: any) => (
+                    {manutenzioniConTesto.map((row: any) => (
                       <li key={row.id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm">
                         <div className="flex items-start justify-between gap-2">
                           <div>
@@ -240,6 +255,12 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
                             <a href={`/manutenzione/${row.token_pubblico}`} target="_blank" rel="noreferrer" className="rounded-full bg-arancio px-3 py-1.5 text-xs font-bold text-white">
                               Link cliente
                             </a>
+                          )}
+                          {row.whatsappTesto && row.token_pubblico && (
+                            <SendWhatsAppButton
+                              sendUrl={`/api/manutenzioni/${row.id}/whatsapp`}
+                              defaultTesto={row.whatsappTesto}
+                            />
                           )}
                         </div>
                       </li>
