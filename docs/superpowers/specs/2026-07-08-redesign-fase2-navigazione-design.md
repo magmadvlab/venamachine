@@ -41,10 +41,23 @@ Report
   Incassi
 ──────────────
 Nuova scheda (evidenziata)
+Opportunità (temporaneo)
+Prodotti (temporaneo)
+Solleciti (temporaneo)
 Manuale
 Notifiche
 Admin (solo admin)
 ```
+
+Opportunità, Prodotti e Solleciti non hanno ancora una nuova casa pronta
+(Opportunità confluirà in Dashboard/timeline cliente, Prodotti in Admin,
+Solleciti nella sezione "da sollecitare" della Dashboard — tutti nella fase
+che disegna quel contenuto). Rimuoverli dalla navigazione ora, prima che
+esista il sostituto, toglierebbe accesso a funzionalità reali già in uso.
+Restano quindi visibili come voci secondarie "temporanee" finché non
+vengono assorbite. Solleciti in particolare va aggiunto ex novo: oggi non
+ha alcun link raggiungibile da nessuna pagina (stesso tipo di bug già
+corretto per Incassi in Fase 1).
 
 Le etichette di gruppo sono testo statico (non link, non collassabili) sopra
 ogni cluster di voci, stesso trattamento visivo minimo (maiuscolo, piccolo,
@@ -60,9 +73,9 @@ cliente in evidenza sulla Dashboard).
 ### Foglio "Altro" (mobile)
 
 Contiene tutte le voci non presenti nella barra primaria: Schede, Clienti,
-Macchine, Report, Vendite, Incassi, Manuale, Notifiche, Admin (solo se
-admin) — stesso meccanismo già esistente (`baseMobileMoreLinks` +
-`adminUtilityLinks` quando `admin === true`).
+Macchine, Report, Vendite, Incassi, Opportunità, Prodotti, Solleciti,
+Manuale, Notifiche, Admin (solo se admin) — stesso meccanismo già esistente
+(`baseMobileMoreLinks` + `adminUtilityLinks` quando `admin === true`).
 
 ### Contenuto minimo di `/` (Dashboard)
 
