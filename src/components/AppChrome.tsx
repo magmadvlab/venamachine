@@ -9,12 +9,16 @@ import {
   Bell,
   BookOpen,
   CalendarDays,
+  ClipboardList,
+  Clock,
   Coffee,
+  Gauge,
   Home,
   Menu,
   PackageSearch,
   Plus,
   Settings,
+  ShoppingBag,
   Target,
   Users,
   Wrench,
@@ -23,42 +27,82 @@ import {
 import { LogoutButton } from "@/components/LogoutButton";
 import { cn } from "@/lib/cn";
 
-const primaryLinks = [
-  { href: "/", label: "Schede", icon: Home },
-  { href: "/clienti", label: "Clienti", icon: Users },
-  { href: "/agenda", label: "Agenda", icon: CalendarDays },
-  { href: "/manutenzioni", label: "Manutenzioni", icon: Wrench },
+type NavItem = { href: string; label: string; icon: typeof Home; highlight?: boolean };
+
+const navGroups: { label: string; items: NavItem[] }[] = [
+  {
+    label: "Lavoro quotidiano",
+    items: [
+      { href: "/", label: "Dashboard", icon: Home },
+      { href: "/schede", label: "Schede", icon: ClipboardList },
+    ],
+  },
+  {
+    label: "Pianificazione",
+    items: [
+      { href: "/agenda", label: "Agenda", icon: CalendarDays },
+      { href: "/manutenzioni", label: "Manutenzioni", icon: Wrench },
+    ],
+  },
+  {
+    label: "Clienti e macchine",
+    items: [
+      { href: "/clienti", label: "Clienti", icon: Users },
+      { href: "/macchine", label: "Macchine", icon: Gauge },
+    ],
+  },
+  {
+    label: "Report",
+    items: [
+      { href: "/dashboard-commerciale", label: "Report", icon: BarChart3 },
+      { href: "/vendite", label: "Vendite", icon: ShoppingBag },
+      { href: "/incassi", label: "Incassi", icon: Banknote },
+    ],
+  },
+];
+
+const allGroupedLinks = navGroups.flatMap((group) => group.items);
+
+const operatorUtilityLinks: NavItem[] = [
+  { href: "/nuova", label: "Nuova scheda", icon: Plus, highlight: true },
   { href: "/opportunita", label: "Opportunità", icon: Target },
   { href: "/prodotti", label: "Prodotti", icon: PackageSearch },
-  { href: "/dashboard-commerciale", label: "Report", icon: BarChart3 },
+  { href: "/solleciti", label: "Solleciti", icon: Clock },
   { href: "/manuale", label: "Manuale", icon: BookOpen },
   { href: "/notifiche", label: "Notifiche", icon: Bell },
-  { href: "/incassi", label: "Incassi", icon: Banknote },
 ];
 
-const operatorUtilityLinks = [
-  { href: "/nuova", label: "Nuova scheda", icon: Plus, highlight: true },
-];
-
-const adminUtilityLinks = [
+const adminUtilityLinks: NavItem[] = [
   { href: "/admin", label: "Admin", icon: Settings },
 ];
 
+const allLinks = [...allGroupedLinks, ...operatorUtilityLinks, ...adminUtilityLinks];
+
+function findLink(href: string): NavItem {
+  const link = allLinks.find((item) => item.href === href);
+  if (!link) throw new Error(`AppChrome: nessuna voce di navigazione per ${href}`);
+  return link;
+}
+
 const mobilePrimaryLinks = [
-  primaryLinks[0], // Schede
-  primaryLinks[3], // Manutenzioni
-  operatorUtilityLinks[0], // Nuova scheda
-  primaryLinks[6], // Report
+  findLink("/"),
+  findLink("/manutenzioni"),
+  findLink("/nuova"),
+  findLink("/agenda"),
 ];
 
 const baseMobileMoreLinks = [
-  primaryLinks[1], // Clienti
-  primaryLinks[2], // Agenda
-  primaryLinks[4], // Opportunità
-  primaryLinks[5], // Prodotti
-  primaryLinks[7], // Manuale
-  primaryLinks[8], // Notifiche
-  primaryLinks[9], // Incassi
+  findLink("/schede"),
+  findLink("/clienti"),
+  findLink("/macchine"),
+  findLink("/dashboard-commerciale"),
+  findLink("/vendite"),
+  findLink("/incassi"),
+  findLink("/opportunita"),
+  findLink("/prodotti"),
+  findLink("/solleciti"),
+  findLink("/manuale"),
+  findLink("/notifiche"),
 ];
 
 function isActive(pathname: string, href: string) {
@@ -66,7 +110,7 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function NavLink({ item, pathname, compact = false, badge = 0 }: { item: any; pathname: string; compact?: boolean; badge?: number }) {
+function NavLink({ item, pathname, compact = false, badge = 0 }: { item: NavItem; pathname: string; compact?: boolean; badge?: number }) {
   const Icon = item.icon;
   const active = isActive(pathname, item.href);
   return (
@@ -95,7 +139,7 @@ function NavLink({ item, pathname, compact = false, badge = 0 }: { item: any; pa
   );
 }
 
-function MobileNavLink({ item, pathname }: { item: any; pathname: string }) {
+function MobileNavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const Icon = item.icon;
   const active = isActive(pathname, item.href);
 
@@ -176,8 +220,15 @@ export function AppChrome({ children, admin = false, incassiCount = 0 }: { child
         </Link>
 
         <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
-          {primaryLinks.map((item) => (
-            <NavLink key={item.href} item={item} pathname={pathname} badge={item.href === "/incassi" ? incassiCount : 0} />
+          {navGroups.map((group) => (
+            <div key={group.label} className="mb-3">
+              <p className="mb-1 px-3 text-[10px] font-bold uppercase tracking-wide text-white/40">
+                {group.label}
+              </p>
+              {group.items.map((item) => (
+                <NavLink key={item.href} item={item} pathname={pathname} badge={item.href === "/incassi" ? incassiCount : 0} />
+              ))}
+            </div>
           ))}
           <div className="my-3 border-t border-white/10" />
           {utilityLinks.map((item) => (
