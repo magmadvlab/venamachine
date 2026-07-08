@@ -35,7 +35,10 @@ Pianificazione
 Clienti e macchine
   Clienti
   Macchine
+Report
   Report
+  Vendite
+  Incassi
 ──────────────
 Nuova scheda (evidenziata)
 Manuale
@@ -57,15 +60,26 @@ cliente in evidenza sulla Dashboard).
 ### Foglio "Altro" (mobile)
 
 Contiene tutte le voci non presenti nella barra primaria: Schede, Clienti,
-Macchine, Report, Manuale, Notifiche, Admin (solo se admin) — stesso
-meccanismo già esistente (`baseMobileMoreLinks` + `adminUtilityLinks`
-quando `admin === true`).
+Macchine, Report, Vendite, Incassi, Manuale, Notifiche, Admin (solo se
+admin) — stesso meccanismo già esistente (`baseMobileMoreLinks` +
+`adminUtilityLinks` quando `admin === true`).
+
+### Contenuto minimo di `/` (Dashboard)
+
+A differenza di quanto inizialmente previsto, la Dashboard non resta senza
+contenuto in questa fase: per rendere reale (non placeholder) il cambio di
+routing, include una v1 essenziale — ricerca cliente (che invia a
+`/clienti?q=...`, riusando la ricerca già esistente in quella pagina) e
+link rapidi a Schede/Agenda/Manutenzioni/Report. Le sezioni "da riparare",
+"da proporre manutenzione", ecc. (code di lavoro filtrate) restano fuori
+scope, rimandate alla fase che disegna il contenuto pieno della Dashboard.
 
 ## Cosa cambia in `AppChrome.tsx`
 
 - `primaryLinks`: aggiornato con le nuove route (`/` → Dashboard, Schede →
-  `/schede`, aggiunta Macchine), raggruppato in 3 array con etichetta
-  anziché un unico array piatto.
+  `/schede`, aggiunta Macchine), raggruppato in 4 array con etichetta
+  (Lavoro quotidiano, Pianificazione, Clienti e macchine, Report) anziché
+  un unico array piatto.
 - Rendering sidebar: itera i 3 gruppi stampando l'etichetta prima di ogni
   blocco, invece del singolo `.map` piatto attuale.
 - `mobilePrimaryLinks`: sostituisce l'attuale riferimento per indice
@@ -78,12 +92,18 @@ quando `admin === true`).
 
 ## Fuori scope
 
-- Contenuto e layout della Dashboard stessa (sezioni "da riparare", "da
-  proporre", ecc.): Fase 5, spec separato.
+- Sezioni "da riparare", "da proporre manutenzione", ecc. sulla Dashboard
+  (code di lavoro filtrate, con logica di priorità): fase successiva, spec
+  separato. Questa fase costruisce solo la v1 minima (ricerca cliente + link
+  hub) necessaria a rendere reale il cambio di routing.
 - Contenuto della pagina Cliente/timeline: Fase 5, spec separato.
 - Redirect o alias da vecchi URL (`/` con contenuto Schede) a quelli nuovi:
-  da decidere in fase di piano/implementazione, non è una decisione di
-  navigazione ma di compatibilità/rollout.
+  non previsti. Gli unici punti del codice che assumevano `/` = Schede
+  (form di ricerca/reset nella pagina stessa, redirect post-creazione scheda
+  in `AcceptanceForm.tsx`) vengono aggiornati a `/schede` in questa fase; i
+  link "← Indietro" sparsi nelle altre pagine restano `href="/"` invariati,
+  perché sono già un generico "torna alla home", non un riferimento
+  specifico alla lista riparazioni.
 
 ## Testing
 
