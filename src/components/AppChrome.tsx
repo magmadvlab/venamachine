@@ -78,6 +78,9 @@ const adminUtilityLinks: NavItem[] = [
 
 const allLinks = [...allGroupedLinks, ...operatorUtilityLinks, ...adminUtilityLinks];
 
+// Lancia in fase di module-eval (non a runtime condizionale) se un href non corrisponde
+// a nessuna voce: AppChrome è nel root layout, quindi un typo qui blocca subito la build/dev
+// invece di far sparire silenziosamente una voce di navigazione (come il bug del badge Incassi).
 function findLink(href: string): NavItem {
   const link = allLinks.find((item) => item.href === href);
   if (!link) throw new Error(`AppChrome: nessuna voce di navigazione per ${href}`);
