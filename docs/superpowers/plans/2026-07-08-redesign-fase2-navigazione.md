@@ -800,3 +800,50 @@ Sulla Dashboard, cerca un cliente esistente nel campo di ricerca e premi "Cerca"
 Expected: si atterra su `/clienti?q=<query>` con i risultati filtrati (stessa pagina Clienti esistente, invariata da questo piano).
 
 Nessun commit in questo task (solo verifica).
+
+---
+
+### Task 7: Correggere i link "← Schede" rimasti su `/`
+
+**Contesto:** la revisione finale (dopo il Task 6) ha trovato un gap che nessuno dei task 1-6 copriva: 12 pagine hanno un link "← Schede" (o "Torna alle schede") con `href="/"`, che prima del Task 3 significava "torna alla lista riparazioni" ma ora porta alla Dashboard — l'etichetta non corrisponde più alla destinazione. Il piano originale aveva scoperto e aggiornato solo i due riferimenti interni a `schede/page.tsx` (Task 2); non aveva previsto un audit del resto del repo per lo stesso assunto. Verificato con `grep -c 'href="/"'` che ogni file ha esattamente un'occorrenza (due per `riparazioni/[id]/page.tsx`), quindi la sostituzione è univoca e sicura in ognuno.
+
+**Files (1 occorrenza `href="/"` → `href="/schede"` ciascuno, tranne l'ultimo con 2):**
+- Modify: `src/app/solleciti/page.tsx:41`
+- Modify: `src/app/prodotti/page.tsx:36`
+- Modify: `src/app/clienti/page.tsx:148`
+- Modify: `src/app/incassi/page.tsx:96`
+- Modify: `src/app/admin/page.tsx:48`
+- Modify: `src/app/dashboard-commerciale/page.tsx:56`
+- Modify: `src/app/macchine/[id]/page.tsx:201`
+- Modify: `src/app/opportunita/page.tsx:69`
+- Modify: `src/app/manutenzioni/page.tsx:117`
+- Modify: `src/app/vendite/page.tsx:70`
+- Modify: `src/app/nuova/page.tsx:82`
+- Modify: `src/app/agenda/page.tsx:188`
+- Modify: `src/app/riparazioni/[id]/page.tsx:151,368`
+
+- [ ] **Step 1: Sostituire `href="/"` con `href="/schede"` in ognuno dei 13 punti sopra**
+
+In ogni file, l'unica occorrenza di `href="/"` (o le due in `riparazioni/[id]/page.tsx`) è il link "← Schede"/"Torna alle schede": sostituire con `href="/schede"`. Nessun'altra modifica al resto del file.
+
+- [ ] **Step 2: Verificare che non resti nessun link "Schede" che punta a `/`**
+
+Run: `grep -rn 'href="/"' --include="*.tsx" src/app | grep -B1 -A1 'Schede\|schede'`
+Expected: nessun output (nessuna occorrenza residua che abbina `href="/"` a un'etichetta "Schede").
+
+- [ ] **Step 3: Type-check**
+
+Run: `npx tsc --noEmit -p tsconfig.json`
+Expected: nessun errore.
+
+- [ ] **Step 4: Build**
+
+Run: `npm run build`
+Expected: build completata senza errori.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/app/solleciti/page.tsx src/app/prodotti/page.tsx src/app/clienti/page.tsx src/app/incassi/page.tsx src/app/admin/page.tsx src/app/dashboard-commerciale/page.tsx src/app/macchine/\[id\]/page.tsx src/app/opportunita/page.tsx src/app/manutenzioni/page.tsx src/app/vendite/page.tsx src/app/nuova/page.tsx src/app/agenda/page.tsx src/app/riparazioni/\[id\]/page.tsx
+git commit -m "fix: aggiorna i link \"Schede\" rimasti su / dopo lo spostamento a /schede"
+```
