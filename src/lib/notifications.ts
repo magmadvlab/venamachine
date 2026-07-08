@@ -1,5 +1,6 @@
+import { formatSlotDate } from "@/lib/agenda";
 import { getPublicAppUrl } from "@/lib/app-url";
-import { inviaAggiornamentoStato, inviaRicevuta, inviaSollecitoRitiro } from "@/lib/email";
+import { inviaAggiornamentoStato, inviaAnnulloPrenotazione, inviaConfermaPrenotazione, inviaRicevuta, inviaSollecitoRitiro } from "@/lib/email";
 import { queueMessage } from "@/lib/outbox";
 import { stadioCliente, type Canale, type StatoRiparazione } from "@/lib/types";
 
@@ -291,4 +292,56 @@ export async function notificaManuale(opts: NotificaBase & { testo: string }) {
   });
 
   return { ok: true as const, motivo: "in_coda" as const };
+}
+
+export async function notificaPrenotazione(opts: {
+  db: DbClient;
+  cliente: ClienteContatto;
+  clienteId: string;
+  prenotazioneId: string;
+  tipo: "confermata" | "annullata";
+  titolo: string;
+  inizio: string;
+  tokenPubblico: string;
+}) {
+  const canaleRichiesto = canalePreferito(opts.cliente);
+  const telefono = telefonoDestinatario(opts.cliente);
+  const email = emailDestinatario(opts.cliente);
+  const trackingUrl = `${getPublicAppUrl()}/prenotazioni/${opts.tokenPubblico}`;
+  const inizioFormattato = formatSlotDate(opts.inizio);
+  const etichetta = opts.tipo === "confermata" ? "confermata" : "annullata";
+
+  if (canaleRichiesto === "whatsapp" && telefono) {
+    await queueMessage({
+      db: opts.db,
+      canale: "whatsapp",
+      tipo: `prenotazione_${opts.tipo}`,
+      destinatario: telefono,
+      testo: [
+        "Vena Coffee Machine",
+        `Prenotazione ${etichetta}: ${inizioFormattato}`,
+        opts.titolo,
+        `Dettagli: ${trackingUrl}`,
+      ].join("\n"),
+      sourceTable: "prenotazioni",
+      sourceId: opts.prenotazioneId,
+      clienteId: opts.clienteId,
+      dedupeSource: true,
+    });
+    return { canale: "whatsapp" as const, inviata: false };
+  }
+
+  if (!email) return { canale: null, inviata: false };
+
+  try {
+    if (opts.tipo === "confermata") {
+      await inviaConfermaPrenotazione({ to: email, titolo: opts.titolo, inizio: inizioFormattato, trackingUrl });
+    } else {
+      await inviaAnnulloPrenotazione({ to: email, titolo: opts.titolo, inizio: inizioFormattato, trackingUrl });
+    }
+    return { canale: "email" as const, inviata: true };
+  } catch (err: any) {
+    console.error("notificaPrenotazione: invio email fallito", { prenotazioneId: opts.prenotazioneId, err: String(err?.message || err) });
+    return { canale: "email" as const, inviata: false };
+  }
 }
