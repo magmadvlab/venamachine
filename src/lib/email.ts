@@ -249,3 +249,75 @@ export async function inviaNotificaAdminSospeso(opts: {
     ...(attachments.length > 0 ? { attachments } : {}),
   });
 }
+
+export async function inviaConfermaPrenotazione(opts: {
+  to: string;
+  titolo: string;
+  inizio: string;
+  trackingUrl: string;
+}) {
+  const resend = getResend();
+  const text = [
+    "Prenotazione confermata.",
+    opts.titolo,
+    `Data e ora: ${opts.inizio}`,
+    "",
+    `Dettagli: ${opts.trackingUrl}`,
+    "",
+    "Vena Coffee Machine",
+  ].join("\n");
+
+  const bodyHtml = `
+    <p style="margin:0 0 12px;">La tua prenotazione è stata <strong>confermata</strong>.</p>
+    <p style="margin:0 0 4px;"><strong>${escapeHtml(opts.titolo)}</strong></p>
+    <p style="margin:0 0 12px;">${escapeHtml(opts.inizio)}</p>`;
+
+  return resend.emails.send({
+    from: fromAddress(),
+    to: opts.to,
+    subject: `Prenotazione confermata · Vena Coffee Machine`,
+    text,
+    html: emailLayout({
+      title: "Prenotazione confermata",
+      bodyHtml,
+      ctaUrl: opts.trackingUrl,
+      ctaLabel: "Vedi dettagli",
+    }),
+  });
+}
+
+export async function inviaAnnulloPrenotazione(opts: {
+  to: string;
+  titolo: string;
+  inizio: string;
+  trackingUrl: string;
+}) {
+  const resend = getResend();
+  const text = [
+    "Prenotazione annullata.",
+    opts.titolo,
+    `Data e ora: ${opts.inizio}`,
+    "",
+    `Dettagli: ${opts.trackingUrl}`,
+    "",
+    "Vena Coffee Machine",
+  ].join("\n");
+
+  const bodyHtml = `
+    <p style="margin:0 0 12px;">La tua prenotazione è stata <strong>annullata</strong>.</p>
+    <p style="margin:0 0 4px;"><strong>${escapeHtml(opts.titolo)}</strong></p>
+    <p style="margin:0 0 12px;">${escapeHtml(opts.inizio)}</p>`;
+
+  return resend.emails.send({
+    from: fromAddress(),
+    to: opts.to,
+    subject: `Prenotazione annullata · Vena Coffee Machine`,
+    text,
+    html: emailLayout({
+      title: "Prenotazione annullata",
+      bodyHtml,
+      ctaUrl: opts.trackingUrl,
+      ctaLabel: "Vedi dettagli",
+    }),
+  });
+}
