@@ -101,8 +101,13 @@ selezionato, invece che da pagine generiche scollegate.
 
 ### Collegamento nella pagina cliente
 
-Il bottone si aggiunge accanto a "Vendita" e "Scheda" nell'header azioni di
-`src/app/clienti/[id]/page.tsx`.
+Il bottone **non** va nell'header azioni insieme a "Vendita"/"Scheda"
+(quelli sono semplici link, questo apre una form multi-campo — stesso
+motivo per cui anche il bottone WhatsApp vive in una card a sé, non
+nell'header). Va aggiunto come nuova `Card` nella colonna laterale
+(`aside`) di `src/app/clienti/[id]/page.tsx`, subito dopo la card
+"Macchine" — posizione coerente perché la macchina è il primo dato da
+scegliere nella form.
 
 ## Fuori scope
 
