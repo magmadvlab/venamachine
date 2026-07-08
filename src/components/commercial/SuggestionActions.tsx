@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, Copy, Loader2, RefreshCw, Send, ShoppingBag, X } from "lucide-react";
 import { useState, useTransition } from "react";
+import { SendWhatsAppButton } from "@/components/SendWhatsAppButton";
 
 export type SuggestionRow = {
   id: string;
@@ -79,6 +80,7 @@ export function SuggestionCard({ suggestion }: { suggestion: SuggestionRow }) {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const machine = [suggestion.marca, suggestion.modello, suggestion.matricola].filter(Boolean).join(" · ");
+  const whatsappAvailable = Boolean(suggestion.consenso_marketing) && Boolean(suggestion.telefono);
 
   function mutate(stato: string) {
     setError(null);
@@ -140,15 +142,17 @@ export function SuggestionCard({ suggestion }: { suggestion: SuggestionRow }) {
             {suggestion.cta_label}
           </Link>
         )}
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={() => mutate("inviato")}
-          className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-800 disabled:opacity-60"
-        >
-          <Send className="h-3.5 w-3.5" />
-          Inviato
-        </button>
+        {!whatsappAvailable && (
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => mutate("inviato")}
+            className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-800 disabled:opacity-60"
+          >
+            <Send className="h-3.5 w-3.5" />
+            Inviato
+          </button>
+        )}
         <button
           type="button"
           disabled={isPending}
@@ -168,6 +172,12 @@ export function SuggestionCard({ suggestion }: { suggestion: SuggestionRow }) {
           Scarta
         </button>
       </div>
+      {whatsappAvailable && (
+        <SendWhatsAppButton
+          sendUrl={`/api/suggerimenti/${suggestion.id}/whatsapp`}
+          defaultTesto={suggestion.messaggio}
+        />
+      )}
       {suggestion.fonte_nome && (
         <p className="mt-2 text-[11px] font-semibold text-coffee-400">
           Fonte: {suggestion.fonte_url ? (
