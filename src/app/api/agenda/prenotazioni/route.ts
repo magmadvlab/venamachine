@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { buildBookingTitle, getAgendaSlots, listAgendaPrenotazioni } from "@/lib/agenda";
+import { notificaPrenotazione } from "@/lib/notifications";
 import { getSessionOperatore } from "@/lib/operator-server";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
@@ -192,6 +193,27 @@ export async function POST(req: Request) {
     if (updateError) return dbError("Aggiornamento manutenzione", updateError);
   }
 
+  if (created.stato === "confermata") {
+    const { data: clienteRow } = await db
+      .from("clienti")
+      .select("telefono, email, canale_preferito")
+      .eq("id", clienteId)
+      .maybeSingle();
+
+    if (clienteRow) {
+      await notificaPrenotazione({
+        db,
+        cliente: clienteRow,
+        clienteId,
+        prenotazioneId: created.id,
+        tipo: "confermata",
+        titolo: title,
+        inizio: created.inizio,
+        tokenPubblico: created.token_pubblico,
+      });
+    }
+  }
+
   return NextResponse.json({ prenotazione: created });
 }
 
@@ -217,7 +239,8 @@ export async function PATCH(req: Request) {
     .from("prenotazioni")
     .update(patch)
     .eq("id", body.id)
-    .select("id, stato, riparazione_id")
+    .select(`id, stato, riparazione_id, titolo, inizio, token_pubblico, cliente_id,
+      cliente:clienti(telefono, email, canale_preferito)`)
     .maybeSingle();
   if (error) return dbError("Aggiornamento prenotazione", error);
   if (!data) return NextResponse.json({ error: "Prenotazione non trovata." }, { status: 404 });
@@ -227,6 +250,22 @@ export async function PATCH(req: Request) {
       .from("manutenzioni_programmate")
       .update({ riparazione_id: clean(body.riparazione_id) ?? null })
       .eq("prenotazione_id", body.id);
+  }
+
+  if (body.stato === "confermata" || body.stato === "annullata") {
+    const cliente = one((data as any).cliente);
+    if (cliente) {
+      await notificaPrenotazione({
+        db,
+        cliente,
+        clienteId: (data as any).cliente_id,
+        prenotazioneId: data.id,
+        tipo: body.stato,
+        titolo: (data as any).titolo,
+        inizio: (data as any).inizio,
+        tokenPubblico: (data as any).token_pubblico,
+      });
+    }
   }
 
   return NextResponse.json({ prenotazione: data });
