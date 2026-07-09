@@ -109,11 +109,11 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
               Chiama
             </a>
           )}
-          <Link href="/vendite" className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
+          <Link href={`/vendite?cliente=${cliente.id}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
             <ShoppingBag className="h-4 w-4" />
             Vendita
           </Link>
-          <Link href="/nuova" className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
+          <Link href={`/nuova?cliente=${cliente.id}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
             <Plus className="h-4 w-4" />
             Scheda
           </Link>
