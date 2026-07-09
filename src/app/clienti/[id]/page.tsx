@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { CustomerEditForm } from "@/components/customers/CustomerEditForm";
 import { CustomerNoteForm } from "@/components/customers/CustomerNoteForm";
 import { SendWhatsAppButton } from "@/components/SendWhatsAppButton";
+import { ProponiManutenzioneButton } from "@/components/customers/ProponiManutenzioneButton";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -236,6 +237,14 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
                 ))}
               </ul>
             )}
+          </Card>
+
+          <Card className="p-4 sm:p-5">
+            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
+              <Wrench className="h-5 w-5 text-arancio" />
+              Proponi manutenzione
+            </h2>
+            <ProponiManutenzioneButton clienteId={cliente.id} macchine={(macchine ?? []) as any} />
           </Card>
 
           <Card className="p-4 sm:p-5">
