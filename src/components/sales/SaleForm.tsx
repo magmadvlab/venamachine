@@ -41,6 +41,7 @@ type SaleFormProps = {
   clienti: ClienteOption[];
   macchine: MacchinaOption[];
   prodotti: ProdottoOption[];
+  initialClienteId?: string;
 };
 
 const inputCls = "w-full rounded-xl border border-coffee-200 bg-white px-3 py-3 text-base text-coffee-900 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20 sm:py-2.5 sm:text-sm";
@@ -54,11 +55,11 @@ function macchinaLabel(m: MacchinaOption) {
   return `${nome}${matricola}${categoria}${regime}`;
 }
 
-export function SaleForm({ clienti, macchine, prodotti }: SaleFormProps) {
+export function SaleForm({ clienti, macchine, prodotti, initialClienteId }: SaleFormProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
-  const [clienteId, setClienteId] = useState("");
+  const [clienteId, setClienteId] = useState(initialClienteId ?? "");
   const [macchinaId, setMacchinaId] = useState("");
   const [prodottoId, setProdottoId] = useState("");
   const [nomeProdotto, setNomeProdotto] = useState("");
