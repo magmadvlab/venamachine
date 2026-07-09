@@ -12,7 +12,6 @@ import {
   ClipboardList,
   Clock,
   Coffee,
-  Gauge,
   Home,
   Menu,
   PackageSearch,
@@ -45,10 +44,9 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     ],
   },
   {
-    label: "Clienti e macchine",
+    label: "Clienti",
     items: [
       { href: "/clienti", label: "Clienti", icon: Users },
-      { href: "/macchine", label: "Macchine", icon: Gauge },
     ],
   },
   {
@@ -97,7 +95,6 @@ const mobilePrimaryLinks = [
 const baseMobileMoreLinks = [
   findLink("/schede"),
   findLink("/clienti"),
-  findLink("/macchine"),
   findLink("/dashboard-commerciale"),
   findLink("/vendite"),
   findLink("/incassi"),
