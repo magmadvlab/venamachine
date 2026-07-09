@@ -16,6 +16,7 @@ import {
   Target,
   UserRound,
   Users,
+  Wrench,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
@@ -27,9 +28,9 @@ const lastUpdated = "23 giugno 2026";
 const menuSections = [
   {
     href: "/",
-    title: "Dashboard",
+    title: "Schede",
     icon: ClipboardList,
-    text: "Coda di lavoro quotidiana: riparazioni aperte, manutenzioni da proporre, ritiri da sollecitare, prenotazioni da confermare e opportunità commerciali. Ogni riga porta alla scheda del cliente.",
+    text: "Dashboard dell'officina: cerca riparazioni, apri dettagli, cambia stato e crea nuove schede.",
   },
   {
     href: "/manuale",
@@ -73,6 +74,18 @@ const menuSections = [
     title: "Agenda",
     icon: CalendarDays,
     text: "Azioni commerciali generate da rischio comodato, riordino, calo vendite, upgrade e assistenza.",
+  },
+  {
+    href: "/manutenzioni",
+    title: "Manutenzioni",
+    icon: Wrench,
+    text: "Programmazione preventiva basata su uso stimato, tempo, categoria macchina e segnali tecnici.",
+  },
+  {
+    href: "/opportunita",
+    title: "Opportunita",
+    icon: Target,
+    text: "Analisi di clienti e macchine con rischio o potenziale commerciale.",
   },
   {
     href: "/dashboard-commerciale",
@@ -186,7 +199,7 @@ export default async function ManualePage() {
           <Target className="h-6 w-6 text-arancio" />
           <h2 className="mt-3 font-display text-lg font-semibold text-coffee-50">Uso quotidiano</h2>
           <p className="mt-2 text-sm leading-6 text-coffee-200">
-            Agenda e Dashboard sono le due viste operative da controllare con continuita.
+            Agenda e Manutenzioni sono le due viste operative da controllare con continuita.
           </p>
         </Card>
       </section>
