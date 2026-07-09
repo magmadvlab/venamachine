@@ -54,6 +54,9 @@ export function ProponiManutenzioneButton({ clienteId, macchine }: { clienteId: 
         return;
       }
       setOpen(false);
+      setMacchinaId(macchine[0]?.id ?? "");
+      setTipo("preventiva");
+      setDataPrevista(defaultData());
       setMotivo("");
       router.refresh();
     });
@@ -121,7 +124,14 @@ export function ProponiManutenzioneButton({ clienteId, macchine }: { clienteId: 
         </button>
         <button
           type="button"
-          onClick={() => { setOpen(false); setError(null); setMotivo(""); }}
+          onClick={() => {
+            setOpen(false);
+            setError(null);
+            setMacchinaId(macchine[0]?.id ?? "");
+            setTipo("preventiva");
+            setDataPrevista(defaultData());
+            setMotivo("");
+          }}
           disabled={isPending}
           className="rounded-lg border border-coffee-200 bg-white px-3 py-2 text-sm font-semibold text-coffee-700 disabled:opacity-60"
         >
