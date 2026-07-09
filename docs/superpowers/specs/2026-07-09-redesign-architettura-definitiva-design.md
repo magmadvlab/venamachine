@@ -90,9 +90,12 @@ La Dashboard diventa la vera home operativa, non più ricerca-cliente-più-4-lin
   numero scheda, cliente, telefono, matricola) — ogni risultato mostra il
   nome cliente con link alla sua pagina. Nessuna ricerca cliente separata
   (decisione già presa: una sola barra, non due).
-- **Sezioni per categoria**, ciascuna una lista filtrata trasversale su
-  tutti i clienti, ogni riga linka alla pagina del cliente specifico (mai a
-  una pagina Manutenzioni/Solleciti a sé, che non esistono più):
+- **Sezioni per categoria**, ciascuna una lista **compatta** (nome
+  cliente, informazione chiave, badge di urgenza/priorità — non la card
+  completa con i controlli) trasversale su tutti i clienti, ordinata per
+  priorità/scadenza con gli stessi criteri già usati oggi. Ogni riga è un
+  link a `/clienti/[id]`: i controlli veri (cambia stato, invia proposta,
+  ecc.) vivono lì, non nella Dashboard. Categorie:
   - Da riparare (assistenza aperta, oggi contenuto di `/schede`)
   - Da proporre manutenzione (oggi generato da `POST /api/manutenzioni`,
     letto da `manutenzioni_programmate` stato `da_pianificare`)
@@ -103,6 +106,9 @@ La Dashboard diventa la vera home operativa, non più ricerca-cliente-più-4-lin
     `azioni_commerciali`/`suggerimenti_clienti` esistenti così come sono
     oggi, in attesa del consolidamento di Sezione B. Non introduce nuova
     logica di generazione qui.
+  - Ogni sezione mostra al massimo le prime righe (stesso ordinamento per
+    priorità/scadenza già in uso); un "mostra tutte" espande la sezione
+    sul posto, senza navigare altrove.
 - **Azioni rapide**: "Nuova scheda" (assistenza, invariata), "Vendita al
   banco" (registra una vendita senza aver aperto prima un cliente — stessa
   form di oggi, senza cliente precompilato).
@@ -111,12 +117,30 @@ La Dashboard diventa la vera home operativa, non più ricerca-cliente-più-4-lin
 
 Oltre a quanto già specificato in
 `2026-07-08-redesign-fase5-azioni-cliente-design.md` (Vendita/Scheda
-precompilati, Proponi manutenzione — piano già scritto, in esecuzione),
-questa architettura aggiunge concettualmente due azioni dello stesso tipo,
-il cui piano di implementazione dettagliato è rimandato a un ciclo
-successivo (non in questo spec): **Sollecito manuale** e **Invia
-suggerimento/opportunità**, entrambe raggiungibili solo da qui, mai da una
-pagina Solleciti/Opportunità separata (che non esistono più).
+precompilati, Proponi manutenzione nuova — piano già scritto, in
+esecuzione), la pagina cliente deve anche **gestire le righe già
+esistenti** che nella vecchia architettura vivevano nelle pagine ora
+eliminate, così che spostare quelle pagine nella Dashboard non perda i
+controlli che avevano:
+
+- **Manutenzioni programmate di quel cliente**: stessi componenti già
+  esistenti `MaintenanceControls` (cambia stato/data/note) e
+  `MaintenanceProposalButton` (invia proposta WhatsApp), oggi renderizzati
+  in `src/app/manutenzioni/page.tsx:259-276`, da mostrare per le righe di
+  `manutenzioni_programmate` di questo cliente.
+- **Sollecito ritiro**: componente già esistente `ReminderButton`
+  (`src/components/ReminderButton.tsx`, oggi in
+  `src/app/solleciti/page.tsx:84`), da mostrare quando questo cliente ha
+  una riparazione in stato `cliente_avvisato` in attesa di ritiro.
+- **Opportunità/suggerimenti per questo cliente**: la riga corrispondente
+  di `v_analisi_commerciale_macchine`/`suggerimenti_clienti`, mostrata qui
+  invece che nella pagina Opportunità eliminata — nessuna nuova azione,
+  solo spostare dove si vede.
+
+Il piano di implementazione dettagliato di questi tre punti è compito del
+ciclo di implementazione di questa architettura (non rimandato oltre,
+perché senza non si può eliminare le pagine sorgente senza perdita di
+funzionalità).
 
 ## Cosa cambia concretamente nel codice (implicazioni, dettaglio nel piano)
 
@@ -133,11 +157,23 @@ pagina Solleciti/Opportunità separata (che non esistono più).
 - `src/components/AcceptanceForm.tsx`: il redirect post-creazione scheda
   (oggi `/schede`) torna a puntare a `/` (la Dashboard, dove ora vive la
   coda assistenza).
-- I 12 file con link "← Schede" (corretti in Fase 2 per puntare a
-  `/schede`) vanno corretti di nuovo per puntare a `/`.
-- Le route API esistenti (`/api/manutenzioni`, `/api/solleciti`
-  equivalente, ecc.) restano invariate: cambia solo dove il risultato viene
-  mostrato, non come viene calcolato.
+- 9 file con link "← Schede" (corretti in Fase 2 per puntare a `/schede`,
+  esclusi i 3 che vengono eliminati) vanno corretti di nuovo per puntare a
+  `/`: `clienti/page.tsx`, `prodotti/page.tsx`, `incassi/page.tsx`,
+  `riparazioni/[id]/page.tsx` (2 occorrenze), `macchine/[id]/page.tsx`,
+  `admin/page.tsx`, `vendite/page.tsx`, `dashboard-commerciale/page.tsx`,
+  `agenda/page.tsx`, `nuova/page.tsx`.
+- 3 link `href="/manutenzioni"` verso la pagina eliminata (in
+  `macchine/[id]/page.tsx:443`, `dashboard-commerciale/page.tsx:196`,
+  `agenda/page.tsx:251`) vanno corretti a `href="/"`.
+- Nuovi componenti sulla pagina cliente (vedi sopra): riuso diretto di
+  `MaintenanceControls`, `MaintenanceProposalButton`
+  (`src/components/maintenance/MaintenanceActions.tsx`) e `ReminderButton`
+  (`src/components/ReminderButton.tsx`), già esistenti — non riscritti,
+  solo richiamati da un nuovo punto.
+- Le route API esistenti (`/api/manutenzioni`, generazione suggerimenti,
+  ecc.) restano invariate: cambia solo dove il risultato viene mostrato,
+  non come viene calcolato.
 
 ## Fuori scope
 
