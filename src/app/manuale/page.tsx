@@ -83,7 +83,7 @@ const workflow = [
   "Registra ogni vendita collegandola alla macchina quando possibile.",
   "Crea offerte solo da admin e usa il batch solo per clienti con consenso marketing.",
   "Controlla Agenda ogni giorno: calendario, azioni, manutenzioni da convertire e consigli utili.",
-  "Genera Manutenzioni almeno una volta a settimana.",
+  "Aggiorna la coda manutenzioni dalla Dashboard almeno una volta a settimana.",
   "Prepara il link cliente per prenotare la manutenzione ordinaria negli slot disponibili.",
   "Usa Dashboard per decidere dove intervenire commercialmente.",
   "Aggiorna Prodotti e Configurazione quando cambiano prezzi, soglie o regole.",
