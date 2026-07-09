@@ -6,7 +6,7 @@ import type { NuovaAccettazione, ProfiloAttivita } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function NuovaScheda({ searchParams }: { searchParams?: { prenotazione?: string } }) {
+export default async function NuovaScheda({ searchParams }: { searchParams?: { prenotazione?: string; cliente?: string } }) {
   let profiliAttivita: ProfiloAttivita[] = [];
   let initialValue: Partial<NuovaAccettazione> | undefined;
   let prenotazioneId: string | undefined;
@@ -70,6 +70,51 @@ export default async function NuovaScheda({ searchParams }: { searchParams?: { p
             preventivo_richiesto: false,
             difetto_cliente: booking.manutenzione_motivo ?? booking.descrizione ?? "Manutenzione ordinaria programmata",
           },
+        };
+      }
+    }
+
+    const requestedClienteId = searchParams?.cliente?.trim();
+    if (!requestedBookingId && requestedClienteId) {
+      const [{ data: cliente }, { data: macchineCliente }] = await Promise.all([
+        db
+          .from("clienti")
+          .select("tipo, ragione_sociale, piva_cf, indirizzo, telefono, email, consenso_gdpr, canale_preferito, profilo_attivita_id, caffe_giornalieri_attesi_override, note_fedelta")
+          .eq("id", requestedClienteId)
+          .maybeSingle(),
+        db
+          .from("macchine")
+          .select("marca, modello, colore, matricola, tipologia, categoria_utilizzo, regime_possesso")
+          .eq("cliente_id", requestedClienteId),
+      ]);
+
+      if (cliente) {
+        const macchinaUnica = (macchineCliente ?? []).length === 1 ? macchineCliente![0] : null;
+        initialValue = {
+          cliente: {
+            tipo: cliente.tipo ?? "privato",
+            ragione_sociale: cliente.ragione_sociale ?? "",
+            piva_cf: cliente.piva_cf ?? "",
+            indirizzo: cliente.indirizzo ?? "",
+            telefono: cliente.telefono ?? "",
+            email: cliente.email ?? "",
+            consenso_gdpr: Boolean(cliente.consenso_gdpr),
+            canale_preferito: cliente.canale_preferito ?? "email",
+            profilo_attivita_id: cliente.profilo_attivita_id ?? undefined,
+            caffe_giornalieri_attesi_override: cliente.caffe_giornalieri_attesi_override ?? undefined,
+            note_fedelta: cliente.note_fedelta ?? undefined,
+          },
+          ...(macchinaUnica ? {
+            macchina: {
+              marca: macchinaUnica.marca ?? "",
+              modello: macchinaUnica.modello ?? "",
+              colore: macchinaUnica.colore ?? "",
+              matricola: macchinaUnica.matricola ?? "",
+              tipologia: macchinaUnica.tipologia ?? "capsule",
+              categoria_utilizzo: macchinaUnica.categoria_utilizzo ?? "ufficio",
+              regime_possesso: macchinaUnica.regime_possesso ?? "proprieta_cliente",
+            },
+          } : {}),
         };
       }
     }
