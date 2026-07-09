@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, Coffee, Gauge, Pencil, Phone, Plus, ShoppingBag, Target, Wrench } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock, Coffee, Gauge, Pencil, Phone, Plus, ShoppingBag, Target, Wrench } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { CustomerEditForm } from "@/components/customers/CustomerEditForm";
 import { CustomerNoteForm } from "@/components/customers/CustomerNoteForm";
 import { SendWhatsAppButton } from "@/components/SendWhatsAppButton";
 import { ProponiManutenzioneButton } from "@/components/customers/ProponiManutenzioneButton";
+import { MaintenanceControls, MaintenanceProposalButton } from "@/components/maintenance/MaintenanceActions";
+import { ReminderButton } from "@/components/ReminderButton";
+import { SuggestionCard } from "@/components/commercial/SuggestionActions";
+import { buildMaintenanceProposalMessage } from "@/lib/maintenance-proposal";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +25,33 @@ function formatDate(value?: string | null) {
 function money(value?: number | string | null) {
   return `€ ${Number(value ?? 0).toFixed(2)}`;
 }
+
+const AZIONE_LABELS: Record<string, string> = {
+  proteggi_comodato: "Proteggi comodato",
+  recupero_horeca: "Recupero Ho.Re.Ca.",
+  vendi_prodotti_post_assistenza: "Vendi post assistenza",
+  proponi_upgrade: "Proponi upgrade",
+  valuta_riallocazione: "Valuta riallocazione",
+  primo_ordine: "Primo ordine",
+  verifica_miscela: "Verifica miscela",
+  monitora: "Monitora",
+};
+
+const FIT_LABELS: Record<string, string> = {
+  coerente: "Coerente",
+  sovradimensionata: "Sovradimensionata",
+  sottodimensionata: "Da upgrade",
+  senza_dati_vendita: "Senza vendite",
+  categoria_da_definire: "Categoria da definire",
+};
+
+const STATO_MANUTENZIONE_LABELS: Record<string, string> = {
+  da_pianificare: "Da pianificare",
+  pianificata: "Pianificata",
+  fatta: "Fatta",
+  saltata: "Saltata",
+  annullata: "Annullata",
+};
 
 function eventIcon(tipo?: string | null) {
   if (tipo === "vendita") return <ShoppingBag className="h-4 w-4" />;
@@ -67,14 +98,37 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
     { data: azioniAperte },
     { data: manutenzioni },
     { data: profili },
+    { data: solleciti },
+    { data: suggerimenti },
   ] = await Promise.all([
     db.from("macchine").select("id, marca, modello, matricola, tipologia, categoria_utilizzo, regime_possesso, stato_ciclo_vita").eq("cliente_id", params.id).order("created_at", { ascending: false }),
     db.from("v_timeline_cliente").select("*").eq("cliente_id", params.id).order("data_evento", { ascending: false }).limit(120),
-    db.from("v_analisi_commerciale_macchine").select("macchina_id, priorita_commerciale, azione_consigliata, machine_fit, caffe_acquistati_365gg, caffe_target_365gg, valore_acquisti_365gg, costo_interventi_365gg").eq("cliente_id", params.id),
+    db.from("v_analisi_commerciale_macchine").select(`macchina_id, priorita_commerciale, azione_consigliata, machine_fit, marca, modello, matricola,
+      caffe_acquistati_365gg, caffe_target_365gg, valore_acquisti_365gg, costo_interventi_365gg`).eq("cliente_id", params.id),
     db.from("azioni_commerciali").select("id").eq("cliente_id", params.id).in("stato", ["aperta", "pianificata", "rimandata"]),
-    db.from("manutenzioni_programmate").select("id").eq("cliente_id", params.id).in("stato", ["da_pianificare", "pianificata"]),
+    db.from("v_manutenzioni_programmate_agenda").select("*").eq("cliente_id", params.id).in("stato", ["da_pianificare", "pianificata"]).order("priorita", { ascending: false }).order("data_prevista", { ascending: true }),
     db.from("profili_attivita").select("id, nome, codice, caffe_giornalieri_min, caffe_giornalieri_max").order("nome", { ascending: true }),
+    db.from("riparazioni").select("id, numero_scheda, data_avviso_cliente").eq("cliente_id", params.id).eq("stato", "cliente_avvisato").order("data_avviso_cliente", { ascending: true }),
+    db.from("v_suggerimenti_agenda").select("id, stato, priorita, titolo, messaggio, cta_label, cta_href, ragione_sociale, telefono, email, consenso_marketing, marca, modello, matricola, prodotto_nome, fonte_nome, fonte_url").eq("cliente_id", params.id).in("stato", ["da_preparare", "pronto", "inviato"]).order("priorita", { ascending: false }),
   ]);
+
+  const manutenzioniConTesto = await Promise.all((manutenzioni ?? []).map(async (row: any) => {
+    if (row.canale_preferito !== "whatsapp" || !row.telefono || !row.token_pubblico || row.stato_proposta === "prenotata") {
+      return row;
+    }
+    const macchinaLabel = [row.marca, row.modello, row.matricola].filter(Boolean).join(" ");
+    const proposal = await buildMaintenanceProposalMessage({
+      db,
+      ragioneSociale: row.ragione_sociale,
+      macchinaLabel,
+      motivo: row.motivo,
+      tokenPubblico: row.token_pubblico,
+      durataStimataMinuti: row.durata_stimata_minuti,
+    });
+    return { ...row, whatsappTesto: proposal.message };
+  }));
+
+  const opportunitaRows = (analisiRows ?? []).filter((row: any) => row.azione_consigliata !== "monitora");
 
   const valoreVendite = (analisiRows ?? []).reduce((sum: number, row: any) => sum + Number(row.valore_acquisti_365gg ?? 0), 0);
   const costoInterventi = (analisiRows ?? []).reduce((sum: number, row: any) => sum + Number(row.costo_interventi_365gg ?? 0), 0);
@@ -246,6 +300,125 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
                 Proponi manutenzione
               </h2>
               <ProponiManutenzioneButton clienteId={cliente.id} macchine={(macchine ?? []) as any} />
+            </Card>
+          )}
+
+          {manutenzioniConTesto.length > 0 && (
+            <Card className="p-4 sm:p-5">
+              <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
+                <Wrench className="h-5 w-5 text-arancio" />
+                Manutenzioni programmate
+              </h2>
+              <ul className="space-y-4">
+                {manutenzioniConTesto.map((row: any) => (
+                  <li key={row.id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-coffee-900">
+                          {[row.marca, row.modello, row.matricola].filter(Boolean).join(" ") || "Macchina"}
+                        </p>
+                        <p className="text-xs text-coffee-500">
+                          {formatDate(row.data_prevista)} · {STATO_MANUTENZIONE_LABELS[row.stato] ?? row.stato}
+                        </p>
+                      </div>
+                      <span className="rounded-full border border-coffee-200 bg-white px-2 py-0.5 text-xs font-bold text-coffee-700">
+                        Priorità {row.priorita ?? "-"}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-coffee-600">{row.motivo}</p>
+                    <MaintenanceControls
+                      item={{ id: row.id, stato: row.stato, data_prevista: row.data_prevista, note: row.note }}
+                    />
+                    <MaintenanceProposalButton
+                      item={{
+                        id: row.id,
+                        token_pubblico: row.token_pubblico,
+                        stato_proposta: row.stato_proposta,
+                        canale_preferito: row.canale_preferito,
+                        telefono: row.telefono,
+                        whatsappTesto: row.whatsappTesto,
+                      }}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {(solleciti ?? []).length > 0 && (
+            <Card className="p-4 sm:p-5">
+              <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
+                <Clock className="h-5 w-5 text-arancio" />
+                Sollecito ritiro
+              </h2>
+              <ul className="space-y-3">
+                {(solleciti ?? []).map((r: any) => {
+                  const giorni = r.data_avviso_cliente
+                    ? Math.floor((Date.now() - new Date(r.data_avviso_cliente).getTime()) / 86400000)
+                    : null;
+                  return (
+                    <li key={r.id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-sm font-bold text-arancio-dark">{r.numero_scheda}</span>
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
+                          {giorni ?? "—"} gg in attesa
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        <ReminderButton id={r.id} />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </Card>
+          )}
+
+          {(opportunitaRows.length > 0 || (suggerimenti ?? []).length > 0) && (
+            <Card className="p-4 sm:p-5">
+              <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
+                <Target className="h-5 w-5 text-arancio" />
+                Opportunità e consigli
+              </h2>
+              {opportunitaRows.length > 0 && (
+                <ul className="space-y-3">
+                  {opportunitaRows.map((row: any) => (
+                    <li key={row.macchina_id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-coffee-900">
+                          {[row.marca, row.modello].filter(Boolean).join(" ") || "Macchina"}
+                        </p>
+                        <span className="rounded-full border border-coffee-200 bg-white px-2 py-0.5 text-xs font-bold text-coffee-700">
+                          P{row.priorita_commerciale ?? "—"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-coffee-500">{row.matricola}</p>
+                      <p className="mt-2 font-semibold text-arancio-dark">
+                        {AZIONE_LABELS[row.azione_consigliata] ?? row.azione_consigliata}
+                      </p>
+                      {row.machine_fit && (
+                        <span className="mt-2 inline-flex items-center rounded-full bg-white px-2 py-0.5 text-xs font-bold text-coffee-700">
+                          {FIT_LABELS[row.machine_fit] ?? row.machine_fit}
+                        </span>
+                      )}
+                      <Link
+                        href={`/macchine/${row.macchina_id}`}
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-arancio-dark underline underline-offset-2"
+                      >
+                        <Gauge className="h-3.5 w-3.5" />
+                        Scheda macchina
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {(suggerimenti ?? []).length > 0 && (
+                <ul className="mt-3 space-y-3">
+                  {(suggerimenti ?? []).map((row: any) => (
+                    <SuggestionCard key={row.id} suggestion={row as any} />
+                  ))}
+                </ul>
+              )}
             </Card>
           )}
 
