@@ -239,13 +239,15 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
             )}
           </Card>
 
-          <Card className="p-4 sm:p-5">
-            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
-              <Wrench className="h-5 w-5 text-arancio" />
-              Proponi manutenzione
-            </h2>
-            <ProponiManutenzioneButton clienteId={cliente.id} macchine={(macchine ?? []) as any} />
-          </Card>
+          {(macchine ?? []).length > 0 && (
+            <Card className="p-4 sm:p-5">
+              <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
+                <Wrench className="h-5 w-5 text-arancio" />
+                Proponi manutenzione
+              </h2>
+              <ProponiManutenzioneButton clienteId={cliente.id} macchine={(macchine ?? []) as any} />
+            </Card>
+          )}
 
           <Card className="p-4 sm:p-5">
             <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Aggiungi nota</h2>
