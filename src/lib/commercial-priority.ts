@@ -9,8 +9,8 @@ export type Champion = {
   label: string;
 };
 
-const AZIONI_ACTIVE_STATES = ["aperta", "pianificata", "rimandata"];
-const SUGGERIMENTI_ACTIVE_STATES = ["da_preparare", "pronto", "inviato"];
+export const AZIONI_ACTIVE_STATES = ["aperta", "pianificata", "rimandata"];
+export const SUGGERIMENTI_ACTIVE_STATES = ["da_preparare", "pronto", "inviato"];
 
 export function groupByClienteId<T extends { cliente_id: string }>(rows: T[]): Map<string, T[]> {
   const map = new Map<string, T[]>();
@@ -99,7 +99,7 @@ async function closeSuggerimentiActive(
   db: SupabaseClient,
   clienteId: string,
   excludeId: string | null,
-  nota: string,
+  _nota: string,
 ): Promise<void> {
   let query = db
     .from("suggerimenti_clienti")
@@ -112,11 +112,11 @@ async function closeSuggerimentiActive(
   if (error) throw new Error(`Lettura suggerimenti da chiudere: ${error.message}`);
 
   for (const row of data ?? []) {
-    const { error: updateError } = await db
+    const { error: deleteError } = await db
       .from("suggerimenti_clienti")
-      .update({ stato: "scartato", note: nota })
+      .delete()
       .eq("id", row.id);
-    if (updateError) throw new Error(`Chiusura suggerimento superato: ${updateError.message}`);
+    if (deleteError) throw new Error(`Chiusura suggerimento superato: ${deleteError.message}`);
   }
 }
 

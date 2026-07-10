@@ -2,12 +2,9 @@ import { NextResponse } from "next/server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 import { getSessionOperatore } from "@/lib/operator-server";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
-import { getClientChampion, supersede } from "@/lib/commercial-priority";
+import { AZIONI_ACTIVE_STATES, SUGGERIMENTI_ACTIVE_STATES, getClientChampion, supersede } from "@/lib/commercial-priority";
 
 export const runtime = "nodejs";
-
-const AZIONI_ACTIVE_STATES = ["aperta", "pianificata", "rimandata"];
-const SUGGERIMENTI_ACTIVE_STATES = ["da_preparare", "pronto", "inviato"];
 
 async function canWrite(db: any) {
   const operatore = await getSessionOperatore(db).catch(() => null);

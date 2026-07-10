@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 import { getSessionOperatore } from "@/lib/operator-server";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
-import { getClientChampion, groupByClienteId, supersede } from "@/lib/commercial-priority";
+import { AZIONI_ACTIVE_STATES, getClientChampion, groupByClienteId, supersede } from "@/lib/commercial-priority";
 
 export const runtime = "nodejs";
-
-const ACTIVE_STATES = ["aperta", "pianificata", "rimandata"];
 
 const TYPE_BY_ACTION: Record<string, string> = {
   proteggi_comodato: "comodato_rischio",
@@ -218,7 +216,7 @@ export async function POST(req: Request) {
         .from("azioni_commerciali")
         .select("id, source_key, stato")
         .in("source_key", sourceKeys)
-        .in("stato", ACTIVE_STATES)
+        .in("stato", AZIONI_ACTIVE_STATES)
     : { data: [], error: null };
 
   if (existingError) return dbError("Lettura azioni esistenti", existingError);

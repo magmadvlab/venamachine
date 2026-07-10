@@ -3,11 +3,9 @@ import { getSessionOperatore } from "@/lib/operator-server";
 import { buildSuggestionsForMachine } from "@/lib/suggestions";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
-import { getClientChampion, groupByClienteId, supersede } from "@/lib/commercial-priority";
+import { SUGGERIMENTI_ACTIVE_STATES, getClientChampion, groupByClienteId, supersede } from "@/lib/commercial-priority";
 
 export const runtime = "nodejs";
-
-const ACTIVE_STATES = ["da_preparare", "pronto", "inviato"];
 
 type PatchPayload = {
   id?: string;
@@ -50,7 +48,7 @@ export async function GET() {
   const { data, error } = await db
     .from("v_suggerimenti_agenda")
     .select("*")
-    .in("stato", ACTIVE_STATES)
+    .in("stato", SUGGERIMENTI_ACTIVE_STATES)
     .order("priorita", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(200);
