@@ -135,8 +135,8 @@ export async function getClientsWithActiveSignal(db: SupabaseClient): Promise<Se
     { data: azioni, error: azioniError },
     { data: suggerimenti, error: suggerimentiError },
   ] = await Promise.all([
-    db.from("azioni_commerciali").select("cliente_id").in("stato", AZIONI_ACTIVE_STATES),
-    db.from("suggerimenti_clienti").select("cliente_id").in("stato", SUGGERIMENTI_ACTIVE_STATES),
+    db.from("azioni_commerciali").select("cliente_id").in("stato", AZIONI_ACTIVE_STATES).limit(5000),
+    db.from("suggerimenti_clienti").select("cliente_id").in("stato", SUGGERIMENTI_ACTIVE_STATES).limit(5000),
   ]);
 
   if (azioniError) throw new Error(`Lettura azioni attive: ${azioniError.message}`);
