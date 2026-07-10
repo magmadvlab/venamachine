@@ -60,7 +60,7 @@ const menuSections = [
   },
   {
     href: "/dashboard-commerciale",
-    title: "Dashboard",
+    title: "Report",
     icon: BarChart3,
     text: "Vista direzionale su vendite, rischi, azioni, manutenzioni e clienti da recuperare.",
   },
