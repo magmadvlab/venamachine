@@ -129,3 +129,21 @@ export async function supersede(
   await closeAzioniActive(db, clienteId, winner.tipo === "azione" ? winner.excludeId : null, nota);
   await closeSuggerimentiActive(db, clienteId, winner.tipo === "suggerimento" ? winner.excludeId : null, nota);
 }
+
+export async function getClientsWithActiveSignal(db: SupabaseClient): Promise<Set<string>> {
+  const [
+    { data: azioni, error: azioniError },
+    { data: suggerimenti, error: suggerimentiError },
+  ] = await Promise.all([
+    db.from("azioni_commerciali").select("cliente_id").in("stato", AZIONI_ACTIVE_STATES).limit(5000),
+    db.from("suggerimenti_clienti").select("cliente_id").in("stato", SUGGERIMENTI_ACTIVE_STATES).limit(5000),
+  ]);
+
+  if (azioniError) throw new Error(`Lettura azioni attive: ${azioniError.message}`);
+  if (suggerimentiError) throw new Error(`Lettura suggerimenti attivi: ${suggerimentiError.message}`);
+
+  return new Set([
+    ...(azioni ?? []).map((row: any) => row.cliente_id),
+    ...(suggerimenti ?? []).map((row: any) => row.cliente_id),
+  ]);
+}
