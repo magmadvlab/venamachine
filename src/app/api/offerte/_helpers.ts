@@ -13,3 +13,12 @@ export function dbError(step: string, error: DbErrorShape) {
     { status: 400 },
   );
 }
+
+export function offerMessage(opts: { titolo: string; offertaUrl: string; validaAl?: string | null }) {
+  return [
+    "Ciao! Vena Coffee Machine ha nuove offerte per te.",
+    `Volantino: ${opts.titolo}`,
+    opts.validaAl ? `Valide fino al ${new Date(opts.validaAl).toLocaleDateString("it-IT")}.` : null,
+    `Vedi tutte le offerte: ${opts.offertaUrl}`,
+  ].filter(Boolean).join("\n");
+}

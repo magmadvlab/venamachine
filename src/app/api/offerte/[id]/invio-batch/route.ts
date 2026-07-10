@@ -3,18 +3,9 @@ import { getPublicAppUrl } from "@/lib/app-url";
 import { queueMessage } from "@/lib/outbox";
 import { requireAdmin } from "@/lib/supabase/auth-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
-import { dbError } from "@/app/api/offerte/_helpers";
+import { dbError, offerMessage } from "@/app/api/offerte/_helpers";
 
 export const runtime = "nodejs";
-
-function offerMessage(opts: { titolo: string; offertaUrl: string; validaAl?: string | null }) {
-  return [
-    "Ciao! Vena Coffee Machine ha nuove offerte per te.",
-    `Volantino: ${opts.titolo}`,
-    opts.validaAl ? `Valide fino al ${new Date(opts.validaAl).toLocaleDateString("it-IT")}.` : null,
-    `Vedi tutte le offerte: ${opts.offertaUrl}`,
-  ].filter(Boolean).join("\n");
-}
 
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
   if (!hasServiceConfig()) {
