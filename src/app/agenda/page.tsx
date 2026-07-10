@@ -185,11 +185,11 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <Link
-            href="/schede"
+            href="/"
             className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-coffee-200 bg-white px-3 text-sm font-semibold text-coffee-700 active:scale-95"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Schede</span>
+            <span>Dashboard</span>
           </Link>
           <div>
             <p className="text-sm font-semibold text-arancio-dark">Commerciale</p>
@@ -248,8 +248,8 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
                         </div>
                         <p className="mt-2 line-clamp-3 text-xs leading-5 text-coffee-600">{row.motivo}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          <Link href="/manutenzioni" className="rounded-full border border-coffee-200 bg-white px-3 py-1.5 text-xs font-bold text-coffee-700">
-                            Apri manutenzioni
+                          <Link href="/" className="rounded-full border border-coffee-200 bg-white px-3 py-1.5 text-xs font-bold text-coffee-700">
+                            Apri dashboard
                           </Link>
                           {row.token_pubblico && (
                             <a href={`/manutenzione/${row.token_pubblico}`} target="_blank" rel="noreferrer" className="rounded-full bg-arancio px-3 py-1.5 text-xs font-bold text-white">

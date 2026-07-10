@@ -207,7 +207,7 @@ export default function AcceptanceForm({ profiliAttivita = [], initialValue, pre
         if (!photoRes.ok) throw new Error(`Scheda creata, ma upload foto non riuscito: ${photoOut.error}`);
       }
 
-      router.push("/schede");
+      router.push("/");
       router.refresh();
     } catch (e: any) {
       setErrore(e.message); setSaving(false);

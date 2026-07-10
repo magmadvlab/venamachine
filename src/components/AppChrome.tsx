@@ -9,8 +9,6 @@ import {
   Bell,
   BookOpen,
   CalendarDays,
-  ClipboardList,
-  Clock,
   Coffee,
   Home,
   Menu,
@@ -18,9 +16,7 @@ import {
   Plus,
   Settings,
   ShoppingBag,
-  Target,
   Users,
-  Wrench,
   X,
 } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -33,14 +29,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: "Lavoro quotidiano",
     items: [
       { href: "/", label: "Dashboard", icon: Home },
-      { href: "/schede", label: "Schede", icon: ClipboardList },
-    ],
-  },
-  {
-    label: "Pianificazione",
-    items: [
       { href: "/agenda", label: "Agenda", icon: CalendarDays },
-      { href: "/manutenzioni", label: "Manutenzioni", icon: Wrench },
     ],
   },
   {
@@ -63,9 +52,7 @@ const allGroupedLinks = navGroups.flatMap((group) => group.items);
 
 const operatorUtilityLinks: NavItem[] = [
   { href: "/nuova", label: "Nuova scheda", icon: Plus, highlight: true },
-  { href: "/opportunita", label: "Opportunità", icon: Target },
   { href: "/prodotti", label: "Prodotti", icon: PackageSearch },
-  { href: "/solleciti", label: "Solleciti", icon: Clock },
   { href: "/manuale", label: "Manuale", icon: BookOpen },
   { href: "/notifiche", label: "Notifiche", icon: Bell },
 ];
@@ -87,20 +74,16 @@ function findLink(href: string): NavItem {
 
 const mobilePrimaryLinks = [
   findLink("/"),
-  findLink("/manutenzioni"),
-  findLink("/nuova"),
   findLink("/agenda"),
+  findLink("/nuova"),
+  findLink("/clienti"),
 ];
 
 const baseMobileMoreLinks = [
-  findLink("/schede"),
-  findLink("/clienti"),
   findLink("/dashboard-commerciale"),
   findLink("/vendite"),
   findLink("/incassi"),
-  findLink("/opportunita"),
   findLink("/prodotti"),
-  findLink("/solleciti"),
   findLink("/manuale"),
   findLink("/notifiche"),
 ];
