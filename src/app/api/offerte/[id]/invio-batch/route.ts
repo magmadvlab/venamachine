@@ -4,16 +4,24 @@ import { queueMessage } from "@/lib/outbox";
 import { requireAdmin } from "@/lib/supabase/auth-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 import { dbError, offerMessage } from "@/app/api/offerte/_helpers";
+import { getClientsWithActiveSignal } from "@/lib/commercial-priority";
 
 export const runtime = "nodejs";
 
-export async function POST(_req: Request, { params }: { params: { id: string } }) {
+type BatchPayload = {
+  modalita?: "tutti" | "segnale_attivo";
+};
+
+export async function POST(req: Request, { params }: { params: { id: string } }) {
   if (!hasServiceConfig()) {
     return NextResponse.json({ error: "Configurazione Supabase incompleta" }, { status: 503 });
   }
   if (!(await requireAdmin())) {
     return NextResponse.json({ error: "Solo amministratore può inviare campagne offerte." }, { status: 403 });
   }
+
+  const body = (await req.json().catch(() => ({}))) as BatchPayload;
+  const modalita = body.modalita === "segnale_attivo" ? "segnale_attivo" : "tutti";
 
   const db = createServiceClient();
   const { data: campagna, error: campagnaError } = await db
@@ -28,7 +36,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: "Aggiungi almeno un prodotto/offerta prima del batch." }, { status: 400 });
   }
 
-  const { data: clienti, error: clientiError } = await db
+  const { data: clientiConsenso, error: clientiError } = await db
     .from("clienti")
     .select("id, ragione_sociale, telefono, canale_preferito")
     .eq("consenso_marketing", true)
@@ -37,8 +45,19 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
   if (clientiError) return dbError("Lettura destinatari", clientiError);
 
+  let clienti = clientiConsenso ?? [];
+  if (modalita === "segnale_attivo") {
+    let clientiConSegnale: Set<string>;
+    try {
+      clientiConSegnale = await getClientsWithActiveSignal(db);
+    } catch (e: any) {
+      return dbError("Lettura clienti con segnale attivo", { message: e.message });
+    }
+    clienti = clienti.filter((cliente: any) => clientiConSegnale.has(cliente.id));
+  }
+
   const offertaUrl = `${getPublicAppUrl()}/offerte/${campagna.slug}`;
-  const rows = (clienti ?? [])
+  const rows = clienti
     .map((cliente: any) => ({
       campagna_id: campagna.id,
       cliente_id: cliente.id,
