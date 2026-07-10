@@ -161,7 +161,8 @@ export default async function OffertePage() {
                       </a>
                       <CampaignStatusButton campaignId={campagna.id} stato="pubblicata" />
                       <div className="space-y-2">
-                        <CampaignBatchButton campaignId={campagna.id} />
+                        <CampaignBatchButton campaignId={campagna.id} modalita="tutti" label="Invia a tutti" />
+                        <CampaignBatchButton campaignId={campagna.id} modalita="segnale_attivo" label="Invia a clienti con segnale attivo" />
                         <CampaignSingleSendForm campaignId={campagna.id} customers={(clientiMarketing ?? []) as any} />
                       </div>
                     </div>
