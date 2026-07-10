@@ -3,6 +3,7 @@ import { getSessionOperatore } from "@/lib/operator-server";
 import { buildSuggestionsForMachine } from "@/lib/suggestions";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
+import { getClientChampion, groupByClienteId, supersede } from "@/lib/commercial-priority";
 
 export const runtime = "nodejs";
 
@@ -106,17 +107,53 @@ export async function POST() {
   if (existingError) return dbError("Lettura suggerimenti esistenti", existingError);
   const existingKeys = new Set((existing ?? []).map((row: any) => row.source_key));
   const toInsert = candidates.filter((candidate) => !existingKeys.has(candidate.source_key));
+  const alreadyExistedCount = candidates.length - toInsert.length;
 
-  if (toInsert.length === 0) {
-    return NextResponse.json({ created: 0, skipped: candidates.length, total: candidates.length });
+  const byClient = groupByClienteId(toInsert);
+  let createCount = 0;
+  let prioritySuppressedCount = 0;
+
+  for (const [clienteId, group] of byClient) {
+    const best = group.reduce((a, b) => (b.priorita > a.priorita ? b : a));
+
+    let champion;
+    try {
+      champion = await getClientChampion(db, clienteId);
+    } catch (e: any) {
+      return dbError("Lettura campione cliente", { message: e.message });
+    }
+
+    if (champion && champion.priorita >= best.priorita) {
+      prioritySuppressedCount += group.length;
+      continue;
+    }
+
+    const { data: inserted, error: insertError } = await db
+      .from("suggerimenti_clienti")
+      .insert(best)
+      .select("id")
+      .single();
+    if (insertError) return dbError("Creazione suggerimento", insertError);
+    createCount += 1;
+
+    try {
+      await supersede(db, clienteId, {
+        tipo: "suggerimento",
+        label: best.titolo,
+        priorita: best.priorita,
+        excludeId: inserted.id,
+      });
+    } catch (e: any) {
+      return dbError("Chiusura segnali superati", { message: e.message });
+    }
+
+    prioritySuppressedCount += group.length - 1;
   }
 
-  const { error: insertError } = await db.from("suggerimenti_clienti").insert(toInsert);
-  if (insertError) return dbError("Creazione suggerimenti", insertError);
-
   return NextResponse.json({
-    created: toInsert.length,
-    skipped: candidates.length - toInsert.length,
+    created: createCount,
+    skipped: alreadyExistedCount,
+    soppressi: prioritySuppressedCount,
     total: candidates.length,
   });
 }
