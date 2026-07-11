@@ -1023,15 +1023,57 @@ Sostituiscilo con:
 
 Questo è il punto più critico dal punto di vista compliance: senza questo filtro un invio batch WhatsApp potrebbe raggiungere un cliente archiviato.
 
-- [ ] **Step 3: Verifica di build**
+- [ ] **Step 3: Blocca anche l'invio singolo**
+
+**Files:**
+- Modify: `src/app/api/offerte/[id]/invio-singolo/route.ts:40-50`
+
+Emerso da code review del Task 6: questo endpoint (invio WhatsApp a un singolo cliente scelto dal dropdown) verifica solo `consenso_marketing`, senza mai controllare `archiviato_at`. Il dropdown lato UI è già filtrato dal Task 6 Step 1, ma è solo una barriera client-side — una chiamata diretta all'API (tab non aggiornata, script, futuro caller) raggiungerebbe comunque un cliente archiviato con consenso marketing ancora attivo (archiviare un cliente non tocca `consenso_marketing`). Stesso rischio di compliance già risolto per il batch, va chiuso anche qui.
+
+Il file ha oggi (righe 40-50):
+
+```ts
+  const { data: cliente, error: clienteError } = await db
+    .from("clienti")
+    .select("id, ragione_sociale, telefono, consenso_marketing")
+    .eq("id", body.cliente_id)
+    .maybeSingle();
+
+  if (clienteError) return dbError("Lettura cliente", clienteError);
+  if (!cliente) return NextResponse.json({ error: "Cliente non trovato." }, { status: 404 });
+  if (!cliente.consenso_marketing) {
+    return NextResponse.json({ error: "Il cliente non ha consenso marketing attivo." }, { status: 400 });
+  }
+```
+
+Sostituiscilo con:
+
+```ts
+  const { data: cliente, error: clienteError } = await db
+    .from("clienti")
+    .select("id, ragione_sociale, telefono, consenso_marketing, archiviato_at")
+    .eq("id", body.cliente_id)
+    .maybeSingle();
+
+  if (clienteError) return dbError("Lettura cliente", clienteError);
+  if (!cliente) return NextResponse.json({ error: "Cliente non trovato." }, { status: 404 });
+  if (cliente.archiviato_at) {
+    return NextResponse.json({ error: "Il cliente è archiviato." }, { status: 400 });
+  }
+  if (!cliente.consenso_marketing) {
+    return NextResponse.json({ error: "Il cliente non ha consenso marketing attivo." }, { status: 400 });
+  }
+```
+
+- [ ] **Step 4: Verifica di build**
 
 Run: `npm run build`
 Expected: build riuscita, nessun errore TypeScript.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add src/app/offerte/page.tsx src/app/api/offerte/\[id\]/invio-batch/route.ts
+git add src/app/offerte/page.tsx src/app/api/offerte/\[id\]/invio-batch/route.ts src/app/api/offerte/\[id\]/invio-singolo/route.ts
 git commit -m "fix: esclude i clienti archiviati dal targeting delle campagne offerte WhatsApp"
 ```
 
