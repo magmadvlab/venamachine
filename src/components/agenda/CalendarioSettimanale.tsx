@@ -179,6 +179,7 @@ export function CalendarioSettimanale({ initialPrenotazioni }: CalendarioSettima
             type="button"
             onClick={() => setSelectedDayIndex((index) => Math.max(0, index - 1))}
             disabled={selectedDayIndex === 0}
+            aria-label="Giorno precedente"
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-coffee-200 bg-white text-coffee-700 disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -188,6 +189,7 @@ export function CalendarioSettimanale({ initialPrenotazioni }: CalendarioSettima
             type="button"
             onClick={() => setSelectedDayIndex((index) => Math.min(days.length - 1, index + 1))}
             disabled={selectedDayIndex === days.length - 1}
+            aria-label="Giorno successivo"
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-coffee-200 bg-white text-coffee-700 disabled:opacity-40"
           >
             <ChevronRight className="h-4 w-4" />
