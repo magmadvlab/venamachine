@@ -1558,16 +1558,162 @@ Sostituisci il blocco header (dal `<header` di apertura alla `</header>` di chiu
 
 Nota sul link "Vendita" ora condizionale: il Task 5 ha filtrato il dropdown clienti di `/vendite` con `archiviato_at is null`. Se il link restasse sempre visibile, cliccandolo su un cliente archiviato si aprirebbe `SaleForm` con `initialClienteId` valorizzato a un id assente dalla lista filtrata — il `<select>` non avrebbe l'opzione corrispondente ma lo stato interno manterrebbe comunque quell'id, con rischio di registrare una vendita attribuita silenziosamente al cliente sbagliato. Nascondere il link quando `archiviato_at` è valorizzato evita il problema alla radice (coerente con la regola "sparisce da ogni flusso attivo" — vendere a un cliente archiviato non è un caso d'uso previsto, va prima ripristinato). Il link "Scheda" (nuova riparazione) resta invece sempre visibile: quel flusso passa da `cercaCliente()` che already riattiva automaticamente il cliente (Task 2), quindi non ha lo stesso problema.
 
-- [ ] **Step 4: Verifica di build**
+- [ ] **Step 4: Nascondi "Contatto WhatsApp" e "Proponi manutenzione" per i clienti archiviati**
+
+Emerso da code review del Task 9: altre due card nella stessa pagina scrivono dati o inviano messaggi reali senza controllare `archiviato_at`, e nessuna delle due è coperta dai filtri applicativi dei task precedenti.
+
+- "Contatto WhatsApp" invia davvero un messaggio (stesso rischio di compliance già chiuso per `invio-singolo` nel Task 6).
+- "Proponi manutenzione" inserisce una riga in `manutenzioni_programmate` che poi risulta invisibile ovunque (la vista che la mostra è già filtrata dal Task 1) — una scrittura silenziosamente orfana, non solo un problema di UI.
+
+Il file ha oggi (riga 255):
+
+```tsx
+          {cliente.canale_preferito === "whatsapp" && cliente.telefono && (
+```
+
+Sostituiscila con:
+
+```tsx
+          {cliente.canale_preferito === "whatsapp" && cliente.telefono && !cliente.archiviato_at && (
+```
+
+Il file ha oggi (riga 311):
+
+```tsx
+          {(macchine ?? []).length > 0 && (
+```
+
+Sostituiscila con:
+
+```tsx
+          {(macchine ?? []).length > 0 && !cliente.archiviato_at && (
+```
+
+- [ ] **Step 5: Verifica di build**
 
 Run: `npm run build`
 Expected: build riuscita, nessun errore TypeScript.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add src/app/clienti/\[id\]/page.tsx
 git commit -m "feat: aggiunge il bottone Archivia/Ripristina (solo admin) e il badge Archiviato alla scheda cliente"
+```
+
+- [ ] **Step 7: Blocca lato server l'invio WhatsApp a un cliente archiviato**
+
+**Files:**
+- Modify: `src/app/api/clienti/[id]/whatsapp/route.ts`
+
+Coerente con la regola già applicata in `invio-singolo` (Task 6): nascondere la card in UI non basta, una chiamata diretta all'endpoint deve fallire esplicitamente.
+
+Il file ha oggi:
+
+```ts
+  const db = createServiceClient();
+  const { data, error } = await db
+    .from("clienti")
+    .select("id, telefono, canale_preferito")
+    .eq("id", params.id)
+    .maybeSingle();
+
+  if (error) {
+    return NextResponse.json({ error: error.message, details: error.details, hint: error.hint }, { status: 400 });
+  }
+  if (!data) {
+    return NextResponse.json({ error: "Cliente non trovato" }, { status: 404 });
+  }
+  if (data.canale_preferito !== "whatsapp" || !data.telefono) {
+    return NextResponse.json({ error: "Cliente senza telefono o canale WhatsApp non preferito" }, { status: 400 });
+  }
+```
+
+Sostituiscilo con:
+
+```ts
+  const db = createServiceClient();
+  const { data, error } = await db
+    .from("clienti")
+    .select("id, telefono, canale_preferito, archiviato_at")
+    .eq("id", params.id)
+    .maybeSingle();
+
+  if (error) {
+    return NextResponse.json({ error: error.message, details: error.details, hint: error.hint }, { status: 400 });
+  }
+  if (!data) {
+    return NextResponse.json({ error: "Cliente non trovato" }, { status: 404 });
+  }
+  if (data.archiviato_at) {
+    return NextResponse.json({ error: "Il cliente è archiviato." }, { status: 400 });
+  }
+  if (data.canale_preferito !== "whatsapp" || !data.telefono) {
+    return NextResponse.json({ error: "Cliente senza telefono o canale WhatsApp non preferito" }, { status: 400 });
+  }
+```
+
+- [ ] **Step 8: Blocca lato server la creazione manutenzione per un cliente archiviato**
+
+**Files:**
+- Modify: `src/app/api/clienti/[id]/manutenzioni/route.ts`
+
+Il file ha oggi, subito dopo il controllo `canWrite`:
+
+```ts
+  const db = createServiceClient();
+  if (!(await canWrite(db))) {
+    return NextResponse.json({ error: "Non autorizzato" }, { status: 401 });
+  }
+
+  const { data: macchina, error: macchinaError } = await db
+    .from("macchine")
+    .select("id")
+    .eq("id", macchinaId)
+    .eq("cliente_id", params.id)
+    .maybeSingle();
+```
+
+Sostituiscilo con:
+
+```ts
+  const db = createServiceClient();
+  if (!(await canWrite(db))) {
+    return NextResponse.json({ error: "Non autorizzato" }, { status: 401 });
+  }
+
+  const { data: cliente, error: clienteError } = await db
+    .from("clienti")
+    .select("id, archiviato_at")
+    .eq("id", params.id)
+    .maybeSingle();
+
+  if (clienteError) return dbError("Lettura cliente", clienteError);
+  if (!cliente) {
+    return NextResponse.json({ error: "Cliente non trovato" }, { status: 404 });
+  }
+  if (cliente.archiviato_at) {
+    return NextResponse.json({ error: "Il cliente è archiviato." }, { status: 400 });
+  }
+
+  const { data: macchina, error: macchinaError } = await db
+    .from("macchine")
+    .select("id")
+    .eq("id", macchinaId)
+    .eq("cliente_id", params.id)
+    .maybeSingle();
+```
+
+- [ ] **Step 9: Verifica di build**
+
+Run: `npm run build`
+Expected: build riuscita, nessun errore TypeScript.
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add src/app/api/clienti/\[id\]/whatsapp/route.ts src/app/api/clienti/\[id\]/manutenzioni/route.ts
+git commit -m "fix: blocca invio WhatsApp e creazione manutenzione per clienti archiviati"
 ```
 
 ---
