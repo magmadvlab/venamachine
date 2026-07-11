@@ -629,6 +629,23 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   }
 
   const db = createServiceClient();
+
+  const { data: existing, error: lookupError } = await db
+    .from("clienti")
+    .select("id, archiviato_at")
+    .eq("id", params.id)
+    .maybeSingle();
+
+  if (lookupError) {
+    return NextResponse.json({ error: lookupError.message, details: lookupError.details, hint: lookupError.hint }, { status: 400 });
+  }
+  if (!existing) {
+    return NextResponse.json({ error: "Cliente non trovato." }, { status: 404 });
+  }
+  if (existing.archiviato_at) {
+    return NextResponse.json({ cliente: existing });
+  }
+
   const { data, error } = await db
     .from("clienti")
     .update({ archiviato_at: new Date().toISOString() })
@@ -646,6 +663,8 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   return NextResponse.json({ cliente: data });
 }
 ```
+
+Nota: a differenza di `ripristina` (dove scrivere `null` su un valore già `null` è naturalmente un no-op), `archivia` deve controllare lo stato attuale prima di scrivere — altrimenti un doppio click o un retry di rete sposterebbe in avanti il timestamp di archiviazione, che `Task 10` usa come data mostrata e come chiave di ordinamento nella lista admin.
 
 - [ ] **Step 2: Crea l'endpoint di ripristino**
 
