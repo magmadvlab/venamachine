@@ -110,7 +110,7 @@ export function CalendarioSettimanale({ initialPrenotazioni }: CalendarioSettima
   }
 
   return (
-    <section className="rounded-2xl border border-coffee-100 bg-white p-4 shadow-sm shadow-coffee-900/5">
+    <section className="min-w-0 rounded-2xl border border-coffee-100 bg-white p-4 shadow-sm shadow-coffee-900/5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-arancio-dark">Calendario</p>
