@@ -6,11 +6,13 @@ import { CustomerEditForm } from "@/components/customers/CustomerEditForm";
 import { CustomerNoteForm } from "@/components/customers/CustomerNoteForm";
 import { SendWhatsAppButton } from "@/components/SendWhatsAppButton";
 import { ProponiManutenzioneButton } from "@/components/customers/ProponiManutenzioneButton";
+import { ArchiveClientButton } from "@/components/customers/ArchiveClientButton";
 import { MaintenanceControls, MaintenanceProposalButton } from "@/components/maintenance/MaintenanceActions";
 import { ReminderButton } from "@/components/ReminderButton";
 import { SuggestionCard } from "@/components/commercial/SuggestionActions";
 import { buildMaintenanceProposalMessage } from "@/lib/maintenance-proposal";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
+import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -78,10 +80,13 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
   if (missingEnv.length > 0) notFound();
 
   const db = createServiceClient();
+  const user = await getCurrentUser();
+  const admin = isAdminEmail(user?.email);
+
   const { data: clienteRow } = await db
     .from("clienti")
     .select(`id, ragione_sociale, tipo, piva_cf, telefono, email, indirizzo, canale_preferito,
-      profilo_attivita_id, caffe_giornalieri_attesi_override, note_fedelta, consenso_gdpr, consenso_marketing, created_at,
+      profilo_attivita_id, caffe_giornalieri_attesi_override, note_fedelta, consenso_gdpr, consenso_marketing, created_at, archiviato_at,
       profilo:profili_attivita(nome, codice, caffe_giornalieri_min, caffe_giornalieri_max)`)
     .eq("id", params.id)
     .maybeSingle();
@@ -149,7 +154,12 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
           </Link>
           <div>
             <p className="text-sm font-semibold text-arancio-dark">Storico commerciale</p>
-            <h1 className="font-display text-xl font-bold text-coffee-50">{cliente.ragione_sociale}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="font-display text-xl font-bold text-coffee-50">{cliente.ragione_sociale}</h1>
+              {cliente.archiviato_at && (
+                <span className="rounded-full bg-stone-200 px-2 py-0.5 text-xs font-bold text-stone-700">Archiviato</span>
+              )}
+            </div>
             <p className="text-sm text-coffee-400">{[cliente.telefono, cliente.email, cliente.piva_cf].filter(Boolean).join(" · ") || "Recapiti mancanti"}</p>
           </div>
         </div>
@@ -164,14 +174,19 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
               Chiama
             </a>
           )}
-          <Link href={`/vendite?cliente=${cliente.id}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
-            <ShoppingBag className="h-4 w-4" />
-            Vendita
-          </Link>
+          {!cliente.archiviato_at && (
+            <Link href={`/vendite?cliente=${cliente.id}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
+              <ShoppingBag className="h-4 w-4" />
+              Vendita
+            </Link>
+          )}
           <Link href={`/nuova?cliente=${cliente.id}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
             <Plus className="h-4 w-4" />
             Scheda
           </Link>
+          {admin && (
+            <ArchiveClientButton id={cliente.id} ragioneSociale={cliente.ragione_sociale} archiviato={Boolean(cliente.archiviato_at)} />
+          )}
         </div>
       </header>
 
