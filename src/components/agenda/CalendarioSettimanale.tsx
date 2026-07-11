@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { Check, Clock3, FilePlus2, Loader2, Wrench, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Clock3, FilePlus2, Loader2, Wrench, X } from "lucide-react";
 import type { AgendaPrenotazione } from "@/lib/agenda";
 
 type CalendarioSettimanaleProps = {
@@ -85,6 +85,9 @@ export function CalendarioSettimanale({ initialPrenotazioni }: CalendarioSettima
   const [isPending, startTransition] = useTransition();
   const weekStart = useMemo(() => startOfWeek(), []);
   const days = useMemo(() => Array.from({ length: 6 }, (_, index) => addDays(weekStart, index)), [weekStart]);
+  const todayIndex = days.findIndex((day) => dateKey(day) === dateKey(new Date()));
+  const [selectedDayIndex, setSelectedDayIndex] = useState(todayIndex >= 0 ? todayIndex : 0);
+  const selectedDay = days[selectedDayIndex];
 
   const byDay = useMemo(() => {
     const map = new Map<string, AgendaPrenotazione[]>();
@@ -96,6 +99,7 @@ export function CalendarioSettimanale({ initialPrenotazioni }: CalendarioSettima
     }
     return map;
   }, [initialPrenotazioni]);
+  const selectedDayRows = byDay.get(dateKey(selectedDay)) ?? [];
 
   function updateStatus(id: string, stato: string) {
     startTransition(async () => {
@@ -121,7 +125,7 @@ export function CalendarioSettimanale({ initialPrenotazioni }: CalendarioSettima
         </p>
       </div>
 
-      <div className="overflow-x-auto pb-2">
+      <div className="hidden overflow-x-auto pb-2 lg:block">
         <div className="grid min-w-[900px] grid-cols-[56px_repeat(6,minmax(130px,1fr))]">
           <div />
           {days.map((day) => (
@@ -166,6 +170,61 @@ export function CalendarioSettimanale({ initialPrenotazioni }: CalendarioSettima
               </div>
             );
           })}
+        </div>
+      </div>
+
+      <div className="lg:hidden">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => setSelectedDayIndex((index) => Math.max(0, index - 1))}
+            disabled={selectedDayIndex === 0}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-coffee-200 bg-white text-coffee-700 disabled:opacity-40"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <p className="text-sm font-bold capitalize text-coffee-900">{formatDay(selectedDay)}</p>
+          <button
+            type="button"
+            onClick={() => setSelectedDayIndex((index) => Math.min(days.length - 1, index + 1))}
+            disabled={selectedDayIndex === days.length - 1}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-coffee-200 bg-white text-coffee-700 disabled:opacity-40"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex">
+          <div className="w-14 shrink-0">
+            {HOURS.map((hour) => (
+              <div key={hour} style={{ height: HOUR_HEIGHT }} className="border-t border-coffee-100 pr-2 text-right text-xs font-semibold text-coffee-400">
+                {String(hour).padStart(2, "0")}:00
+              </div>
+            ))}
+          </div>
+          <div className="relative flex-1 border-l border-t border-coffee-100 bg-coffee-50/40" style={{ height: HOURS.length * HOUR_HEIGHT }}>
+            {HOURS.map((hour) => (
+              <div key={hour} className="border-b border-coffee-100/80" style={{ height: HOUR_HEIGHT }} />
+            ))}
+            {selectedDayRows.map((booking) => {
+              const pos = bookingPosition(booking);
+              if (!pos) return null;
+              return (
+                <button
+                  key={booking.id}
+                  type="button"
+                  onClick={() => setSelected(booking)}
+                  style={{ top: pos.top, height: pos.height }}
+                  className={`absolute left-1 right-1 overflow-hidden rounded-lg border px-2 py-1 text-left text-xs shadow-sm ${statusClass(booking.stato)}`}
+                >
+                  <span className="block truncate font-bold">{booking.titolo}</span>
+                  <span className="block truncate opacity-75">
+                    {formatTime(booking.inizio)} · {booking.ragione_sociale}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
