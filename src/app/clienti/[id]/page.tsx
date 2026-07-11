@@ -252,7 +252,7 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
         </section>
 
         <aside className="space-y-4">
-          {cliente.canale_preferito === "whatsapp" && cliente.telefono && (
+          {cliente.canale_preferito === "whatsapp" && cliente.telefono && !cliente.archiviato_at && (
             <Card className="p-4 sm:p-5">
               <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Contatto WhatsApp</h2>
               <SendWhatsAppButton
@@ -308,7 +308,7 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
             )}
           </Card>
 
-          {(macchine ?? []).length > 0 && (
+          {(macchine ?? []).length > 0 && !cliente.archiviato_at && (
             <Card className="p-4 sm:p-5">
               <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
                 <Wrench className="h-5 w-5 text-arancio" />

@@ -18,7 +18,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const db = createServiceClient();
   const { data, error } = await db
     .from("clienti")
-    .select("id, telefono, canale_preferito")
+    .select("id, telefono, canale_preferito, archiviato_at")
     .eq("id", params.id)
     .maybeSingle();
 
@@ -27,6 +27,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
   if (!data) {
     return NextResponse.json({ error: "Cliente non trovato" }, { status: 404 });
+  }
+  if (data.archiviato_at) {
+    return NextResponse.json({ error: "Il cliente è archiviato." }, { status: 400 });
   }
   if (data.canale_preferito !== "whatsapp" || !data.telefono) {
     return NextResponse.json({ error: "Cliente senza telefono o canale WhatsApp non preferito" }, { status: 400 });
