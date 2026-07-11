@@ -39,12 +39,15 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
   const { data: cliente, error: clienteError } = await db
     .from("clienti")
-    .select("id, ragione_sociale, telefono, consenso_marketing")
+    .select("id, ragione_sociale, telefono, consenso_marketing, archiviato_at")
     .eq("id", body.cliente_id)
     .maybeSingle();
 
   if (clienteError) return dbError("Lettura cliente", clienteError);
   if (!cliente) return NextResponse.json({ error: "Cliente non trovato." }, { status: 404 });
+  if (cliente.archiviato_at) {
+    return NextResponse.json({ error: "Il cliente è archiviato." }, { status: 400 });
+  }
   if (!cliente.consenso_marketing) {
     return NextResponse.json({ error: "Il cliente non ha consenso marketing attivo." }, { status: 400 });
   }
