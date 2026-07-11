@@ -140,8 +140,16 @@ usato in `api/riparazioni/[id]/route.ts` DELETE):
      commerciali, contatti, prenotazioni — è già `ON DELETE CASCADE` e si
      elimina automaticamente).
 
-  Tutto in una singola transazione lato Postgres se possibile (RPC) o in
-  sequenza con rollback manuale in caso di errore a metà.
+  **Decisione presa in implementazione (Task 4)**: niente RPC/transazione
+  atomica — chiamate sequenziali con return immediato al primo errore,
+  stesso pattern già in uso per l'eliminazione di una singola riparazione
+  altrove nell'app. Rischio residuo accettato consapevolmente: un fallimento
+  a metà sequenza (es. errore di rete tra la cancellazione riparazioni e
+  quella macchine) lascia uno stato intermedio invece di un rollback pulito,
+  ma l'errore è sempre esplicito verso l'admin (mai corruzione silenziosa) e
+  il caso è raro. Non implementato per non aggiungere una nuova funzione SQL
+  scope a un task già completato — riconsiderare se in futuro l'hard delete
+  viene usato più spesso o su volumi più grandi.
 
 ## UI
 
