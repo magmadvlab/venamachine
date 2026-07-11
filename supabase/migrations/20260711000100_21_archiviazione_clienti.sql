@@ -132,9 +132,7 @@ select
 from scored;
 
 -- v_score_fedelta_macchine (da 11_score_fedelta_categorie_macchina.sql)
-drop view if exists v_score_fedelta_macchine;
-
-create view v_score_fedelta_macchine as
+create or replace view v_score_fedelta_macchine as
 with base as (
   select
     m.id as macchina_id,
