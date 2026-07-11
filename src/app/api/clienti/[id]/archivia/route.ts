@@ -14,6 +14,23 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   }
 
   const db = createServiceClient();
+
+  const { data: existing, error: lookupError } = await db
+    .from("clienti")
+    .select("id, archiviato_at")
+    .eq("id", params.id)
+    .maybeSingle();
+
+  if (lookupError) {
+    return NextResponse.json({ error: lookupError.message, details: lookupError.details, hint: lookupError.hint }, { status: 400 });
+  }
+  if (!existing) {
+    return NextResponse.json({ error: "Cliente non trovato." }, { status: 404 });
+  }
+  if (existing.archiviato_at) {
+    return NextResponse.json({ cliente: existing });
+  }
+
   const { data, error } = await db
     .from("clienti")
     .update({ archiviato_at: new Date().toISOString() })
