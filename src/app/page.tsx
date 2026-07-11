@@ -279,7 +279,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
 
       {q ? (
         <DashboardSection
-          icon={Search}
+          icon={<Search className="h-5 w-5 text-arancio" />}
           title="Risultati ricerca"
           rows={searchResults}
           emptyLabel={`Nessun risultato per "${q}"`}
@@ -288,32 +288,32 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
       ) : (
         <div className="space-y-4">
           <DashboardSection
-            icon={ClipboardList}
+            icon={<ClipboardList className="h-5 w-5 text-arancio" />}
             title="Da riparare"
             rows={daRiparareRows}
             emptyLabel="Nessuna riparazione aperta."
           />
           <DashboardSection
-            icon={Wrench}
+            icon={<Wrench className="h-5 w-5 text-arancio" />}
             title="Da proporre manutenzione"
             rows={daProporreRows}
             emptyLabel="Nessuna manutenzione da proporre."
             headerAction={<GenerateMaintenanceButton />}
           />
           <DashboardSection
-            icon={Clock}
+            icon={<Clock className="h-5 w-5 text-arancio" />}
             title="Da sollecitare"
             rows={daSollecitareRows}
             emptyLabel="Nessuna macchina da sollecitare."
           />
           <DashboardSection
-            icon={CalendarClock}
+            icon={<CalendarClock className="h-5 w-5 text-arancio" />}
             title="Prenotazioni da confermare"
             rows={prenotazioniRows}
             emptyLabel="Nessuna prenotazione da confermare."
           />
           <DashboardSection
-            icon={Lightbulb}
+            icon={<Lightbulb className="h-5 w-5 text-arancio" />}
             title="Opportunità commerciali da agire"
             rows={opportunitaRows}
             emptyLabel="Nessuna opportunità attiva."

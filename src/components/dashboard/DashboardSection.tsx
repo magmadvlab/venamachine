@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
 
@@ -24,14 +23,14 @@ const TONE_CLASSES: Record<DashboardSectionTone, string> = {
 };
 
 export function DashboardSection({
-  icon: Icon,
+  icon,
   title,
   rows,
   emptyLabel,
   initialVisible = 5,
   headerAction,
 }: {
-  icon: LucideIcon;
+  icon: ReactNode;
   title: string;
   rows: DashboardSectionRow[];
   emptyLabel: string;
@@ -45,7 +44,7 @@ export function DashboardSection({
     <Card className="p-4 sm:p-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 font-display text-base font-semibold text-coffee-50">
-          <Icon className="h-5 w-5 text-arancio" />
+          {icon}
           {title}
           <span className="rounded-full bg-coffee-800 px-2 py-0.5 text-xs font-bold text-coffee-300">
             {rows.length}
