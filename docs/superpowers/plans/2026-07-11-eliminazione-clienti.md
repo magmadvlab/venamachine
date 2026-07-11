@@ -1497,10 +1497,12 @@ Sostituisci il blocco header (dal `<header` di apertura alla `</header>` di chiu
               Chiama
             </a>
           )}
-          <Link href={`/vendite?cliente=${cliente.id}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
-            <ShoppingBag className="h-4 w-4" />
-            Vendita
-          </Link>
+          {!cliente.archiviato_at && (
+            <Link href={`/vendite?cliente=${cliente.id}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
+              <ShoppingBag className="h-4 w-4" />
+              Vendita
+            </Link>
+          )}
           <Link href={`/nuova?cliente=${cliente.id}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
             <Plus className="h-4 w-4" />
             Scheda
@@ -1511,6 +1513,8 @@ Sostituisci il blocco header (dal `<header` di apertura alla `</header>` di chiu
         </div>
       </header>
 ```
+
+Nota sul link "Vendita" ora condizionale: il Task 5 ha filtrato il dropdown clienti di `/vendite` con `archiviato_at is null`. Se il link restasse sempre visibile, cliccandolo su un cliente archiviato si aprirebbe `SaleForm` con `initialClienteId` valorizzato a un id assente dalla lista filtrata — il `<select>` non avrebbe l'opzione corrispondente ma lo stato interno manterrebbe comunque quell'id, con rischio di registrare una vendita attribuita silenziosamente al cliente sbagliato. Nascondere il link quando `archiviato_at` è valorizzato evita il problema alla radice (coerente con la regola "sparisce da ogni flusso attivo" — vendere a un cliente archiviato non è un caso d'uso previsto, va prima ripristinato). Il link "Scheda" (nuova riparazione) resta invece sempre visibile: quel flusso passa da `cercaCliente()` che already riattiva automaticamente il cliente (Task 2), quindi non ha lo stesso problema.
 
 - [ ] **Step 4: Verifica di build**
 
