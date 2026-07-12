@@ -2313,3 +2313,252 @@ Se il browser non ha una sessione autenticata disponibile in questo ambiente, sa
 - [ ] **Step 4: Nessun commit in questo task**
 
 Task di sola verifica — non modifica file, non serve commit.
+
+---
+
+### Task 13: Rifiniture emerse dalla review finale sull'intero branch
+
+Emerso da una review olistica sull'intero branch (dopo che ogni singolo task era già stato approvato singolarmente): due punti di UX non coperti da nessun task precedente. Nessun rischio di sicurezza o integrità dati — in entrambi i casi l'invio di messaggi resta comunque bloccato dalla guardia centralizzata del Task 9, questi fix riguardano solo cosa vede l'operatore.
+
+- [ ] **Step 1: Badge "Archiviato" su `/incassi`**
+
+**Files:**
+- Modify: `src/app/incassi/page.tsx`
+
+Lo spec (`docs/superpowers/specs/2026-07-11-eliminazione-clienti-design.md`) prometteva un badge "Archiviato" per i clienti archiviati nella lista pagamenti sospesi, ma questo non è mai finito in un task del piano.
+
+Il file ha oggi (righe 30-41):
+
+```tsx
+  const [{ data: riparazioni }, { data: vendite }] = await Promise.all([
+    db
+      .from("riparazioni")
+      .select("id, numero_scheda, importo_finale, importo_preventivo, data_ingresso, updated_at, cliente:clienti(ragione_sociale, telefono, email)")
+      .eq("stato_pagamento", "sospeso")
+      .order("updated_at", { ascending: true }),
+    db
+      .from("ordini_caffe")
+      .select("id, data_ordine, numero_documento, updated_at, righe:righe_ordine_caffe(prezzo_unitario, quantita), cliente:clienti(ragione_sociale, telefono, email)")
+      .eq("stato_pagamento", "sospeso")
+      .order("updated_at", { ascending: true }),
+  ]);
+```
+
+Sostituiscilo con:
+
+```tsx
+  const [{ data: riparazioni }, { data: vendite }] = await Promise.all([
+    db
+      .from("riparazioni")
+      .select("id, numero_scheda, importo_finale, importo_preventivo, data_ingresso, updated_at, cliente:clienti(ragione_sociale, telefono, email, archiviato_at)")
+      .eq("stato_pagamento", "sospeso")
+      .order("updated_at", { ascending: true }),
+    db
+      .from("ordini_caffe")
+      .select("id, data_ordine, numero_documento, updated_at, righe:righe_ordine_caffe(prezzo_unitario, quantita), cliente:clienti(ragione_sociale, telefono, email, archiviato_at)")
+      .eq("stato_pagamento", "sospeso")
+      .order("updated_at", { ascending: true }),
+  ]);
+```
+
+Il file ha oggi (righe 45-55, il tipo `SospesoRow`):
+
+```tsx
+  type SospesoRow = {
+    tipo: "riparazione" | "vendita";
+    id: string;
+    riferimento: string;
+    clienteNome: string;
+    clienteTelefono: string | null;
+    clienteEmail: string | null;
+    importo: number | null;
+    data: string;
+    giorni: number;
+  };
+```
+
+Sostituiscilo con:
+
+```tsx
+  type SospesoRow = {
+    tipo: "riparazione" | "vendita";
+    id: string;
+    riferimento: string;
+    clienteNome: string;
+    clienteTelefono: string | null;
+    clienteEmail: string | null;
+    clienteArchiviato: boolean;
+    importo: number | null;
+    data: string;
+    giorni: number;
+  };
+```
+
+Il file ha oggi (righe 57-71, il primo `.map`):
+
+```tsx
+  const items: SospesoRow[] = [
+    ...(riparazioni ?? []).map((r: any) => {
+      const c = Array.isArray(r.cliente) ? r.cliente[0] : r.cliente;
+      return {
+        tipo: "riparazione" as const,
+        id: r.id,
+        riferimento: r.numero_scheda,
+        clienteNome: c?.ragione_sociale ?? "—",
+        clienteTelefono: c?.telefono ?? null,
+        clienteEmail: c?.email ?? null,
+        importo: r.importo_finale ?? r.importo_preventivo ?? null,
+        data: r.data_ingresso,
+        giorni: Math.floor((oggi.getTime() - new Date(r.updated_at ?? r.data_ingresso).getTime()) / 86400000),
+      };
+    }),
+```
+
+Sostituiscilo con:
+
+```tsx
+  const items: SospesoRow[] = [
+    ...(riparazioni ?? []).map((r: any) => {
+      const c = Array.isArray(r.cliente) ? r.cliente[0] : r.cliente;
+      return {
+        tipo: "riparazione" as const,
+        id: r.id,
+        riferimento: r.numero_scheda,
+        clienteNome: c?.ragione_sociale ?? "—",
+        clienteTelefono: c?.telefono ?? null,
+        clienteEmail: c?.email ?? null,
+        clienteArchiviato: Boolean(c?.archiviato_at),
+        importo: r.importo_finale ?? r.importo_preventivo ?? null,
+        data: r.data_ingresso,
+        giorni: Math.floor((oggi.getTime() - new Date(r.updated_at ?? r.data_ingresso).getTime()) / 86400000),
+      };
+    }),
+```
+
+Il file ha oggi (righe 72-87, il secondo `.map`):
+
+```tsx
+    ...(vendite ?? []).map((v: any) => {
+      const c = Array.isArray(v.cliente) ? v.cliente[0] : v.cliente;
+      const righe = v.righe ?? [];
+      const importo = righe.reduce((s: number, r: any) => s + Number(r.quantita ?? 0) * Number(r.prezzo_unitario ?? 0), 0);
+      return {
+        tipo: "vendita" as const,
+        id: v.id,
+        riferimento: v.numero_documento ?? v.id.slice(0, 8),
+        clienteNome: c?.ragione_sociale ?? "—",
+        clienteTelefono: c?.telefono ?? null,
+        clienteEmail: c?.email ?? null,
+        importo: importo > 0 ? importo : null,
+        data: v.data_ordine,
+        giorni: Math.floor((oggi.getTime() - new Date(v.updated_at ?? v.data_ordine).getTime()) / 86400000),
+      };
+    }),
+  ].sort((a, b) => a.giorni - b.giorni);
+```
+
+Sostituiscilo con:
+
+```tsx
+    ...(vendite ?? []).map((v: any) => {
+      const c = Array.isArray(v.cliente) ? v.cliente[0] : v.cliente;
+      const righe = v.righe ?? [];
+      const importo = righe.reduce((s: number, r: any) => s + Number(r.quantita ?? 0) * Number(r.prezzo_unitario ?? 0), 0);
+      return {
+        tipo: "vendita" as const,
+        id: v.id,
+        riferimento: v.numero_documento ?? v.id.slice(0, 8),
+        clienteNome: c?.ragione_sociale ?? "—",
+        clienteTelefono: c?.telefono ?? null,
+        clienteEmail: c?.email ?? null,
+        clienteArchiviato: Boolean(c?.archiviato_at),
+        importo: importo > 0 ? importo : null,
+        data: v.data_ordine,
+        giorni: Math.floor((oggi.getTime() - new Date(v.updated_at ?? v.data_ordine).getTime()) / 86400000),
+      };
+    }),
+  ].sort((a, b) => a.giorni - b.giorni);
+```
+
+Il file ha oggi (riga 149, dentro il rendering della lista):
+
+```tsx
+                    <p className="font-semibold text-coffee-900">{item.clienteNome}</p>
+```
+
+Sostituiscila con:
+
+```tsx
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="font-semibold text-coffee-900">{item.clienteNome}</p>
+                      {item.clienteArchiviato && (
+                        <span className="rounded-full bg-stone-200 px-1.5 py-0.5 text-[10px] font-bold text-stone-700">Archiviato</span>
+                      )}
+                    </div>
+```
+
+- [ ] **Step 2: Nascondi "Sollecito ritiro" per i clienti archiviati**
+
+**Files:**
+- Modify: `src/app/clienti/[id]/page.tsx`
+
+Stesso pattern già applicato a "Contatto WhatsApp" e "Proponi manutenzione" nel Task 9 — questa terza card invia anch'essa un messaggio reale (bloccato dalla guardia centralizzata, ma la card resta comunque visibile e cliccabile).
+
+Il file ha oggi (riga 363):
+
+```tsx
+          {(solleciti ?? []).length > 0 && (
+```
+
+Sostituiscila con:
+
+```tsx
+          {(solleciti ?? []).length > 0 && !cliente.archiviato_at && (
+```
+
+- [ ] **Step 3: Messaggio d'errore corretto quando il sollecito è bloccato**
+
+**Files:**
+- Modify: `src/app/api/riparazioni/[id]/sollecito/route.ts`
+
+Difesa in profondità: anche se la card è nascosta, una chiamata diretta all'endpoint deve restituire un messaggio chiaro invece che fuorviante.
+
+Il file ha oggi (righe 41-48):
+
+```ts
+  if (!notifica.inviata) {
+    return NextResponse.json({
+      error: notifica.motivo === "destinatario_mancante"
+        ? "Cliente senza recapito per il canale scelto"
+        : "Canale scelto non configurato",
+      canale: notifica.canale,
+    }, { status: 400 });
+  }
+```
+
+Sostituiscilo con:
+
+```ts
+  if (!notifica.inviata) {
+    return NextResponse.json({
+      error: notifica.motivo === "cliente_archiviato"
+        ? "Il cliente è archiviato."
+        : notifica.motivo === "destinatario_mancante"
+          ? "Cliente senza recapito per il canale scelto"
+          : "Canale scelto non configurato",
+      canale: notifica.canale,
+    }, { status: 400 });
+  }
+```
+
+- [ ] **Step 4: Verifica di build**
+
+Run: `npm run build`
+Expected: build riuscita, nessun errore TypeScript.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/app/incassi/page.tsx src/app/clienti/\[id\]/page.tsx src/app/api/riparazioni/\[id\]/sollecito/route.ts
+git commit -m "fix: aggiunge il badge Archiviato su /incassi e nasconde Sollecito ritiro per clienti archiviati"
+```
