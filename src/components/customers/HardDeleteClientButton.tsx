@@ -11,7 +11,8 @@ export function HardDeleteClientButton({ id, ragioneSociale }: { id: string; rag
   const [deleting, setDeleting] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const canDelete = confirmText.trim() === ragioneSociale;
+  const nomeAtteso = ragioneSociale.trim();
+  const canDelete = nomeAtteso.length > 0 && confirmText.trim() === nomeAtteso;
 
   async function elimina() {
     if (!canDelete) return;
