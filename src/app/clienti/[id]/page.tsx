@@ -360,7 +360,7 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
             </Card>
           )}
 
-          {(solleciti ?? []).length > 0 && (
+          {(solleciti ?? []).length > 0 && !cliente.archiviato_at && (
             <Card className="p-4 sm:p-5">
               <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
                 <Clock className="h-5 w-5 text-arancio" />

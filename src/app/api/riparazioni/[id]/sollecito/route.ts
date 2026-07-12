@@ -40,9 +40,11 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
   if (!notifica.inviata) {
     return NextResponse.json({
-      error: notifica.motivo === "destinatario_mancante"
-        ? "Cliente senza recapito per il canale scelto"
-        : "Canale scelto non configurato",
+      error: notifica.motivo === "cliente_archiviato"
+        ? "Il cliente è archiviato."
+        : notifica.motivo === "destinatario_mancante"
+          ? "Cliente senza recapito per il canale scelto"
+          : "Canale scelto non configurato",
       canale: notifica.canale,
     }, { status: 400 });
   }
