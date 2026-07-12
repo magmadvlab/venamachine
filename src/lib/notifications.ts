@@ -10,6 +10,7 @@ type ClienteContatto = {
   email?: string | null;
   telefono?: string | null;
   canale_preferito?: Canale | string | null;
+  archiviato_at?: string | null;
 };
 
 type NotificaBase = {
@@ -93,6 +94,9 @@ export async function notificaRicevuta(opts: NotificaBase & {
   pdf: Buffer;
   trackingUrl: string;
 }) {
+  if (opts.cliente.archiviato_at) {
+    return { inviata: false, canale: "email" as const, motivo: "cliente_archiviato" };
+  }
   const canaleRichiesto = canalePreferito(opts.cliente);
   const destinatario = emailDestinatario(opts.cliente);
   const telefono = telefonoDestinatario(opts.cliente);
@@ -154,6 +158,9 @@ export async function notificaAggiornamentoStato(opts: NotificaBase & {
   stato: StatoRiparazione;
   macchina?: string;
 }) {
+  if (opts.cliente.archiviato_at) {
+    return { inviata: false, canale: "email" as const, motivo: "cliente_archiviato" };
+  }
   const canaleRichiesto = canalePreferito(opts.cliente);
   const destinatario = emailDestinatario(opts.cliente);
   const trackingUrl = `${getPublicAppUrl()}/r/${opts.tokenPubblico}`;
@@ -218,6 +225,9 @@ export async function notificaSollecitoRitiro(opts: NotificaBase & {
   tokenPubblico: string;
   macchina?: string;
 }) {
+  if (opts.cliente.archiviato_at) {
+    return { inviata: false, canale: "email" as const, motivo: "cliente_archiviato" };
+  }
   const canaleRichiesto = canalePreferito(opts.cliente);
   const destinatario = emailDestinatario(opts.cliente);
   const trackingUrl = `${getPublicAppUrl()}/r/${opts.tokenPubblico}`;
@@ -276,6 +286,9 @@ export async function notificaSollecitoRitiro(opts: NotificaBase & {
 }
 
 export async function notificaManuale(opts: NotificaBase & { testo: string }) {
+  if (opts.cliente.archiviato_at) {
+    return { ok: false as const, motivo: "cliente_archiviato" as const };
+  }
   const canaleRichiesto = canalePreferito(opts.cliente);
   const telefono = telefonoDestinatario(opts.cliente);
 
@@ -304,6 +317,9 @@ export async function notificaPrenotazione(opts: {
   inizio: string;
   tokenPubblico: string;
 }) {
+  if (opts.cliente.archiviato_at) {
+    return { canale: null, inviata: false };
+  }
   const canaleRichiesto = canalePreferito(opts.cliente);
   const telefono = telefonoDestinatario(opts.cliente);
   const email = emailDestinatario(opts.cliente);

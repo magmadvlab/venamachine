@@ -22,7 +22,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const db = createServiceClient();
   const { data, error } = await db
     .from("riparazioni")
-    .select(`id, cliente:clienti(telefono, canale_preferito)`)
+    .select(`id, cliente:clienti(telefono, canale_preferito, archiviato_at)`)
     .eq("id", params.id)
     .single();
 

@@ -17,7 +17,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   const { data, error } = await db
     .from("riparazioni")
     .select(`id, numero_scheda, token_pubblico, stato,
-      cliente:clienti(email, telefono, canale_preferito),
+      cliente:clienti(email, telefono, canale_preferito, archiviato_at),
       macchina:macchine(marca, modello, matricola)`)
     .eq("id", params.id)
     .single();
