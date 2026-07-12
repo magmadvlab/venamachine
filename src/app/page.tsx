@@ -22,7 +22,7 @@ import { isLegacyRepairResidue } from "@/lib/legacy-repairs";
 export const dynamic = "force-dynamic";
 
 const RIPARAZIONI_SELECT = `id, numero_scheda, stato, data_ingresso, cliente_id,
-  cliente:clienti(ragione_sociale, email, telefono, piva_cf),
+  cliente:clienti(ragione_sociale, email, telefono, piva_cf, archiviato_at),
   macchina:macchine(marca, modello, matricola)`;
 
 function formatDateTime(value?: string | null) {
@@ -102,6 +102,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
     searchResults = (data ?? [])
       .map(normalizeRiparazioneRow)
       .filter((r: any) => !isLegacyRepairResidue(r.id))
+      .filter((r: any) => !r.cliente?.archiviato_at)
       .filter((r: any) => rowMatchesSearch(r, q))
       .map((r: any) => ({
         id: r.id,
@@ -137,7 +138,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
       .limit(30),
     db
       .from("riparazioni")
-      .select("id, numero_scheda, data_avviso_cliente, cliente_id, cliente:clienti(ragione_sociale)")
+      .select("id, numero_scheda, data_avviso_cliente, cliente_id, cliente:clienti(ragione_sociale, archiviato_at)")
       .eq("stato", "cliente_avvisato")
       .lt("data_avviso_cliente", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
       .order("data_avviso_cliente", { ascending: true })
@@ -165,6 +166,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
 
   const daRiparareRows: DashboardSectionRow[] = (riparazioniAperte ?? [])
     .map(normalizeRiparazioneRow)
+    .filter((r: any) => !r.cliente?.archiviato_at)
     .map((r: any) => ({
       id: r.id,
       href: `/clienti/${r.cliente_id}`,
@@ -183,19 +185,24 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
     badge: { label: `Priorità ${row.priorita ?? "-"}`, tone: priorityTone(row.priorita) },
   }));
 
-  const daSollecitareRows: DashboardSectionRow[] = (solleciti ?? []).map((r: any) => {
-    const cliente = Array.isArray(r.cliente) ? r.cliente[0] : r.cliente;
-    const giorni = r.data_avviso_cliente
-      ? Math.floor((Date.now() - new Date(r.data_avviso_cliente).getTime()) / 86400000)
-      : null;
-    return {
-      id: r.id,
-      href: `/clienti/${r.cliente_id}`,
-      title: cliente?.ragione_sociale ?? "Cliente",
-      subtitle: r.numero_scheda,
-      badge: { label: giorni != null ? `${giorni} gg` : "-", tone: giorni != null && giorni > 120 ? "danger" : "warning" },
-    };
-  });
+  const daSollecitareRows: DashboardSectionRow[] = (solleciti ?? [])
+    .filter((r: any) => {
+      const cliente = Array.isArray(r.cliente) ? r.cliente[0] : r.cliente;
+      return !cliente?.archiviato_at;
+    })
+    .map((r: any) => {
+      const cliente = Array.isArray(r.cliente) ? r.cliente[0] : r.cliente;
+      const giorni = r.data_avviso_cliente
+        ? Math.floor((Date.now() - new Date(r.data_avviso_cliente).getTime()) / 86400000)
+        : null;
+      return {
+        id: r.id,
+        href: `/clienti/${r.cliente_id}`,
+        title: cliente?.ragione_sociale ?? "Cliente",
+        subtitle: r.numero_scheda,
+        badge: { label: giorni != null ? `${giorni} gg` : "-", tone: giorni != null && giorni > 120 ? "danger" : "warning" },
+      };
+    });
 
   const prenotazioniRows: DashboardSectionRow[] = (prenotazioniDaConfermare ?? []).map((row: any) => ({
     id: row.id,

@@ -41,6 +41,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     .select("id, ragione_sociale, telefono, canale_preferito")
     .eq("consenso_marketing", true)
     .not("telefono", "is", null)
+    .is("archiviato_at", null)
     .limit(5000);
 
   if (clientiError) return dbError("Lettura destinatari", clientiError);

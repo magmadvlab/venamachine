@@ -1,6 +1,6 @@
 # Manuale operativo Vena Coffee Machine
 
-Ultimo aggiornamento: 5 luglio 2026.
+Ultimo aggiornamento: 12 luglio 2026.
 
 Questo manuale spiega le voci principali dell'app e il flusso di lavoro consigliato. Va aggiornato ogni volta che vengono aggiunte nuove funzioni operative o cambiano i campi usati dagli operatori.
 
@@ -289,6 +289,15 @@ Azioni disponibili:
 - aprire `Link cliente` su `/manutenzione/[token]`.
 
 La pagina pubblica `/manutenzione/[token]` permette al cliente di scegliere uno slot disponibile per manutenzione ordinaria senza accedere all'area operatori. Quando la prenotazione viene presa, la manutenzione risulta `Prenotata` e appare nel calendario agenda.
+
+### Eliminazione clienti
+
+Un cliente non viene mai cancellato direttamente. Ci sono due azioni distinte, entrambe riservate agli amministratori:
+
+- **Archivia** (dalla scheda cliente): reversibile. Il cliente sparisce da liste, ricerche, dashboard, agenda e campagne WhatsApp, ma tutto lo storico resta intatto. Se il cliente si ripresenta con una nuova scheda riparazione, viene riattivato automaticamente. I pagamenti sospesi di un cliente archiviato restano visibili in Incassi.
+- **Elimina definitivamente** (da Admin > Clienti archiviati, solo su clienti gia archiviati): irreversibile. Cancella il cliente, le sue macchine e tutte le schede riparazione collegate. Richiede di digitare il nome esatto del cliente prima di confermare.
+
+Da Admin > Clienti archiviati si puo anche ripristinare un cliente archiviato per errore.
 
 ### Opportunita
 

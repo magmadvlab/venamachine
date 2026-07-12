@@ -60,12 +60,14 @@ export default async function OffertePage() {
       .select("id, ragione_sociale, telefono")
       .eq("consenso_marketing", true)
       .not("telefono", "is", null)
+      .is("archiviato_at", null)
       .order("ragione_sociale", { ascending: true })
       .limit(1000),
     db.from("clienti")
       .select("id", { count: "exact", head: true })
       .eq("consenso_marketing", true)
-      .not("telefono", "is", null),
+      .not("telefono", "is", null)
+      .is("archiviato_at", null),
   ]);
 
   const fotoByPath = new Map<string, string>();

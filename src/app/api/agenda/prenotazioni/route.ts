@@ -196,7 +196,7 @@ export async function POST(req: Request) {
   if (created.stato === "confermata") {
     const { data: clienteRow } = await db
       .from("clienti")
-      .select("telefono, email, canale_preferito")
+      .select("telefono, email, canale_preferito, archiviato_at")
       .eq("id", clienteId)
       .maybeSingle();
 
@@ -240,7 +240,7 @@ export async function PATCH(req: Request) {
     .update(patch)
     .eq("id", body.id)
     .select(`id, stato, riparazione_id, titolo, inizio, token_pubblico, cliente_id,
-      cliente:clienti(telefono, email, canale_preferito)`)
+      cliente:clienti(telefono, email, canale_preferito, archiviato_at)`)
     .maybeSingle();
   if (error) return dbError("Aggiornamento prenotazione", error);
   if (!data) return NextResponse.json({ error: "Prenotazione non trovata." }, { status: 404 });

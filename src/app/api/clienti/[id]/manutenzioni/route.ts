@@ -64,6 +64,20 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: "Non autorizzato" }, { status: 401 });
   }
 
+  const { data: cliente, error: clienteError } = await db
+    .from("clienti")
+    .select("id, archiviato_at")
+    .eq("id", params.id)
+    .maybeSingle();
+
+  if (clienteError) return dbError("Lettura cliente", clienteError);
+  if (!cliente) {
+    return NextResponse.json({ error: "Cliente non trovato" }, { status: 404 });
+  }
+  if (cliente.archiviato_at) {
+    return NextResponse.json({ error: "Il cliente è archiviato." }, { status: 400 });
+  }
+
   const { data: macchina, error: macchinaError } = await db
     .from("macchine")
     .select("id")

@@ -80,6 +80,7 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
     .select(`id, ragione_sociale, tipo, piva_cf, telefono, email, indirizzo, created_at,
       caffe_giornalieri_attesi_override,
       profilo:profili_attivita(nome, codice, caffe_giornalieri_min, caffe_giornalieri_max)`)
+    .is("archiviato_at", null)
     .order("created_at", { ascending: false })
     .limit(300);
 
