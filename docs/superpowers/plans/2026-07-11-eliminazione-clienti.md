@@ -1716,6 +1716,256 @@ git add src/app/api/clienti/\[id\]/whatsapp/route.ts src/app/api/clienti/\[id\]/
 git commit -m "fix: blocca invio WhatsApp e creazione manutenzione per clienti archiviati"
 ```
 
+- [ ] **Step 11: Guardia centralizzata in `notifications.ts` per gli invii automatici**
+
+**Files:**
+- Modify: `src/lib/notifications.ts`
+- Modify: `src/app/api/riparazioni/[id]/sollecito/route.ts`
+- Modify: `src/app/api/riparazioni/[id]/stato/route.ts`
+- Modify: `src/app/api/riparazioni/[id]/whatsapp/route.ts`
+- Modify: `src/app/api/agenda/prenotazioni/route.ts`
+
+Emerso da un audit esaustivo dopo la review del Task 9: oltre ai due endpoint già corretti (Step 7-8), altri 5 punti inviano un messaggio reale a un cliente passando da `src/lib/notifications.ts`, che non ha mai controllato `archiviato_at`. Due di questi (`PATCH /api/riparazioni/[id]/stato`, `PATCH /api/agenda/prenotazioni`) sono azioni di workflow standard — cambio stato scheda, conferma prenotazione — non bottoni "invia" dedicati: nascondere una card in UI non li coprirebbe. Invece di aggiungere una guardia ripetuta in ogni route (rischio di dimenticarne una), il controllo va messo una sola volta dentro le funzioni condivise di `notifications.ts`, così vale per ogni chiamante presente e futuro.
+
+Il file `src/lib/notifications.ts` ha oggi (righe 9-13):
+
+```ts
+type ClienteContatto = {
+  email?: string | null;
+  telefono?: string | null;
+  canale_preferito?: Canale | string | null;
+};
+```
+
+Sostituiscilo con:
+
+```ts
+type ClienteContatto = {
+  email?: string | null;
+  telefono?: string | null;
+  canale_preferito?: Canale | string | null;
+  archiviato_at?: string | null;
+};
+```
+
+Poi aggiungi una guardia in cima a ciascuna delle 5 funzioni esportate che inviano un messaggio, subito dopo la riga della firma della funzione (`export async function ... {`), prima di qualsiasi altra riga:
+
+In `notificaRicevuta` (dopo `export async function notificaRicevuta(opts: NotificaBase & { numeroScheda: string; pdf: Buffer; trackingUrl: string; }) {`):
+
+```ts
+  if (opts.cliente.archiviato_at) {
+    return { inviata: false, canale: "email" as const, motivo: "cliente_archiviato" };
+  }
+```
+
+In `notificaAggiornamentoStato` (dopo `export async function notificaAggiornamentoStato(opts: NotificaBase & { numeroScheda: string; tokenPubblico: string; stato: StatoRiparazione; macchina?: string; }) {`):
+
+```ts
+  if (opts.cliente.archiviato_at) {
+    return { inviata: false, canale: "email" as const, motivo: "cliente_archiviato" };
+  }
+```
+
+In `notificaSollecitoRitiro` (dopo `export async function notificaSollecitoRitiro(opts: NotificaBase & { numeroScheda: string; tokenPubblico: string; macchina?: string; }) {`):
+
+```ts
+  if (opts.cliente.archiviato_at) {
+    return { inviata: false, canale: "email" as const, motivo: "cliente_archiviato" };
+  }
+```
+
+In `notificaManuale` (dopo `export async function notificaManuale(opts: NotificaBase & { testo: string }) {`):
+
+```ts
+  if (opts.cliente.archiviato_at) {
+    return { ok: false as const, motivo: "cliente_archiviato" as const };
+  }
+```
+
+In `notificaPrenotazione` (dopo `export async function notificaPrenotazione(opts: { db: DbClient; cliente: ClienteContatto; clienteId: string; prenotazioneId: string; tipo: "confermata" | "annullata"; titolo: string; inizio: string; tokenPubblico: string; }) {`):
+
+```ts
+  if (opts.cliente.archiviato_at) {
+    return { canale: null, inviata: false };
+  }
+```
+
+Ognuna di queste guardie va inserita SUBITO dopo la riga di apertura della funzione (prima della prima riga di logica esistente, es. `const canaleRichiesto = canalePreferito(opts.cliente);`) — non alla fine, non in mezzo.
+
+Questa guardia funziona solo se il chiamante seleziona davvero `archiviato_at` dal DB e lo passa dentro l'oggetto `cliente`. Nessuno dei 4 file seguenti lo fa oggi — vanno aggiornati tutti, altrimenti il campo arriva sempre `undefined` e la guardia non scatta mai.
+
+Il file `src/app/api/riparazioni/[id]/sollecito/route.ts` ha oggi (riga 20):
+
+```ts
+      cliente:clienti(email, telefono, canale_preferito),
+```
+
+Sostituiscila con:
+
+```ts
+      cliente:clienti(email, telefono, canale_preferito, archiviato_at),
+```
+
+Il file `src/app/api/riparazioni/[id]/stato/route.ts` ha oggi (riga 67):
+
+```ts
+      cliente:clienti(email, telefono, canale_preferito),
+```
+
+Sostituiscila con:
+
+```ts
+      cliente:clienti(email, telefono, canale_preferito, archiviato_at),
+```
+
+Il file `src/app/api/riparazioni/[id]/whatsapp/route.ts` ha oggi (riga 25):
+
+```ts
+    .select(`id, cliente:clienti(telefono, canale_preferito)`)
+```
+
+Sostituiscila con:
+
+```ts
+    .select(`id, cliente:clienti(telefono, canale_preferito, archiviato_at)`)
+```
+
+Il file `src/app/api/agenda/prenotazioni/route.ts` ha oggi, nell'handler `POST` (riga 199):
+
+```ts
+      .select("telefono, email, canale_preferito")
+```
+
+Sostituiscila con:
+
+```ts
+      .select("telefono, email, canale_preferito, archiviato_at")
+```
+
+E, nell'handler `PATCH` (riga 243):
+
+```ts
+      cliente:clienti(telefono, email, canale_preferito)`)
+```
+
+Sostituiscila con:
+
+```ts
+      cliente:clienti(telefono, email, canale_preferito, archiviato_at)`)
+```
+
+- [ ] **Step 12: Verifica di build**
+
+Run: `npm run build`
+Expected: build riuscita, nessun errore TypeScript.
+
+- [ ] **Step 13: Commit**
+
+```bash
+git add src/lib/notifications.ts src/app/api/riparazioni/\[id\]/sollecito/route.ts src/app/api/riparazioni/\[id\]/stato/route.ts src/app/api/riparazioni/\[id\]/whatsapp/route.ts src/app/api/agenda/prenotazioni/route.ts
+git commit -m "fix: aggiunge una guardia centralizzata in notifications.ts contro l'invio di messaggi a clienti archiviati"
+```
+
+- [ ] **Step 14: Guardia sui due endpoint che chiamano `queueMessage()` direttamente**
+
+**Files:**
+- Modify: `src/app/api/manutenzioni/[id]/whatsapp/route.ts`
+- Modify: `src/app/api/suggerimenti/[id]/whatsapp/route.ts`
+
+Questi due endpoint non passano da `notifications.ts` (chiamano `queueMessage()` di `src/lib/outbox.ts` direttamente), quindi la guardia centralizzata dello Step 11 non li copre — serve un controllo esplicito in ciascuno.
+
+Il file `src/app/api/manutenzioni/[id]/whatsapp/route.ts` ha oggi (righe 51-64):
+
+```ts
+  const { data, error } = await db
+    .from("manutenzioni_programmate")
+    .select(`id, cliente_id, priorita, stato_proposta,
+      cliente:clienti(telefono, canale_preferito)`)
+    .eq("id", params.id)
+    .maybeSingle();
+
+  if (error) return dbError("Lettura manutenzione", error);
+  if (!data) return NextResponse.json({ error: "Manutenzione non trovata." }, { status: 404 });
+
+  const cliente: any = one(data.cliente);
+  if (cliente?.canale_preferito !== "whatsapp" || !cliente?.telefono) {
+    return NextResponse.json({ error: "Cliente senza telefono o canale WhatsApp non preferito." }, { status: 400 });
+  }
+```
+
+Sostituiscilo con:
+
+```ts
+  const { data, error } = await db
+    .from("manutenzioni_programmate")
+    .select(`id, cliente_id, priorita, stato_proposta,
+      cliente:clienti(telefono, canale_preferito, archiviato_at)`)
+    .eq("id", params.id)
+    .maybeSingle();
+
+  if (error) return dbError("Lettura manutenzione", error);
+  if (!data) return NextResponse.json({ error: "Manutenzione non trovata." }, { status: 404 });
+
+  const cliente: any = one(data.cliente);
+  if (cliente?.archiviato_at) {
+    return NextResponse.json({ error: "Il cliente è archiviato." }, { status: 400 });
+  }
+  if (cliente?.canale_preferito !== "whatsapp" || !cliente?.telefono) {
+    return NextResponse.json({ error: "Cliente senza telefono o canale WhatsApp non preferito." }, { status: 400 });
+  }
+```
+
+Il file `src/app/api/suggerimenti/[id]/whatsapp/route.ts` ha oggi (righe 45-57):
+
+```ts
+  const { data, error } = await db
+    .from("suggerimenti_clienti")
+    .select(`id, cliente_id, cliente:clienti(telefono, consenso_marketing)`)
+    .eq("id", params.id)
+    .maybeSingle();
+
+  if (error) return dbError("Lettura suggerimento", error);
+  if (!data) return NextResponse.json({ error: "Suggerimento non trovato." }, { status: 404 });
+
+  const cliente: any = one((data as any).cliente);
+  if (!cliente?.consenso_marketing || !cliente?.telefono) {
+    return NextResponse.json({ error: "Cliente senza consenso marketing attivo o telefono." }, { status: 400 });
+  }
+```
+
+Sostituiscilo con:
+
+```ts
+  const { data, error } = await db
+    .from("suggerimenti_clienti")
+    .select(`id, cliente_id, cliente:clienti(telefono, consenso_marketing, archiviato_at)`)
+    .eq("id", params.id)
+    .maybeSingle();
+
+  if (error) return dbError("Lettura suggerimento", error);
+  if (!data) return NextResponse.json({ error: "Suggerimento non trovato." }, { status: 404 });
+
+  const cliente: any = one((data as any).cliente);
+  if (cliente?.archiviato_at) {
+    return NextResponse.json({ error: "Il cliente è archiviato." }, { status: 400 });
+  }
+  if (!cliente?.consenso_marketing || !cliente?.telefono) {
+    return NextResponse.json({ error: "Cliente senza consenso marketing attivo o telefono." }, { status: 400 });
+  }
+```
+
+- [ ] **Step 15: Verifica di build**
+
+Run: `npm run build`
+Expected: build riuscita, nessun errore TypeScript.
+
+- [ ] **Step 16: Commit**
+
+```bash
+git add src/app/api/manutenzioni/\[id\]/whatsapp/route.ts src/app/api/suggerimenti/\[id\]/whatsapp/route.ts
+git commit -m "fix: blocca l'invio WhatsApp di proposte manutenzione e suggerimenti verso clienti archiviati"
+```
+
 ---
 
 ### Task 10: Pagina admin `/admin/clienti-archiviati` (ripristino + hard delete)
