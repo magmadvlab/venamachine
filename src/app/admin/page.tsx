@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, ArrowRight, BadgePercent, MessageCircle, Settings, UserRound } from "lucide-react";
+import { Archive, ArrowLeft, ArrowRight, BadgePercent, MessageCircle, Settings, UserRound } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
@@ -34,6 +34,13 @@ const adminCards = [
     icon: MessageCircle,
     text: "Collega WhatsApp Web, controlla la sessione e verifica che il servizio sia pronto agli invii.",
     cta: "Collega numero",
+  },
+  {
+    href: "/admin/clienti-archiviati",
+    title: "Clienti archiviati",
+    icon: Archive,
+    text: "Ripristina un cliente archiviato o eliminalo definitivamente insieme a macchine e schede riparazione.",
+    cta: "Gestisci archiviati",
   },
 ];
 
