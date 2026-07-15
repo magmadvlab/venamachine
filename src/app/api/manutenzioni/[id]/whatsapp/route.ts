@@ -51,7 +51,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const { data, error } = await db
     .from("manutenzioni_programmate")
     .select(`id, cliente_id, priorita, stato_proposta,
-      cliente:clienti(telefono, canale_preferito)`)
+      cliente:clienti(telefono, canale_preferito, archiviato_at)`)
     .eq("id", params.id)
     .maybeSingle();
 
@@ -59,6 +59,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (!data) return NextResponse.json({ error: "Manutenzione non trovata." }, { status: 404 });
 
   const cliente: any = one(data.cliente);
+  if (cliente?.archiviato_at) {
+    return NextResponse.json({ error: "Il cliente è archiviato." }, { status: 400 });
+  }
   if (cliente?.canale_preferito !== "whatsapp" || !cliente?.telefono) {
     return NextResponse.json({ error: "Cliente senza telefono o canale WhatsApp non preferito." }, { status: 400 });
   }

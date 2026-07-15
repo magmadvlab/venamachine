@@ -213,7 +213,7 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
             className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-coffee-200 bg-white px-3 text-sm font-semibold text-coffee-700 active:scale-95"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Schede</span>
+            <span>Dashboard</span>
           </Link>
           <div>
             <p className="text-sm font-semibold text-arancio">Parco macchine</p>
@@ -478,9 +478,9 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
                 <CalendarDays className="h-4 w-4" />
                 Apri agenda cliente
               </Link>
-              <Link href="/manutenzioni" className="inline-flex items-center gap-2 rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
+              <Link href="/" className="inline-flex items-center gap-2 rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
                 <Wrench className="h-4 w-4" />
-                Programma manutenzione
+                Apri dashboard
               </Link>
               <Link href={cliente?.id ? `/clienti/${cliente.id}` : `/clienti?q=${encodeURIComponent(cliente?.ragione_sociale ?? "")}`} className="inline-flex items-center gap-2 rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
                 <History className="h-4 w-4" />

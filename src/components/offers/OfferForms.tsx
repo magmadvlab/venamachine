@@ -127,7 +127,15 @@ export function CampaignStatusButton({ campaignId, stato }: { campaignId: string
   );
 }
 
-export function CampaignBatchButton({ campaignId }: { campaignId: string }) {
+export function CampaignBatchButton({
+  campaignId,
+  modalita,
+  label,
+}: {
+  campaignId: string;
+  modalita: "tutti" | "segnale_attivo";
+  label: string;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<{ destinatari: number; waUrl: string } | null>(null);
@@ -137,7 +145,11 @@ export function CampaignBatchButton({ campaignId }: { campaignId: string }) {
     setResult(null);
     setError(null);
     startTransition(async () => {
-      const res = await fetch(`/api/offerte/${campaignId}/invio-batch`, { method: "POST" });
+      const res = await fetch(`/api/offerte/${campaignId}/invio-batch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ modalita }),
+      });
       const out = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(out.error || "Invio batch non riuscito");
@@ -165,7 +177,7 @@ export function CampaignBatchButton({ campaignId }: { campaignId: string }) {
         className="inline-flex h-10 items-center gap-2 rounded-full bg-coffee-900 px-3 text-sm font-semibold text-white disabled:opacity-60"
       >
         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-        Prepara batch WhatsApp
+        {label}
       </button>
       {result && (
         <div className="space-y-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3">

@@ -13,7 +13,6 @@ import {
   ShoppingBag,
   Target,
   Users,
-  Wrench,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
@@ -25,9 +24,9 @@ const lastUpdated = "15 luglio 2026";
 const menuSections = [
   {
     href: "/",
-    title: "Schede",
+    title: "Dashboard",
     icon: ClipboardList,
-    text: "Dashboard dell'officina: cerca riparazioni, apri dettagli, cambia stato e crea nuove schede.",
+    text: "Coda di lavoro quotidiana: riparazioni aperte, manutenzioni da proporre, ritiri da sollecitare, prenotazioni da confermare e opportunità commerciali. Ogni riga porta alla scheda del cliente.",
   },
   {
     href: "/nuova",
@@ -60,20 +59,8 @@ const menuSections = [
     text: "Vista giornaliera con calendario prenotazioni, manutenzioni da convertire, consigli utili con CTA e azioni commerciali.",
   },
   {
-    href: "/manutenzioni",
-    title: "Manutenzioni",
-    icon: Wrench,
-    text: "Programmazione preventiva, proposta cliente, link pubblico di prenotazione e collegamento alla scheda riparazione.",
-  },
-  {
-    href: "/opportunita",
-    title: "Opportunita",
-    icon: Target,
-    text: "Analisi di clienti e macchine con rischio o potenziale commerciale.",
-  },
-  {
     href: "/dashboard-commerciale",
-    title: "Dashboard",
+    title: "Report",
     icon: BarChart3,
     text: "Vista direzionale su vendite, rischi, azioni, manutenzioni e clienti da recuperare.",
   },
@@ -96,7 +83,7 @@ const workflow = [
   "Registra ogni vendita sul cliente; collega la macchina solo quando la vendita la riguarda davvero.",
   "Crea offerte solo da admin e usa il batch solo per clienti con consenso marketing.",
   "Controlla Agenda ogni giorno: calendario, azioni, manutenzioni da convertire e consigli utili.",
-  "Genera Manutenzioni almeno una volta a settimana.",
+  "Aggiorna la coda manutenzioni dalla Dashboard almeno una volta a settimana.",
   "Prepara il link cliente per prenotare la manutenzione ordinaria negli slot disponibili.",
   "Usa Dashboard per decidere dove intervenire commercialmente.",
   "Aggiorna Prodotti e Configurazione quando cambiano prezzi, soglie o regole.",
@@ -175,7 +162,7 @@ export default async function ManualePage() {
           <Target className="h-6 w-6 text-arancio" />
           <h2 className="mt-3 font-display text-lg font-semibold text-coffee-50">Uso quotidiano</h2>
           <p className="mt-2 text-sm leading-6 text-coffee-200">
-            Agenda e Manutenzioni sono le due viste operative da controllare con continuita.
+            Agenda e Dashboard sono le due viste operative da controllare con continuita.
           </p>
         </Card>
       </section>

@@ -91,7 +91,13 @@ Quando il cliente preferisce email, resta attivo Resend.
 2. Impostare variabili ambiente Supabase, Resend, `NEXT_PUBLIC_APP_URL=https://venamachine-production.up.railway.app`.
 3. Deploy web con `npm run start`.
 4. Creare secondo servizio Railway dallo stesso repo.
-5. Sovrascrivere start command del secondo servizio con `npm run worker:whatsapp`.
+5. **Non** limitarsi a sovrascrivere il "Custom Start Command" da dashboard: il
+   `railway.json` alla radice del repo (per `venamachine-web`) impone
+   `npm run start` a qualunque servizio che usi la root directory di default,
+   sovrascrivendo quel campo. Andare invece in
+   Settings → Config-as-code → "Railway Config File" e impostare
+   `railway.worker.json`, poi ridistribuire il servizio. Verificare nei Deploy
+   Logs che parta `node scripts/whatsapp-worker.mjs` (non `next start`).
 6. Creare un terzo servizio Railway dallo stesso repo, root directory `services/whatsapp`.
 7. Aggiungere un volume persistente al servizio whatsapp, mount path `/data` (vedi `services/whatsapp/README.md`).
 8. Impostare `WA_API_SECRET`, `WA_DEFAULT_INSTANCE=default`, `WA_AUTH_DIR=/data/.wa-auth` sul servizio whatsapp.

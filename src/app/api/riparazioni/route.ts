@@ -101,6 +101,7 @@ export async function POST(req: Request) {
     const updateCliente = {
       tipo: clienteInput.tipo,
       ragione_sociale: clienteInput.ragione_sociale,
+      archiviato_at: null,
       ...(clienteInput.piva_cf ? { piva_cf: clienteInput.piva_cf } : {}),
       ...(clienteInput.indirizzo ? { indirizzo: clienteInput.indirizzo } : {}),
       ...(clienteInput.telefono ? { telefono: clienteInput.telefono } : {}),

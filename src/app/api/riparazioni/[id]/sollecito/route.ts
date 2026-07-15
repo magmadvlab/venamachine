@@ -17,7 +17,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   const { data, error } = await db
     .from("riparazioni")
     .select(`id, numero_scheda, token_pubblico, stato,
-      cliente:clienti(email, telefono, canale_preferito),
+      cliente:clienti(email, telefono, canale_preferito, archiviato_at),
       macchina:macchine(marca, modello, matricola)`)
     .eq("id", params.id)
     .single();
@@ -40,9 +40,11 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
   if (!notifica.inviata) {
     return NextResponse.json({
-      error: notifica.motivo === "destinatario_mancante"
-        ? "Cliente senza recapito per il canale scelto"
-        : "Canale scelto non configurato",
+      error: notifica.motivo === "cliente_archiviato"
+        ? "Il cliente è archiviato."
+        : notifica.motivo === "destinatario_mancante"
+          ? "Cliente senza recapito per il canale scelto"
+          : "Canale scelto non configurato",
       canale: notifica.canale,
     }, { status: 400 });
   }

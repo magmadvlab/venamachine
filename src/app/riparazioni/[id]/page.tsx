@@ -146,13 +146,13 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
 
   return (
     <main className="mx-auto max-w-4xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
-      <header className="mb-4 flex items-center gap-3">
+      <header className="mb-4 flex flex-wrap items-center gap-3">
         <Link
           href="/"
           className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-coffee-200 bg-white px-3 text-sm font-semibold text-coffee-700 active:scale-95"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Schede</span>
+          <span>Dashboard</span>
         </Link>
         <div className="min-w-0">
           <p className="font-mono text-sm font-bold text-arancio-dark">{data.numero_scheda}</p>
@@ -369,7 +369,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
           className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-coffee-200 bg-white px-4 py-3 text-sm font-semibold text-coffee-700 active:scale-[0.99] sm:w-auto"
         >
           <ArrowLeft className="h-4 w-4" />
-          Torna alle schede
+          Torna alla dashboard
         </Link>
       </div>
     </main>

@@ -64,7 +64,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     .update(patch)
     .eq("id", params.id)
     .select(`id, numero_scheda, token_pubblico, stato,
-      cliente:clienti(email, telefono, canale_preferito),
+      cliente:clienti(email, telefono, canale_preferito, archiviato_at),
       macchina:macchine(marca, modello, matricola)`)
     .single();
 

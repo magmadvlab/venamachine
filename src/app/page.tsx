@@ -1,61 +1,52 @@
 import Link from "next/link";
-import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
-import { type RiparazioneRow } from "@/lib/types";
-import { getPublicAppUrl } from "@/lib/app-url";
-import { stadioCliente } from "@/lib/types";
+import {
+  CalendarClock,
+  Clock,
+  ClipboardList,
+  Lightbulb,
+  Search,
+  ShoppingBag,
+  Wrench,
+} from "lucide-react";
 import { BrandHeader } from "@/components/BrandHeader";
 import { Card } from "@/components/ui/Card";
-import { RepairList } from "@/components/RepairList";
-import { Search, Plus } from "lucide-react";
+import { NuovaSchedaButton } from "@/components/NuovaSchedaButton";
+import { DashboardSection, type DashboardSectionRow } from "@/components/dashboard/DashboardSection";
+import { GenerateMaintenanceButton } from "@/components/maintenance/MaintenanceActions";
+import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { getSessionOperatore } from "@/lib/operator-server";
+import { stadioCliente } from "@/lib/types";
 import { isLegacyRepairResidue } from "@/lib/legacy-repairs";
-
-function NuovaSchedaButton() {
-  return (
-    <Link
-      href="/nuova"
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-arancio px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-arancio-dark active:scale-95"
-    >
-      <Plus className="h-4 w-4 shrink-0" />
-      <span className="hidden sm:inline">Nuova scheda</span>
-      <span className="sm:hidden">Nuova</span>
-    </Link>
-  );
-}
 
 export const dynamic = "force-dynamic";
 
-const RIPARAZIONI_SELECT = `id, numero_scheda, token_pubblico, stato, data_ingresso, difetto_cliente, stato_estetico, importo_preventivo,
-  cliente:clienti(ragione_sociale, email, telefono, piva_cf, canale_preferito),
-  macchina:macchine(marca, modello, matricola, tipologia, colore, regime_possesso)`;
+const RIPARAZIONI_SELECT = `id, numero_scheda, stato, data_ingresso, cliente_id,
+  cliente:clienti(ragione_sociale, email, telefono, piva_cf, archiviato_at),
+  macchina:macchine(marca, modello, matricola)`;
 
-function buildWhatsappTesto(row: { numero_scheda: string; stato: string; token_pubblico: string; macchina: any }) {
-  const stadio = stadioCliente(row.stato as any);
-  const macchinaLabel = [row.macchina?.marca, row.macchina?.modello, row.macchina?.matricola].filter(Boolean).join(" ");
-  const trackingUrl = `${getPublicAppUrl()}/r/${row.token_pubblico}`;
-  return [
-    "Vena Coffee Machine",
-    `Aggiornamento scheda ${row.numero_scheda}: ${stadio}.`,
-    macchinaLabel ? `Macchina: ${macchinaLabel}` : null,
-    `Dettagli: ${trackingUrl}`,
-  ].filter(Boolean).join("\n");
+function formatDateTime(value?: string | null) {
+  return value
+    ? new Date(value).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+    : "-";
 }
 
-function normalizeRows(data: any[] | null): RiparazioneRow[] {
-  return (data ?? []).map((r: any) => {
-    const cliente = Array.isArray(r.cliente) ? r.cliente[0] : r.cliente;
-    const macchina = Array.isArray(r.macchina) ? r.macchina[0] : r.macchina;
-    return {
-      ...r,
-      cliente,
-      macchina,
-      whatsappTesto: buildWhatsappTesto({ numero_scheda: r.numero_scheda, stato: r.stato, token_pubblico: r.token_pubblico, macchina }),
-    };
-  }) as RiparazioneRow[];
+function priorityTone(priority?: number | null): "danger" | "warning" | "neutral" {
+  const value = Number(priority ?? 0);
+  if (value >= 90) return "danger";
+  if (value >= 70) return "warning";
+  return "neutral";
 }
 
-function rowMatchesSearch(row: RiparazioneRow, query: string) {
+function normalizeRiparazioneRow(r: any) {
+  return {
+    ...r,
+    cliente: Array.isArray(r.cliente) ? r.cliente[0] : r.cliente,
+    macchina: Array.isArray(r.macchina) ? r.macchina[0] : r.macchina,
+  };
+}
+
+function rowMatchesSearch(row: any, query: string) {
   const haystack = [
     row.numero_scheda,
     row.cliente?.ragione_sociale,
@@ -65,14 +56,11 @@ function rowMatchesSearch(row: RiparazioneRow, query: string) {
     row.macchina?.marca,
     row.macchina?.modello,
     row.macchina?.matricola,
-    row.macchina?.colore,
-    row.difetto_cliente,
   ].filter(Boolean).join(" ").toLowerCase();
-
   return haystack.includes(query.toLowerCase());
 }
 
-export default async function Dashboard({ searchParams }: { searchParams?: { q?: string } }) {
+export default async function DashboardPage({ searchParams }: { searchParams?: { q?: string } }) {
   const missingEnv = missingSupabaseEnv();
   const q = searchParams?.q?.trim() ?? "";
 
@@ -99,20 +87,151 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
   }
 
   const db = createServiceClient();
-  const { data } = await db
-    .from("riparazioni")
-    .select(RIPARAZIONI_SELECT)
-    .order("data_ingresso", { ascending: false })
-    .limit(q ? 1000 : 100);
-
-  const righe = normalizeRows(data)
-    .filter((r) => !isLegacyRepairResidue(r.id))
-    .filter((r) => !q || rowMatchesSearch(r, q));
-
   const user = await getCurrentUser();
   const admin = isAdminEmail(user?.email);
   const operatore = await getSessionOperatore(db);
   const operatoreLabel = operatore?.nome || "Operatore";
+
+  let searchResults: DashboardSectionRow[] = [];
+  if (q) {
+    const { data } = await db
+      .from("riparazioni")
+      .select(RIPARAZIONI_SELECT)
+      .order("data_ingresso", { ascending: false })
+      .limit(1000);
+    searchResults = (data ?? [])
+      .map(normalizeRiparazioneRow)
+      .filter((r: any) => !isLegacyRepairResidue(r.id))
+      .filter((r: any) => !r.cliente?.archiviato_at)
+      .filter((r: any) => rowMatchesSearch(r, q))
+      .map((r: any) => ({
+        id: r.id,
+        href: `/clienti/${r.cliente_id}`,
+        title: r.cliente?.ragione_sociale ?? "Cliente",
+        subtitle: [r.numero_scheda, [r.macchina?.marca, r.macchina?.modello, r.macchina?.matricola].filter(Boolean).join(" ")]
+          .filter(Boolean)
+          .join(" · "),
+        badge: { label: stadioCliente(r.stato), tone: "neutral" as const },
+      }));
+  }
+
+  const [
+    { data: riparazioniAperte },
+    { data: manutenzioniDaProporre },
+    { data: solleciti },
+    { data: prenotazioniDaConfermare },
+    { data: azioniCommerciali },
+    { data: suggerimenti },
+  ] = await Promise.all([
+    db
+      .from("riparazioni")
+      .select(RIPARAZIONI_SELECT)
+      .not("stato", "in", '("ritirata","non_riparabile","abbandonata")')
+      .order("data_ingresso", { ascending: true })
+      .limit(30),
+    db
+      .from("v_manutenzioni_programmate_agenda")
+      .select("id, cliente_id, ragione_sociale, marca, modello, matricola, data_prevista, priorita")
+      .eq("stato", "da_pianificare")
+      .order("priorita", { ascending: false })
+      .order("data_prevista", { ascending: true })
+      .limit(30),
+    db
+      .from("riparazioni")
+      .select("id, numero_scheda, data_avviso_cliente, cliente_id, cliente:clienti(ragione_sociale, archiviato_at)")
+      .eq("stato", "cliente_avvisato")
+      .lt("data_avviso_cliente", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+      .order("data_avviso_cliente", { ascending: true })
+      .limit(30),
+    db
+      .from("v_prenotazioni_agenda")
+      .select("id, cliente_id, ragione_sociale, titolo, inizio")
+      .eq("stato", "richiesta")
+      .order("inizio", { ascending: true })
+      .limit(30),
+    db
+      .from("v_agenda_azioni_commerciali")
+      .select("id, cliente_id, ragione_sociale, azione_consigliata, priorita")
+      .in("stato", ["aperta", "pianificata", "rimandata"])
+      .order("priorita", { ascending: false })
+      .order("data_scadenza", { ascending: true })
+      .limit(15),
+    db
+      .from("v_suggerimenti_agenda")
+      .select("id, cliente_id, ragione_sociale, titolo, priorita")
+      .in("stato", ["da_preparare", "pronto", "inviato"])
+      .order("priorita", { ascending: false })
+      .limit(15),
+  ]);
+
+  const daRiparareRows: DashboardSectionRow[] = (riparazioniAperte ?? [])
+    .map(normalizeRiparazioneRow)
+    .filter((r: any) => !r.cliente?.archiviato_at)
+    .map((r: any) => ({
+      id: r.id,
+      href: `/clienti/${r.cliente_id}`,
+      title: r.cliente?.ragione_sociale ?? "Cliente",
+      subtitle: [r.numero_scheda, [r.macchina?.marca, r.macchina?.modello].filter(Boolean).join(" ")]
+        .filter(Boolean)
+        .join(" · "),
+      badge: { label: stadioCliente(r.stato), tone: "neutral" },
+    }));
+
+  const daProporreRows: DashboardSectionRow[] = (manutenzioniDaProporre ?? []).map((row: any) => ({
+    id: row.id,
+    href: `/clienti/${row.cliente_id}`,
+    title: row.ragione_sociale,
+    subtitle: [row.marca, row.modello, row.matricola].filter(Boolean).join(" "),
+    badge: { label: `Priorità ${row.priorita ?? "-"}`, tone: priorityTone(row.priorita) },
+  }));
+
+  const daSollecitareRows: DashboardSectionRow[] = (solleciti ?? [])
+    .filter((r: any) => {
+      const cliente = Array.isArray(r.cliente) ? r.cliente[0] : r.cliente;
+      return !cliente?.archiviato_at;
+    })
+    .map((r: any) => {
+      const cliente = Array.isArray(r.cliente) ? r.cliente[0] : r.cliente;
+      const giorni = r.data_avviso_cliente
+        ? Math.floor((Date.now() - new Date(r.data_avviso_cliente).getTime()) / 86400000)
+        : null;
+      return {
+        id: r.id,
+        href: `/clienti/${r.cliente_id}`,
+        title: cliente?.ragione_sociale ?? "Cliente",
+        subtitle: r.numero_scheda,
+        badge: { label: giorni != null ? `${giorni} gg` : "-", tone: giorni != null && giorni > 120 ? "danger" : "warning" },
+      };
+    });
+
+  const prenotazioniRows: DashboardSectionRow[] = (prenotazioniDaConfermare ?? []).map((row: any) => ({
+    id: row.id,
+    href: `/clienti/${row.cliente_id}`,
+    title: row.ragione_sociale,
+    subtitle: row.titolo,
+    badge: { label: formatDateTime(row.inizio), tone: "info" },
+  }));
+
+  const opportunitaRowsRaw = [
+    ...(azioniCommerciali ?? []).map((row: any) => ({
+      id: `azione-${row.id}`,
+      href: `/clienti/${row.cliente_id}`,
+      title: row.ragione_sociale,
+      subtitle: `Azione: ${row.azione_consigliata}`,
+      badge: { label: `P${row.priorita ?? "-"}`, tone: priorityTone(row.priorita) },
+      priorita: Number(row.priorita ?? 0),
+    })),
+    ...(suggerimenti ?? []).map((row: any) => ({
+      id: `suggerimento-${row.id}`,
+      href: `/clienti/${row.cliente_id}`,
+      title: row.ragione_sociale,
+      subtitle: `Consiglio: ${row.titolo}`,
+      badge: { label: `P${row.priorita ?? "-"}`, tone: priorityTone(row.priorita) },
+      priorita: Number(row.priorita ?? 0),
+    })),
+  ];
+  opportunitaRowsRaw.sort((a, b) => b.priorita - a.priorita);
+  const opportunitaRows: DashboardSectionRow[] = opportunitaRowsRaw.map(({ priorita, ...row }) => row);
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-28 pt-6">
@@ -135,7 +254,7 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
               id="q"
               name="q"
               defaultValue={q}
-              placeholder="Cerca cliente, telefono, matricola, marca, scheda"
+              placeholder="Cerca cliente, telefono, matricola, scheda"
               className="w-full rounded-full border border-coffee-700 bg-coffee-800 py-3 pl-9 pr-3 text-base text-coffee-50 placeholder:text-coffee-400 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20 sm:py-2.5 sm:text-sm"
             />
           </div>
@@ -153,13 +272,61 @@ export default async function Dashboard({ searchParams }: { searchParams?: { q?:
         </div>
       </form>
 
-      {q && (
-        <p className="mb-3 text-sm text-coffee-400">
-          {righe.length} risultat{righe.length === 1 ? "o" : "i"} per "{q}"
-        </p>
+      {!q && (
+        <div className="mb-6">
+          <Link
+            href="/vendite"
+            className="inline-flex items-center gap-1.5 rounded-full border border-coffee-700 bg-coffee-800 px-4 py-2.5 text-sm font-semibold text-coffee-50 active:scale-95"
+          >
+            <ShoppingBag className="h-4 w-4" />
+            Vendita al banco
+          </Link>
+        </div>
       )}
 
-      <RepairList righe={righe} admin={admin} />
+      {q ? (
+        <DashboardSection
+          icon={<Search className="h-5 w-5 text-arancio" />}
+          title="Risultati ricerca"
+          rows={searchResults}
+          emptyLabel={`Nessun risultato per "${q}"`}
+          initialVisible={20}
+        />
+      ) : (
+        <div className="space-y-4">
+          <DashboardSection
+            icon={<ClipboardList className="h-5 w-5 text-arancio" />}
+            title="Da riparare"
+            rows={daRiparareRows}
+            emptyLabel="Nessuna riparazione aperta."
+          />
+          <DashboardSection
+            icon={<Wrench className="h-5 w-5 text-arancio" />}
+            title="Da proporre manutenzione"
+            rows={daProporreRows}
+            emptyLabel="Nessuna manutenzione da proporre."
+            headerAction={<GenerateMaintenanceButton />}
+          />
+          <DashboardSection
+            icon={<Clock className="h-5 w-5 text-arancio" />}
+            title="Da sollecitare"
+            rows={daSollecitareRows}
+            emptyLabel="Nessuna macchina da sollecitare."
+          />
+          <DashboardSection
+            icon={<CalendarClock className="h-5 w-5 text-arancio" />}
+            title="Prenotazioni da confermare"
+            rows={prenotazioniRows}
+            emptyLabel="Nessuna prenotazione da confermare."
+          />
+          <DashboardSection
+            icon={<Lightbulb className="h-5 w-5 text-arancio" />}
+            title="Opportunità commerciali da agire"
+            rows={opportunitaRows}
+            emptyLabel="Nessuna opportunità attiva."
+          />
+        </div>
+      )}
     </main>
   );
 }

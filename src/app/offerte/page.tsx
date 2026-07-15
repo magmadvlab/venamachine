@@ -60,12 +60,14 @@ export default async function OffertePage() {
       .select("id, ragione_sociale, telefono")
       .eq("consenso_marketing", true)
       .not("telefono", "is", null)
+      .is("archiviato_at", null)
       .order("ragione_sociale", { ascending: true })
       .limit(1000),
     db.from("clienti")
       .select("id", { count: "exact", head: true })
       .eq("consenso_marketing", true)
-      .not("telefono", "is", null),
+      .not("telefono", "is", null)
+      .is("archiviato_at", null),
   ]);
 
   const fotoByPath = new Map<string, string>();
@@ -161,7 +163,8 @@ export default async function OffertePage() {
                       </a>
                       <CampaignStatusButton campaignId={campagna.id} stato="pubblicata" />
                       <div className="space-y-2">
-                        <CampaignBatchButton campaignId={campagna.id} />
+                        <CampaignBatchButton campaignId={campagna.id} modalita="tutti" label="Invia a tutti" />
+                        <CampaignBatchButton campaignId={campagna.id} modalita="segnale_attivo" label="Invia a clienti con segnale attivo" />
                         <CampaignSingleSendForm campaignId={campagna.id} customers={(clientiMarketing ?? []) as any} />
                       </div>
                     </div>

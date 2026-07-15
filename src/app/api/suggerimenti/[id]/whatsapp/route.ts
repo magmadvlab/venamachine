@@ -44,7 +44,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
   const { data, error } = await db
     .from("suggerimenti_clienti")
-    .select(`id, cliente_id, cliente:clienti(telefono, consenso_marketing)`)
+    .select(`id, cliente_id, cliente:clienti(telefono, consenso_marketing, archiviato_at)`)
     .eq("id", params.id)
     .maybeSingle();
 
@@ -52,6 +52,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (!data) return NextResponse.json({ error: "Suggerimento non trovato." }, { status: 404 });
 
   const cliente: any = one((data as any).cliente);
+  if (cliente?.archiviato_at) {
+    return NextResponse.json({ error: "Il cliente è archiviato." }, { status: 400 });
+  }
   if (!cliente?.consenso_marketing || !cliente?.telefono) {
     return NextResponse.json({ error: "Cliente senza consenso marketing attivo o telefono." }, { status: 400 });
   }

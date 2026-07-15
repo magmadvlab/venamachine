@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, ArrowRight, BadgePercent, MessageCircle, Settings, UserRound } from "lucide-react";
+import { Archive, ArrowLeft, ArrowRight, BadgePercent, MessageCircle, Settings, UserRound } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
@@ -35,6 +35,13 @@ const adminCards = [
     text: "Collega WhatsApp Web, controlla la sessione e verifica che il servizio sia pronto agli invii.",
     cta: "Collega numero",
   },
+  {
+    href: "/admin/clienti-archiviati",
+    title: "Clienti archiviati",
+    icon: Archive,
+    text: "Ripristina un cliente archiviato o eliminalo definitivamente insieme a macchine e schede riparazione.",
+    cta: "Gestisci archiviati",
+  },
 ];
 
 export default async function AdminPage() {
@@ -49,7 +56,7 @@ export default async function AdminPage() {
           className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-coffee-200 bg-white px-3 text-sm font-semibold text-coffee-700 active:scale-95"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Schede</span>
+          <span>Dashboard</span>
         </Link>
         <div>
           <p className="text-sm font-semibold text-arancio">Area riservata</p>
