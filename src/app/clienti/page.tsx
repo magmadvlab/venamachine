@@ -84,6 +84,9 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
     .limit(300);
 
   const clientiIds = (clienti ?? []).map((cliente: any) => cliente.id);
+  const { data: scoreClientiRows } = clientiIds.length
+    ? await db.from("v_score_clienti").select("cliente_id, score_cliente, ultimo_acquisto, data_riacquisto_stimata, stato_riacquisto").in("cliente_id", clientiIds)
+    : { data: [] };
   const { data: macchine } = clientiIds.length
     ? await db.from("macchine").select("id, cliente_id, marca, modello, matricola, tipologia, regime_possesso").in("cliente_id", clientiIds)
     : { data: [] };
@@ -112,6 +115,7 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
     : { data: [] };
 
   const scoresByMacchina = new Map((scoreRows ?? []).map((row: any) => [row.macchina_id, row]));
+  const scoresByCliente = new Map((scoreClientiRows ?? []).map((row: any) => [row.cliente_id, row]));
   const analisiByMacchina = new Map((analisiRows ?? []).map((row: any) => [row.macchina_id, row]));
 
   const rows = (clienti ?? []).map((cliente: any) => {
@@ -122,7 +126,7 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
     const clienteRiparazioni = (riparazioni ?? []).filter((r: any) => r.cliente_id === cliente.id);
     const hasAssistenza = clienteRiparazioni.length > 0;
     const hasVendite = (ordini ?? []).some((o: any) => o.cliente_id === cliente.id);
-    return { ...cliente, profilo, macchine: clienteMacchine, riparazioni: clienteRiparazioni, hasAssistenza, hasVendite };
+    return { ...cliente, profilo, scoreCliente: scoresByCliente.get(cliente.id) ?? null, macchine: clienteMacchine, riparazioni: clienteRiparazioni, hasAssistenza, hasVendite };
   }).filter((cliente: any) => {
     if (filtro === "assistenza") return cliente.hasAssistenza && !cliente.hasVendite;
     if (filtro === "vendite") return !cliente.hasAssistenza && cliente.hasVendite;
@@ -220,8 +224,14 @@ export default async function ClientiPage({ searchParams }: { searchParams?: { q
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-1">
+                  <span className={`rounded-full border px-2 py-1 text-xs font-bold ${scoreTone(cliente.scoreCliente?.score_cliente, null)}`}>
+                    Score cliente {cliente.scoreCliente?.score_cliente ?? "—"}
+                  </span>
                   <span className="rounded-full bg-coffee-800 px-2 py-1 text-xs font-bold text-coffee-200">
                     {cliente.macchine.length} macchin{cliente.macchine.length === 1 ? "a" : "e"}
+                  </span>
+                  <span className="text-[10px] font-semibold text-coffee-400">
+                    Riacquisto: {formatDate(cliente.scoreCliente?.data_riacquisto_stimata)}
                   </span>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                     cliente.hasAssistenza && cliente.hasVendite

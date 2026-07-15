@@ -6,10 +6,13 @@ import type { NuovaAccettazione, ProfiloAttivita } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function NuovaScheda({ searchParams }: { searchParams?: { prenotazione?: string } }) {
+export default async function NuovaScheda({ searchParams }: { searchParams?: { prenotazione?: string; cliente?: string; macchina?: string } }) {
   let profiliAttivita: ProfiloAttivita[] = [];
   let initialValue: Partial<NuovaAccettazione> | undefined;
   let prenotazioneId: string | undefined;
+  let clienteId: string | undefined;
+  let macchinaId: string | undefined;
+  let macchineCliente: any[] = [];
 
   if (missingSupabaseEnv().length === 0) {
     const db = createServiceClient();
@@ -42,6 +45,8 @@ export default async function NuovaScheda({ searchParams }: { searchParams?: { p
         ]);
 
         prenotazioneId = booking.id;
+        clienteId = booking.cliente_id;
+        macchinaId = booking.macchina_id;
         initialValue = {
           cliente: {
             tipo: cliente?.tipo ?? "privato",
@@ -73,6 +78,64 @@ export default async function NuovaScheda({ searchParams }: { searchParams?: { p
         };
       }
     }
+
+    const requestedClienteId = searchParams?.cliente?.trim();
+    const requestedMacchinaId = searchParams?.macchina?.trim();
+    if (!initialValue && requestedClienteId) {
+      const [{ data: cliente }, { data: macchina }] = await Promise.all([
+        db
+          .from("clienti")
+          .select("tipo, ragione_sociale, piva_cf, indirizzo, telefono, email, consenso_gdpr, canale_preferito, profilo_attivita_id, caffe_giornalieri_attesi_override, note_fedelta")
+          .eq("id", requestedClienteId)
+          .maybeSingle(),
+        requestedMacchinaId
+          ? db
+            .from("macchine")
+            .select("id, cliente_id, marca, modello, colore, matricola, tipologia, categoria_utilizzo, regime_possesso")
+            .eq("id", requestedMacchinaId)
+            .eq("cliente_id", requestedClienteId)
+            .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+
+      if (cliente) {
+        clienteId = requestedClienteId;
+        macchinaId = macchina?.id;
+        initialValue = {
+          cliente: {
+            tipo: cliente.tipo ?? "privato",
+            ragione_sociale: cliente.ragione_sociale ?? "",
+            piva_cf: cliente.piva_cf ?? "",
+            indirizzo: cliente.indirizzo ?? "",
+            telefono: cliente.telefono ?? "",
+            email: cliente.email ?? "",
+            consenso_gdpr: Boolean(cliente.consenso_gdpr),
+            canale_preferito: cliente.canale_preferito ?? "email",
+            profilo_attivita_id: cliente.profilo_attivita_id ?? undefined,
+            caffe_giornalieri_attesi_override: cliente.caffe_giornalieri_attesi_override ?? undefined,
+            note_fedelta: cliente.note_fedelta ?? undefined,
+          },
+          macchina: macchina ? {
+            marca: macchina.marca ?? "",
+            modello: macchina.modello ?? "",
+            colore: macchina.colore ?? "",
+            matricola: macchina.matricola ?? "",
+            tipologia: macchina.tipologia ?? "capsule",
+            categoria_utilizzo: macchina.categoria_utilizzo ?? "ufficio",
+            regime_possesso: macchina.regime_possesso ?? "proprieta_cliente",
+          } : undefined,
+        };
+      }
+    }
+
+    if (clienteId) {
+      const { data: machineRows } = await db
+        .from("macchine")
+        .select("id, marca, modello, colore, matricola, tipologia, categoria_utilizzo, regime_possesso")
+        .eq("cliente_id", clienteId)
+        .order("created_at", { ascending: false });
+      macchineCliente = machineRows ?? [];
+    }
   }
 
   return (
@@ -87,7 +150,14 @@ export default async function NuovaScheda({ searchParams }: { searchParams?: { p
         </Link>
         <h1 className="font-display text-lg font-bold text-coffee-900 sm:text-xl">Nuova accettazione</h1>
       </header>
-      <AcceptanceForm profiliAttivita={profiliAttivita} initialValue={initialValue} prenotazioneId={prenotazioneId} />
+      <AcceptanceForm
+        profiliAttivita={profiliAttivita}
+        initialValue={initialValue}
+        prenotazioneId={prenotazioneId}
+        clienteId={clienteId}
+        macchinaId={macchinaId}
+        macchineCliente={macchineCliente}
+      />
     </main>
   );
 }

@@ -20,6 +20,8 @@ export interface ProfiloAttivita {
 }
 
 export interface NuovaAccettazione {
+  cliente_id?: string;
+  macchina_id?: string;
   operatore_id?: string;
   operatore_nome?: string;
   cliente: {

@@ -155,7 +155,7 @@ Mostra anagrafica clienti, macchine associate, score e ultime schede. Da qui puo
 - creare una nuova scheda;
 - leggere rischio, copertura vendite e storico assistenza.
 
-La pagina dettaglio cliente `/clienti/[id]` contiene timeline completa con vendite, riparazioni, azioni, contatti e note. Va usata prima di chiamare un cliente importante, per capire cosa e successo di recente.
+La pagina dettaglio cliente `/clienti/[id]` contiene timeline, score cliente, previsione generale e per singolo prodotto del prossimo acquisto, vendite, riparazioni, incassi e storico delle assegnazioni macchina. Lo score cliente comprende tutte le vendite del cliente, anche quando non sono riferite a una macchina specifica.
 
 ### Macchine
 
@@ -166,15 +166,16 @@ La scheda macchina si apre da dettaglio assistenza, dettaglio cliente o viste op
 - riparazioni collegate;
 - vendite collegate;
 - indicatori commerciali e di consumo.
+- storico dei clienti ai quali la macchina e stata assegnata.
 
 Usala quando devi capire se una macchina e coerente con il cliente, se rientra troppo spesso o se genera opportunita di upgrade o riallocazione.
 
 ### Vendite
 
-Serve per registrare acquisti certi di caffe o prodotti collegati a cliente e, quando possibile, a macchina. I dati richiesti sono:
+Serve per registrare acquisti certi di caffe o prodotti. Il cliente e sempre obbligatorio; la macchina e facoltativa, perche si puo vendere anche a clienti che non hanno macchine associate. I dati richiesti sono:
 
 - cliente;
-- macchina collegata;
+- macchina collegata, quando la vendita riguarda una macchina specifica;
 - prodotto esistente o descrizione libera;
 - categoria e formato;
 - caffe stimati per unita;
@@ -189,6 +190,14 @@ Se selezioni un prodotto dal catalogo, l'app compila prezzo, categoria, formato 
 
 Questi dati sono fondamentali per capire se il cliente sta acquistando da noi o da concorrenti.
 
+Una vendita senza macchina alimenta score e previsione di riacquisto del cliente, ma non viene distribuita automaticamente sulle sue macchine. Lo score macchina usa soltanto le vendite collegate esplicitamente a quella macchina.
+
+La previsione di riordino puo essere configurata nella scheda macchina. L'operatore puo inserire direttamente i caffe al giorno oppure indicare il numero di utilizzatori per casa/ufficio o il numero di gruppi erogatori per Ho.Re.Ca. La stima guidata propone 2,5 caffe per persona in casa, 2 per utilizzatore in ufficio e 80 per gruppo Ho.Re.Ca.; il valore resta sempre modificabile.
+
+L'ordine di priorita e: valore manuale macchina, stima guidata, valore manuale cliente, fascia annuale specifica della macchina, media storica degli acquisti e profilo attivita. Negli avvisi e indicata la fonte usata. Per una macchina trasferita lo storico riparte dagli acquisti della nuova assegnazione.
+
+Quando una macchina cambia cliente, usa `Cambia assegnazione` nella scheda macchina: l'assegnazione precedente viene chiusa e il nuovo cliente diventa quello attuale. Vendite e riparazioni gia registrate restano associate al cliente storico.
+
 ### Prodotti
 
 Gestisce il catalogo prodotti. Per ogni prodotto puoi indicare:
@@ -197,14 +206,14 @@ Gestisce il catalogo prodotti. Per ogni prodotto puoi indicare:
 - categoria: grani, cialde, capsule, kit, altro;
 - formato: cartone, busta, kg, kit, pezzo;
 - caffe stimati per unita;
-- prezzo standard;
-- costo standard;
-- margine stimato;
+- costo di acquisto netto;
+- percentuale di margine e aliquota IVA;
+- prezzo finale IVA inclusa, calcolato automaticamente;
 - compatibilita con tipologie e categorie macchina;
 - note commerciali;
 - stato attivo/non attivo.
 
-Quando registri una vendita, l'app usa il catalogo per stimare caffe coperti, margine e coerenza con la macchina.
+Quando salvi il prodotto, l'app calcola il prezzo netto applicando il margine al costo e aggiunge poi l'IVA per ottenere il prezzo finale. Lo stesso calcolo viene ripetuto sul server, per evitare prezzi incoerenti. Quando registri una vendita, l'app usa il catalogo per stimare caffe coperti, margine e coerenza con la macchina.
 
 ### Offerte prodotti
 

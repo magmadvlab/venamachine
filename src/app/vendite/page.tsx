@@ -22,13 +22,25 @@ const RIORDINO_LABELS: Record<string, string> = {
   coperto: "Coperto",
 };
 
+const FONTI_CONSUMO: Record<string, string> = {
+  override_macchina: "manuale macchina",
+  stima_utilizzatori: "stima utilizzatori",
+  stima_gruppi: "stima gruppi Ho.Re.Ca.",
+  override_cliente: "manuale cliente",
+  fascia_manuale_macchina: "fascia macchina",
+  media_storica: "media acquisti",
+  profilo_attivita: "profilo attività",
+  categoria_macchina: "categoria macchina",
+  fallback: "stima base",
+};
+
 function riordinoTone(stato?: string | null) {
   if (stato === "da_sollecitare" || stato === "nessun_acquisto") return "border-red-200 bg-red-50 text-red-800";
   if (stato === "in_scadenza" || stato === "profilo_da_definire") return "border-amber-200 bg-amber-50 text-amber-900";
   return "border-emerald-200 bg-emerald-50 text-emerald-800";
 }
 
-export default async function VenditePage() {
+export default async function VenditePage({ searchParams }: { searchParams?: { cliente?: string; macchina?: string } }) {
   const missingEnv = missingSupabaseEnv();
   if (missingEnv.length > 0) {
     return (
@@ -57,7 +69,7 @@ export default async function VenditePage() {
       .order("data_ordine", { ascending: false })
       .limit(20),
     db.from("v_riordino_caffe_macchine")
-      .select("macchina_id, ragione_sociale, marca, modello, matricola, regime_possesso, caffe_giornalieri_attesi, ultimo_acquisto, caffe_stimati_ultimo_ordine, data_riordino_stimata, stato_riordino")
+      .select("macchina_id, ragione_sociale, marca, modello, matricola, regime_possesso, caffe_giornalieri_attesi, consumo_medio_storico, fonte_consumo, ultimo_acquisto, caffe_stimati_ultimo_ordine, data_riordino_stimata, stato_riordino")
       .in("stato_riordino", ["da_sollecitare", "in_scadenza", "nessun_acquisto", "profilo_da_definire"])
       .order("data_riordino_stimata", { ascending: true, nullsFirst: true })
       .limit(30),
@@ -96,6 +108,8 @@ export default async function VenditePage() {
               clienti={(clienti ?? []) as any}
               macchine={(macchine ?? []) as any}
               prodotti={(prodotti ?? []) as any}
+              initialClienteId={searchParams?.cliente}
+              initialMacchinaId={searchParams?.macchina}
             />
           </Card>
 
@@ -192,7 +206,10 @@ export default async function VenditePage() {
                       <span>Ultimo: {formatDate(row.ultimo_acquisto)}</span>
                       <span>Riordino: {formatDate(row.data_riordino_stimata)}</span>
                       <span>{row.caffe_stimati_ultimo_ordine ?? 0} caffè ultimo acquisto</span>
-                      <span>{row.caffe_giornalieri_attesi ?? 0} caffè/giorno attesi</span>
+                      <span>
+                        {Number(row.caffe_giornalieri_attesi ?? 0).toLocaleString("it-IT", { maximumFractionDigits: 2 })} caffè/giorno
+                        {row.fonte_consumo ? ` (${FONTI_CONSUMO[row.fonte_consumo] ?? row.fonte_consumo})` : ""}
+                      </span>
                     </div>
                     {row.regime_possesso === "comodato_uso" && (
                       <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">

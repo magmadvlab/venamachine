@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { getSessionOperatore } from "@/lib/operator-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
+import { calcolaPrezzoVendita, DEFAULT_IVA_PERCENTUALE, DEFAULT_MARGINE_PERCENTUALE } from "@/lib/pricing";
 
 export const runtime = "nodejs";
 
@@ -15,6 +16,8 @@ type ProductPayload = {
   prezzo_standard?: number;
   costo_standard?: number;
   margine_standard?: number;
+  margine_percentuale?: number;
+  aliquota_iva?: number;
   compatibilita_tipologie?: string[];
   compatibilita_categorie_uso?: string[];
   note_commerciali?: string;
@@ -54,11 +57,10 @@ function payloadFromBody(body: ProductPayload) {
   const nome = clean(body.nome);
   if (!nome) return { error: "Nome prodotto obbligatorio." };
 
-  const prezzo = cleanNumber(body.prezzo_standard);
   const costo = cleanNumber(body.costo_standard);
-  const margine = cleanNumber(body.margine_standard) ?? (
-    prezzo != null && costo != null ? Number((prezzo - costo).toFixed(2)) : undefined
-  );
+  const marginePercentuale = cleanNumber(body.margine_percentuale) ?? DEFAULT_MARGINE_PERCENTUALE;
+  const aliquotaIva = cleanNumber(body.aliquota_iva) ?? DEFAULT_IVA_PERCENTUALE;
+  const calcolo = costo == null ? null : calcolaPrezzoVendita(costo, marginePercentuale, aliquotaIva);
 
   return {
     value: {
@@ -68,9 +70,11 @@ function payloadFromBody(body: ProductPayload) {
       formato: clean(body.formato) ?? "cartone",
       caffe_stimati_per_unita: cleanNumber(body.caffe_stimati_per_unita) ?? 0,
       sku: clean(body.sku) ?? null,
-      prezzo_standard: prezzo ?? null,
+      prezzo_standard: calcolo?.prezzoFinale ?? cleanNumber(body.prezzo_standard) ?? null,
       costo_standard: costo ?? null,
-      margine_standard: margine ?? null,
+      margine_standard: calcolo?.margineNetto ?? cleanNumber(body.margine_standard) ?? null,
+      margine_percentuale: marginePercentuale,
+      aliquota_iva: aliquotaIva,
       compatibilita_tipologie: cleanArray(body.compatibilita_tipologie),
       compatibilita_categorie_uso: cleanArray(body.compatibilita_categorie_uso),
       note_commerciali: clean(body.note_commerciali) ?? null,
@@ -87,7 +91,7 @@ export async function GET() {
   const db = createServiceClient();
   const { data, error } = await db
     .from("prodotti_caffe")
-    .select("id, nome, descrizione, categoria, formato, caffe_stimati_per_unita, sku, prezzo_standard, costo_standard, margine_standard, compatibilita_tipologie, compatibilita_categorie_uso, note_commerciali, attivo, created_at")
+    .select("id, nome, descrizione, categoria, formato, caffe_stimati_per_unita, sku, prezzo_standard, costo_standard, margine_standard, margine_percentuale, aliquota_iva, compatibilita_tipologie, compatibilita_categorie_uso, note_commerciali, attivo, created_at")
     .order("attivo", { ascending: false })
     .order("nome", { ascending: true });
 

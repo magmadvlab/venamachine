@@ -20,7 +20,7 @@ import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
 export const dynamic = "force-dynamic";
 
-const lastUpdated = "5 luglio 2026";
+const lastUpdated = "15 luglio 2026";
 
 const menuSections = [
   {
@@ -39,19 +39,19 @@ const menuSections = [
     href: "/clienti",
     title: "Clienti",
     icon: Users,
-    text: "Anagrafica, macchine associate, score, timeline, modifica cliente e storico commerciale.",
+    text: "Anagrafica, score cliente, previsione riacquisto, incassi, macchine e storico assegnazioni.",
   },
   {
     href: "/vendite",
     title: "Vendite",
     icon: ShoppingBag,
-    text: "Registra acquisti certi con prodotto, quantita, prezzo, data, pagamento, documento e macchina collegata.",
+    text: "Registra acquisti e calcola il riordino da consumo manuale, stima per utilizzatori/gruppi o media storica.",
   },
   {
     href: "/prodotti",
     title: "Prodotti",
     icon: PackageSearch,
-    text: "Catalogo con formato, caffe stimati, prezzo, margine e compatibilita con macchine.",
+    text: "Catalogo con costo netto, margine e IVA: il prezzo finale viene calcolato automaticamente.",
   },
   {
     href: "/agenda",
@@ -93,7 +93,7 @@ const workflow = [
   "Classifica cliente e macchina: categoria uso, regime possesso, profilo attivita e stima caffe/giorno.",
   "Segna stato estetico, accessori, difetto e foto quando ci sono danni o graffi.",
   "Dal dettaglio assistenza aggiorna stato, diagnosi, preventivo e importo finale.",
-  "Registra ogni vendita collegandola alla macchina quando possibile.",
+  "Registra ogni vendita sul cliente; collega la macchina solo quando la vendita la riguarda davvero.",
   "Crea offerte solo da admin e usa il batch solo per clienti con consenso marketing.",
   "Controlla Agenda ogni giorno: calendario, azioni, manutenzioni da convertire e consigli utili.",
   "Genera Manutenzioni almeno una volta a settimana.",
@@ -111,6 +111,8 @@ const rules = [
   "Macchina sottodimensionata: valutare upgrade.",
   "Macchina sovradimensionata: valutare riallocazione.",
   "Vendite registrate bene: score piu affidabile.",
+  "Vendita senza macchina: alimenta il cliente, non tutte le sue macchine.",
+  "Cambio cliente macchina: usa lo storico assegnazioni senza riscrivere vendite e riparazioni precedenti.",
   "Manutenzione proposta prima della rottura: meno urgenze e meno sovraffollamento.",
   "Consigli utili: inviarli una tantum e usare CTA coerenti con macchina e consumo.",
 ];

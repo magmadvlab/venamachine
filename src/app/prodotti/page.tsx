@@ -25,7 +25,7 @@ export default async function ProdottiPage() {
   const db = createServiceClient();
   const { data: prodotti } = await db
     .from("prodotti_caffe")
-    .select("id, nome, descrizione, categoria, formato, caffe_stimati_per_unita, sku, prezzo_standard, costo_standard, margine_standard, compatibilita_tipologie, compatibilita_categorie_uso, note_commerciali, attivo, created_at")
+    .select("id, nome, descrizione, categoria, formato, caffe_stimati_per_unita, sku, prezzo_standard, costo_standard, margine_standard, margine_percentuale, aliquota_iva, compatibilita_tipologie, compatibilita_categorie_uso, note_commerciali, attivo, created_at")
     .order("attivo", { ascending: false })
     .order("nome", { ascending: true });
 
@@ -75,11 +75,14 @@ export default async function ProdottiPage() {
                 </div>
                 <div className="mb-4 grid grid-cols-2 gap-2 text-sm text-coffee-600 sm:grid-cols-4">
                   <span>{product.caffe_stimati_per_unita ?? 0} caffè/unità</span>
-                  <span>Prezzo {money(product.prezzo_standard)}</span>
-                  <span>Costo {money(product.costo_standard)}</span>
-                  <span>Margine {money(product.margine_standard)}</span>
+                  <span>Prezzo finale {money(product.prezzo_standard)}</span>
+                  <span>Costo netto {money(product.costo_standard)}</span>
+                  <span>Margine {product.margine_percentuale ?? 30}% · IVA {product.aliquota_iva ?? 22}%</span>
                 </div>
-                <ProductForm product={product} />
+                <details className="rounded-xl border border-coffee-100 bg-coffee-50 p-3">
+                  <summary className="cursor-pointer text-sm font-semibold text-coffee-800">Modifica prodotto</summary>
+                  <div className="mt-4"><ProductForm product={product} /></div>
+                </details>
               </Card>
             ))
           )}
