@@ -27,6 +27,14 @@ type Product = {
 const inputCls = "w-full rounded-xl border border-coffee-200 bg-white px-3 py-2.5 text-sm text-coffee-900 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20";
 const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-coffee-400";
 
+const FORMATO_LABELS: Record<string, string> = {
+  cartone: "cartone",
+  busta: "busta",
+  kg: "kg",
+  kit: "kit",
+  pezzo: "pezzo",
+};
+
 function splitList(value: string) {
   return value.split(",").map((item) => item.trim()).filter(Boolean);
 }
@@ -160,7 +168,7 @@ export function ProductForm({ product }: { product?: Product }) {
           </select>
         </label>
         <label>
-          <span className={labelCls}>Caffè/unità</span>
+          <span className={labelCls}>{`Caffè/${FORMATO_LABELS[formato] ?? "unità"}`}</span>
           <input className={inputCls} type="number" min="0" value={caffeStimati} onChange={(e) => setCaffeStimati(Number(e.target.value))} />
         </label>
         <label className="flex items-end gap-2 rounded-xl border border-coffee-100 bg-coffee-50 px-3 py-2 text-sm font-semibold text-coffee-800">
