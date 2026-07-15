@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
+import { getCurrentUser, isAdminEmail, requireAdmin } from "@/lib/supabase/auth-server";
 import { getSessionOperatore } from "@/lib/operator-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 import { calcolaPrezzoVendita, DEFAULT_IVA_PERCENTUALE, DEFAULT_MARGINE_PERCENTUALE } from "@/lib/pricing";
@@ -123,4 +123,49 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (error) return dbError("Aggiornamento prodotto", error);
   if (!data) return NextResponse.json({ error: "Prodotto non trovato." }, { status: 404 });
   return NextResponse.json({ prodotto: data });
+}
+
+export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+  if (!hasServiceConfig()) {
+    return NextResponse.json({ error: "Configurazione Supabase incompleta" }, { status: 503 });
+  }
+
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Solo un amministratore può eliminare definitivamente un prodotto." }, { status: 403 });
+  }
+
+  const db = createServiceClient();
+
+  const { data: prodotto, error: lookupError } = await db
+    .from("prodotti_caffe")
+    .select("id, nome, attivo")
+    .eq("id", params.id)
+    .maybeSingle();
+
+  if (lookupError) return dbError("Lettura prodotto", lookupError);
+  if (!prodotto) return NextResponse.json({ error: "Prodotto non trovato." }, { status: 404 });
+  if (prodotto.attivo) {
+    return NextResponse.json({ error: "Il prodotto va prima archiviato prima di poter essere eliminato definitivamente." }, { status: 409 });
+  }
+
+  const { count, error: righeError } = await db
+    .from("righe_ordine_caffe")
+    .select("id", { count: "exact", head: true })
+    .eq("prodotto_id", params.id);
+
+  if (righeError) return dbError("Righe ordine", righeError);
+  if ((count ?? 0) > 0) {
+    return NextResponse.json({
+      error: `Prodotto usato in ${count} ${count === 1 ? "ordine" : "ordini"}, non eliminabile — solo archiviabile.`,
+    }, { status: 409 });
+  }
+
+  const { error: deleteError } = await db
+    .from("prodotti_caffe")
+    .delete()
+    .eq("id", params.id);
+
+  if (deleteError) return dbError("Eliminazione prodotto", deleteError);
+
+  return NextResponse.json({ prodotto: { id: prodotto.id, nome: prodotto.nome } });
 }

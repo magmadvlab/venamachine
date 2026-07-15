@@ -2,7 +2,10 @@ import Link from "next/link";
 import { ArrowLeft, PackageSearch } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { ProductForm } from "@/components/products/ProductForm";
+import { ArchiveProductButton } from "@/components/products/ArchiveProductButton";
+import { HardDeleteProductButton } from "@/components/products/HardDeleteProductButton";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
+import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +24,9 @@ export default async function ProdottiPage() {
       </main>
     );
   }
+
+  const user = await getCurrentUser();
+  const admin = isAdminEmail(user?.email);
 
   const db = createServiceClient();
   const { data: prodotti } = await db
@@ -79,6 +85,12 @@ export default async function ProdottiPage() {
                   <span>Costo netto {money(product.costo_standard)}</span>
                   <span>Margine {product.margine_percentuale ?? 30}% · IVA {product.aliquota_iva ?? 22}%</span>
                 </div>
+                {admin && (
+                  <div className="mb-4 space-y-2">
+                    <ArchiveProductButton id={product.id} nome={product.nome} attivo={product.attivo} />
+                    {!product.attivo && <HardDeleteProductButton id={product.id} nome={product.nome} />}
+                  </div>
+                )}
                 <details className="rounded-xl border border-coffee-100 bg-coffee-50 p-3">
                   <summary className="cursor-pointer text-sm font-semibold text-coffee-800">Modifica prodotto</summary>
                   <div className="mt-4"><ProductForm product={product} /></div>
