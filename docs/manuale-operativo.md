@@ -1,6 +1,6 @@
 # Manuale operativo Vena Coffee Machine
 
-Ultimo aggiornamento: 12 luglio 2026.
+Ultimo aggiornamento: 15 luglio 2026.
 
 Questo manuale spiega le voci principali dell'app e il flusso di lavoro consigliato. Va aggiornato ogni volta che vengono aggiunte nuove funzioni operative o cambiano i campi usati dagli operatori.
 
@@ -214,6 +214,8 @@ Gestisce il catalogo prodotti. Per ogni prodotto puoi indicare:
 - stato attivo/non attivo.
 
 Quando salvi il prodotto, l'app calcola il prezzo netto applicando il margine al costo e aggiunge poi l'IVA per ottenere il prezzo finale. Lo stesso calcolo viene ripetuto sul server, per evitare prezzi incoerenti. Quando registri una vendita, l'app usa il catalogo per stimare caffe coperti, margine e coerenza con la macchina.
+
+Gli amministratori vedono in ogni scheda prodotto due azioni dedicate: **Archivia/Riattiva** (reversibile — un prodotto archiviato sparisce dal form di nuova vendita e dai suggerimenti automatici, ma lo storico ordini resta intatto) ed **Elimina definitivamente** (irreversibile, disponibile solo per prodotti già archiviati e mai usati in un ordine; richiede di digitare il nome esatto del prodotto prima di confermare).
 
 ### Offerte prodotti
 
