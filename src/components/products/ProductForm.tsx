@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Loader2, Save } from "lucide-react";
+import { calcolaPrezzoVendita, DEFAULT_IVA_PERCENTUALE, DEFAULT_MARGINE_PERCENTUALE } from "@/lib/pricing";
 
 type Product = {
   id?: string;
@@ -15,6 +16,8 @@ type Product = {
   prezzo_standard?: number | string | null;
   costo_standard?: number | string | null;
   margine_standard?: number | string | null;
+  margine_percentuale?: number | string | null;
+  aliquota_iva?: number | string | null;
   compatibilita_tipologie?: string[] | null;
   compatibilita_categorie_uso?: string[] | null;
   note_commerciali?: string | null;
@@ -34,7 +37,8 @@ function joinList(value?: string[] | null) {
 
 export function ProductForm({ product }: { product?: Product }) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const savingRef = useRef(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -44,18 +48,35 @@ export function ProductForm({ product }: { product?: Product }) {
   const [formato, setFormato] = useState(product?.formato ?? "cartone");
   const [caffeStimati, setCaffeStimati] = useState(Number(product?.caffe_stimati_per_unita ?? 1000));
   const [sku, setSku] = useState(product?.sku ?? "");
-  const [prezzo, setPrezzo] = useState(product?.prezzo_standard == null ? "" : String(product.prezzo_standard));
   const [costo, setCosto] = useState(product?.costo_standard == null ? "" : String(product.costo_standard));
-  const [margine, setMargine] = useState(product?.margine_standard == null ? "" : String(product.margine_standard));
+  const [marginePercentuale, setMarginePercentuale] = useState(
+    product?.margine_percentuale == null ? String(DEFAULT_MARGINE_PERCENTUALE) : String(product.margine_percentuale),
+  );
+  const [aliquotaIva, setAliquotaIva] = useState(
+    product?.aliquota_iva == null ? String(DEFAULT_IVA_PERCENTUALE) : String(product.aliquota_iva),
+  );
   const [tipologie, setTipologie] = useState(joinList(product?.compatibilita_tipologie));
   const [categorieUso, setCategorieUso] = useState(joinList(product?.compatibilita_categorie_uso));
   const [note, setNote] = useState(product?.note_commerciali ?? "");
   const [attivo, setAttivo] = useState(product?.attivo ?? true);
 
-  function submit() {
+  const prezzoCalcolato = useMemo(() => calcolaPrezzoVendita(
+    Number(costo || 0),
+    Number(marginePercentuale || 0),
+    Number(aliquotaIva || 0),
+  ), [aliquotaIva, costo, marginePercentuale]);
+
+  async function submit() {
+    if (savingRef.current) return;
+    if (!nome.trim()) {
+      setError("Nome prodotto obbligatorio.");
+      return;
+    }
+    savingRef.current = true;
+    setSaving(true);
     setError(null);
     setMessage(null);
-    startTransition(async () => {
+    try {
       const payload = {
         nome,
         descrizione,
@@ -63,9 +84,9 @@ export function ProductForm({ product }: { product?: Product }) {
         formato,
         caffe_stimati_per_unita: caffeStimati,
         sku,
-        prezzo_standard: prezzo ? Number(prezzo) : undefined,
         costo_standard: costo ? Number(costo) : undefined,
-        margine_standard: margine ? Number(margine) : undefined,
+        margine_percentuale: Number(marginePercentuale || DEFAULT_MARGINE_PERCENTUALE),
+        aliquota_iva: Number(aliquotaIva || DEFAULT_IVA_PERCENTUALE),
         compatibilita_tipologie: splitList(tipologie),
         compatibilita_categorie_uso: splitList(categorieUso),
         note_commerciali: note,
@@ -78,21 +99,25 @@ export function ProductForm({ product }: { product?: Product }) {
       });
       const out = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(out.error || "Salvataggio non riuscito");
-        return;
+        throw new Error(out.error || "Salvataggio non riuscito");
       }
       setMessage("Salvato");
       if (!product?.id) {
         setNome("");
         setDescrizione("");
         setSku("");
-        setPrezzo("");
         setCosto("");
-        setMargine("");
+        setMarginePercentuale(String(DEFAULT_MARGINE_PERCENTUALE));
+        setAliquotaIva(String(DEFAULT_IVA_PERCENTUALE));
         setNote("");
       }
       router.refresh();
-    });
+    } catch (e: any) {
+      setError(e.message || "Salvataggio non riuscito");
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   }
 
   return (
@@ -144,20 +169,29 @@ export function ProductForm({ product }: { product?: Product }) {
         </label>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <label>
-          <span className={labelCls}>Prezzo standard</span>
-          <input className={inputCls} type="number" step="0.01" min="0" value={prezzo} onChange={(e) => setPrezzo(e.target.value)} />
-        </label>
-        <label>
-          <span className={labelCls}>Costo standard</span>
+          <span className={labelCls}>Costo acquisto netto</span>
           <input className={inputCls} type="number" step="0.01" min="0" value={costo} onChange={(e) => setCosto(e.target.value)} />
         </label>
         <label>
-          <span className={labelCls}>Margine</span>
-          <input className={inputCls} type="number" step="0.01" value={margine} onChange={(e) => setMargine(e.target.value)} placeholder="auto" />
+          <span className={labelCls}>Margine %</span>
+          <input className={inputCls} type="number" step="0.1" min="0" value={marginePercentuale} onChange={(e) => setMarginePercentuale(e.target.value)} />
+        </label>
+        <label>
+          <span className={labelCls}>IVA %</span>
+          <input className={inputCls} type="number" step="0.1" min="0" value={aliquotaIva} onChange={(e) => setAliquotaIva(e.target.value)} />
+        </label>
+        <label>
+          <span className={labelCls}>Prezzo vendita IVA incl.</span>
+          <input className={`${inputCls} font-bold`} readOnly value={costo ? prezzoCalcolato.prezzoFinale.toFixed(2) : ""} placeholder="automatico" />
         </label>
       </div>
+      {costo && (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
+          Netto € {prezzoCalcolato.prezzoNetto.toFixed(2)} · margine € {prezzoCalcolato.margineNetto.toFixed(2)} · IVA € {prezzoCalcolato.iva.toFixed(2)} · finale € {prezzoCalcolato.prezzoFinale.toFixed(2)}
+        </p>
+      )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label>
@@ -180,11 +214,11 @@ export function ProductForm({ product }: { product?: Product }) {
       <button
         type="button"
         onClick={submit}
-        disabled={isPending}
+        disabled={saving}
         className="inline-flex items-center gap-2 rounded-full bg-coffee-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
       >
-        {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-        Salva prodotto
+        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+        {saving ? "Salvataggio..." : "Salva prodotto"}
       </button>
     </div>
   );

@@ -64,6 +64,12 @@ export async function POST(req: Request) {
 
   async function cercaCliente() {
     const select = "id, ragione_sociale, piva_cf, indirizzo, telefono, email";
+    if (body.cliente_id) {
+      const { data, error } = await db.from("clienti").select(select).eq("id", body.cliente_id).maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("Cliente selezionato non trovato.");
+      return data;
+    }
     const lookup = async (column: string, value?: string, ilike = false, sameTipo = false) => {
       if (!value) return null;
       let query = db.from("clienti").select(select);
@@ -142,7 +148,21 @@ export async function POST(req: Request) {
   };
   let macchina;
 
-  if (macchinaInput.matricola) {
+  if (body.macchina_id) {
+    const { data, error } = await db
+      .from("macchine")
+      .select("id, cliente_id")
+      .eq("id", body.macchina_id)
+      .maybeSingle();
+    if (error) return dbError("Ricerca macchina", error);
+    if (!data) return NextResponse.json({ error: "Macchina selezionata non trovata." }, { status: 404 });
+    if (data.cliente_id !== cliente!.id) {
+      return NextResponse.json({ error: "La macchina non è assegnata al cliente selezionato." }, { status: 400 });
+    }
+    macchina = data;
+  }
+
+  if (!macchina && macchinaInput.matricola) {
     const { data, error } = await db
       .from("macchine")
       .select("id")
@@ -199,12 +219,36 @@ export async function POST(req: Request) {
     macchina = data;
   }
 
+  let { data: assegnazione, error: assegnazioneError } = await db
+    .from("assegnazioni_macchina")
+    .select("id")
+    .eq("macchina_id", macchina!.id)
+    .eq("cliente_id", cliente!.id)
+    .is("data_fine", null)
+    .maybeSingle();
+  if (assegnazioneError) return dbError("Assegnazione macchina", assegnazioneError);
+  if (!assegnazione) {
+    const result = await db
+      .from("assegnazioni_macchina")
+      .insert({
+        macchina_id: macchina!.id,
+        cliente_id: cliente!.id,
+        data_inizio: new Date().toISOString().slice(0, 10),
+        motivo: "Assegnazione rilevata in accettazione",
+      })
+      .select("id")
+      .single();
+    if (result.error) return dbError("Assegnazione macchina", result.error);
+    assegnazione = result.data;
+  }
+
   // 3) riparazione
   const { data: rip, error: e3 } = await db
     .from("riparazioni")
     .insert({
       cliente_id: cliente!.id,
       macchina_id: macchina!.id,
+      assegnazione_macchina_id: assegnazione.id,
       operatore_id: operatore?.id ?? null,
       stato: "ingresso",
       stato_estetico: body.scheda.stato_estetico,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { getSessionOperatore } from "@/lib/operator-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
+import { calcolaPrezzoVendita, DEFAULT_IVA_PERCENTUALE, DEFAULT_MARGINE_PERCENTUALE } from "@/lib/pricing";
 
 export const runtime = "nodejs";
 
@@ -15,6 +16,8 @@ type ProductPayload = {
   prezzo_standard?: number;
   costo_standard?: number;
   margine_standard?: number;
+  margine_percentuale?: number;
+  aliquota_iva?: number;
   compatibilita_tipologie?: string[];
   compatibilita_categorie_uso?: string[];
   note_commerciali?: string;
@@ -50,7 +53,7 @@ async function canWrite(db: any) {
   return isAdminEmail(user?.email);
 }
 
-function payloadFromBody(body: ProductPayload) {
+function payloadFromBody(body: ProductPayload, current?: { costo_standard?: number | null; margine_percentuale?: number | null; aliquota_iva?: number | null }) {
   const patch: Record<string, unknown> = {};
   if (body.nome !== undefined) {
     const nome = clean(body.nome);
@@ -64,16 +67,25 @@ function payloadFromBody(body: ProductPayload) {
   if (body.sku !== undefined) patch.sku = clean(body.sku) ?? null;
   if (body.prezzo_standard !== undefined) patch.prezzo_standard = cleanNumber(body.prezzo_standard) ?? null;
   if (body.costo_standard !== undefined) patch.costo_standard = cleanNumber(body.costo_standard) ?? null;
-  if (body.margine_standard !== undefined) patch.margine_standard = cleanNumber(body.margine_standard) ?? null;
+  if (body.margine_percentuale !== undefined) patch.margine_percentuale = cleanNumber(body.margine_percentuale) ?? DEFAULT_MARGINE_PERCENTUALE;
+  if (body.aliquota_iva !== undefined) patch.aliquota_iva = cleanNumber(body.aliquota_iva) ?? DEFAULT_IVA_PERCENTUALE;
   if (body.compatibilita_tipologie !== undefined) patch.compatibilita_tipologie = cleanArray(body.compatibilita_tipologie);
   if (body.compatibilita_categorie_uso !== undefined) patch.compatibilita_categorie_uso = cleanArray(body.compatibilita_categorie_uso);
   if (body.note_commerciali !== undefined) patch.note_commerciali = clean(body.note_commerciali) ?? null;
   if (body.attivo !== undefined) patch.attivo = Boolean(body.attivo);
 
-  const prezzo = patch.prezzo_standard;
-  const costo = patch.costo_standard;
-  if (patch.margine_standard === undefined && typeof prezzo === "number" && typeof costo === "number") {
-    patch.margine_standard = Number((prezzo - costo).toFixed(2));
+  if (body.costo_standard !== undefined || body.margine_percentuale !== undefined || body.aliquota_iva !== undefined) {
+    const costo = cleanNumber(body.costo_standard) ?? current?.costo_standard;
+    const marginePercentuale = cleanNumber(body.margine_percentuale) ?? current?.margine_percentuale ?? DEFAULT_MARGINE_PERCENTUALE;
+    const aliquotaIva = cleanNumber(body.aliquota_iva) ?? current?.aliquota_iva ?? DEFAULT_IVA_PERCENTUALE;
+    if (costo != null) {
+      const calcolo = calcolaPrezzoVendita(Number(costo), Number(marginePercentuale), Number(aliquotaIva));
+      patch.costo_standard = calcolo.costo;
+      patch.margine_percentuale = calcolo.marginePercentuale;
+      patch.aliquota_iva = calcolo.aliquotaIva;
+      patch.margine_standard = calcolo.margineNetto;
+      patch.prezzo_standard = calcolo.prezzoFinale;
+    }
   }
 
   return { value: patch };
@@ -89,7 +101,16 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: "Operatore non collegato all'utente. Contatta l'amministratore." }, { status: 403 });
   }
 
-  const parsed = payloadFromBody((await req.json()) as ProductPayload);
+  const body = (await req.json()) as ProductPayload;
+  const { data: current, error: currentError } = await db
+    .from("prodotti_caffe")
+    .select("costo_standard, margine_percentuale, aliquota_iva")
+    .eq("id", params.id)
+    .maybeSingle();
+  if (currentError) return dbError("Lettura prodotto", currentError);
+  if (!current) return NextResponse.json({ error: "Prodotto non trovato." }, { status: 404 });
+
+  const parsed = payloadFromBody(body, current);
   if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
   const { data, error } = await db

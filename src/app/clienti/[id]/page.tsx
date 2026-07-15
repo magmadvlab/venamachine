@@ -103,6 +103,11 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
     { data: azioniAperte },
     { data: manutenzioni },
     { data: profili },
+    { data: scoreClienteRow },
+    { data: venditeCliente },
+    { data: riparazioniCliente },
+    { data: assegnazioniCliente },
+    { data: riacquistiProdotti },
     { data: solleciti },
     { data: suggerimenti },
   ] = await Promise.all([
@@ -113,6 +118,11 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
     db.from("azioni_commerciali").select("id").eq("cliente_id", params.id).in("stato", ["aperta", "pianificata", "rimandata"]),
     db.from("v_manutenzioni_programmate_agenda").select("*").eq("cliente_id", params.id).in("stato", ["da_pianificare", "pianificata"]).order("priorita", { ascending: false }).order("data_prevista", { ascending: true }),
     db.from("profili_attivita").select("id, nome, codice, caffe_giornalieri_min, caffe_giornalieri_max").order("nome", { ascending: true }),
+    db.from("v_score_clienti").select("*").eq("cliente_id", params.id).maybeSingle(),
+    db.from("ordini_caffe").select("id, macchina_id, numero_documento, data_ordine, stato_pagamento, data_pagamento, metodo_pagamento, righe:righe_ordine_caffe(quantita, prezzo_unitario)").eq("cliente_id", params.id).order("data_ordine", { ascending: false }),
+    db.from("riparazioni").select("id, macchina_id, numero_scheda, data_ingresso, stato_pagamento, data_pagamento, metodo_pagamento, importo_finale, importo_preventivo").eq("cliente_id", params.id).order("data_ingresso", { ascending: false }),
+    db.from("assegnazioni_macchina").select("id, macchina_id, data_inizio, data_fine, motivo, macchina:macchine(marca, modello, matricola)").eq("cliente_id", params.id).order("data_inizio", { ascending: false }),
+    db.from("v_riacquisto_prodotti_clienti").select("prodotto_id, prodotto_nome, numero_acquisti, ultimo_acquisto, ultima_quantita, intervallo_medio_giorni, data_riacquisto_stimata, stato_riacquisto").eq("cliente_id", params.id).order("data_riacquisto_stimata", { ascending: true, nullsFirst: false }),
     db.from("riparazioni").select("id, numero_scheda, data_avviso_cliente").eq("cliente_id", params.id).eq("stato", "cliente_avvisato").order("data_avviso_cliente", { ascending: true }),
     db.from("v_suggerimenti_agenda").select("id, stato, priorita, titolo, messaggio, cta_label, cta_href, ragione_sociale, telefono, email, consenso_marketing, marca, modello, matricola, prodotto_nome, fonte_nome, fonte_url").eq("cliente_id", params.id).in("stato", ["da_preparare", "pronto", "inviato"]).order("priorita", { ascending: false }),
   ]);
@@ -134,12 +144,27 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
   }));
 
   const opportunitaRows = (analisiRows ?? []).filter((row: any) => row.azione_consigliata !== "monitora");
-
-  const valoreVendite = (analisiRows ?? []).reduce((sum: number, row: any) => sum + Number(row.valore_acquisti_365gg ?? 0), 0);
-  const costoInterventi = (analisiRows ?? []).reduce((sum: number, row: any) => sum + Number(row.costo_interventi_365gg ?? 0), 0);
-  const caffeAcquistati = (analisiRows ?? []).reduce((sum: number, row: any) => sum + Number(row.caffe_acquistati_365gg ?? 0), 0);
-  const caffeTarget = (analisiRows ?? []).reduce((sum: number, row: any) => sum + Number(row.caffe_target_365gg ?? 0), 0);
-  const priorita = Math.max(0, ...(analisiRows ?? []).map((row: any) => Number(row.priorita_commerciale ?? 0)));
+  const scoreCliente: any = scoreClienteRow;
+  const valoreVendite = Number(scoreCliente?.valore_acquisti_365gg ?? 0);
+  const unAnnoFa = new Date();
+  unAnnoFa.setDate(unAnnoFa.getDate() - 365);
+  const costoInterventi = (riparazioniCliente ?? [])
+    .filter((row: any) => new Date(row.data_ingresso) >= unAnnoFa)
+    .reduce((sum: number, row: any) => sum + Number(row.importo_finale ?? row.importo_preventivo ?? 0), 0);
+  const caffeAcquistati = Number(scoreCliente?.caffe_acquistati_365gg ?? 0);
+  const targetCliente = Number(scoreCliente?.caffe_giornalieri_attesi ?? 0) * 365;
+  const caffeTarget = targetCliente || (analisiRows ?? []).reduce((sum: number, row: any) => sum + Number(row.caffe_target_365gg ?? 0), 0);
+  const prioritaDaScore = scoreCliente?.score_cliente == null ? 0 : 100 - Number(scoreCliente.score_cliente);
+  const priorita = Math.max(prioritaDaScore, ...(analisiRows ?? []).map((row: any) => Number(row.priorita_commerciale ?? 0)));
+  const sospesiVendite = (venditeCliente ?? []).filter((row: any) => row.stato_pagamento === "sospeso");
+  const sospesiRiparazioni = (riparazioniCliente ?? []).filter((row: any) => row.stato_pagamento === "sospeso");
+  const totaleSospesoVendite = sospesiVendite.reduce((sum: number, ordine: any) => sum + (ordine.righe ?? []).reduce(
+    (lineSum: number, row: any) => lineSum + Number(row.quantita ?? 0) * Number(row.prezzo_unitario ?? 0), 0,
+  ), 0);
+  const totaleSospesoRiparazioni = sospesiRiparazioni.reduce(
+    (sum: number, row: any) => sum + Number(row.importo_finale ?? row.importo_preventivo ?? 0), 0,
+  );
+  const totaleSospeso = totaleSospesoVendite + totaleSospesoRiparazioni;
 
   return (
     <main className="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
@@ -175,12 +200,12 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
             </a>
           )}
           {!cliente.archiviato_at && (
-            <Link href={`/vendite?cliente=${cliente.id}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
+            <Link href={`/vendite?cliente=${encodeURIComponent(cliente.id)}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
               <ShoppingBag className="h-4 w-4" />
               Vendita
             </Link>
           )}
-          <Link href={`/nuova?cliente=${cliente.id}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
+          <Link href={`/nuova?cliente=${encodeURIComponent(cliente.id)}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
             <Plus className="h-4 w-4" />
             Scheda
           </Link>
@@ -190,15 +215,25 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
         </div>
       </header>
 
-      <section className="mb-4 grid grid-cols-2 gap-2 lg:grid-cols-5">
+      <section className="mb-4 grid grid-cols-2 gap-2 lg:grid-cols-4 xl:grid-cols-7">
+        <Card className="p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Score cliente</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{scoreCliente?.score_cliente ?? "-"}</p>
+          <p className="text-xs text-coffee-400">{scoreCliente?.stato_riacquisto?.replaceAll("_", " ") ?? "da valutare"}</p>
+        </Card>
+        <Card className="p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Prossimo acquisto</p>
+          <p className="mt-1 font-display text-lg font-bold text-coffee-50">{formatDate(scoreCliente?.data_riacquisto_stimata)}</p>
+          <p className="text-xs text-coffee-400">Ultimo: {formatDate(scoreCliente?.ultimo_acquisto)}</p>
+        </Card>
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Priorità</p>
           <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{priorita || "-"}</p>
         </Card>
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Copertura anno</p>
-          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{caffeTarget ? `${Math.round((caffeAcquistati / caffeTarget) * 100)}%` : "-"}</p>
-          <p className="text-xs text-coffee-400">{caffeAcquistati}/{caffeTarget} caffè</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{caffeTarget ? `${Math.round((caffeAcquistati / caffeTarget) * 100)}%` : `${caffeAcquistati}`}</p>
+          <p className="text-xs text-coffee-400">{caffeTarget ? `${caffeAcquistati}/${caffeTarget}` : "caffè acquistati"}</p>
         </Card>
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Vendite 365g</p>
@@ -209,9 +244,9 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
           <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{money(costoInterventi)}</p>
         </Card>
         <Card className="p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Azioni</p>
-          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{azioniAperte?.length ?? 0}</p>
-          <p className="text-xs text-coffee-400">{manutenzioni?.length ?? 0} manutenzioni attive</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Da incassare</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{money(totaleSospeso)}</p>
+          <p className="text-xs text-coffee-400">{sospesiVendite.length + sospesiRiparazioni.length} operazioni</p>
         </Card>
       </section>
 
@@ -246,6 +281,74 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
                     </div>
                   </li>
                 ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card className="p-4 sm:p-5">
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Vendite, riparazioni e incassi</h2>
+            {(venditeCliente ?? []).length + (riparazioniCliente ?? []).length === 0 ? (
+              <p className="text-sm text-coffee-400">Nessuna operazione registrata.</p>
+            ) : (
+              <ul className="divide-y divide-coffee-100">
+                {[
+                  ...(venditeCliente ?? []).map((row: any) => ({ ...row, tipo: "Vendita", data: row.data_ordine, riferimento: row.numero_documento ?? row.id.slice(0, 8) })),
+                  ...(riparazioniCliente ?? []).map((row: any) => ({ ...row, tipo: "Riparazione", data: row.data_ingresso, riferimento: row.numero_scheda })),
+                ].sort((a: any, b: any) => new Date(b.data).getTime() - new Date(a.data).getTime()).slice(0, 20).map((row: any) => (
+                  <li key={`${row.tipo}-${row.id}`} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+                    <div>
+                      <p className="font-semibold text-coffee-900">{row.tipo} · {row.riferimento}</p>
+                      <p className="text-xs text-coffee-500">{formatDate(row.data)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-coffee-800">{row.stato_pagamento === "pagato" ? "Incassato" : row.stato_pagamento === "sospeso" ? "Da incassare" : "Pagamento non indicato"}</p>
+                      {row.data_pagamento && <p className="text-xs text-coffee-500">{formatDate(row.data_pagamento)}{row.metodo_pagamento ? ` · ${row.metodo_pagamento}` : ""}</p>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card className="p-4 sm:p-5">
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Previsione riacquisto prodotti</h2>
+            {(riacquistiProdotti ?? []).length === 0 ? (
+              <p className="text-sm text-coffee-400">Servono vendite prodotto per calcolare le prossime date.</p>
+            ) : (
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {(riacquistiProdotti ?? []).map((row: any) => (
+                  <li key={row.prodotto_id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold text-coffee-900">{row.prodotto_nome}</p>
+                      <span className="rounded-full border border-coffee-200 bg-white px-2 py-0.5 text-xs font-bold text-coffee-700">
+                        {row.stato_riacquisto.replaceAll("_", " ")}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-coffee-700">Prossimo: <strong>{formatDate(row.data_riacquisto_stimata)}</strong></p>
+                    <p className="text-xs text-coffee-500">Ultimo {formatDate(row.ultimo_acquisto)} · q.tà {Number(row.ultima_quantita ?? 0).toLocaleString("it-IT")}</p>
+                    <p className="text-xs text-coffee-500">Cadenza: {row.intervallo_medio_giorni ? `${row.intervallo_medio_giorni} giorni` : "stima da consumo"}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card className="p-4 sm:p-5">
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Storico assegnazioni macchine</h2>
+            {(assegnazioniCliente ?? []).length === 0 ? (
+              <p className="text-sm text-coffee-400">Nessuna assegnazione registrata.</p>
+            ) : (
+              <ul className="space-y-2">
+                {(assegnazioniCliente ?? []).map((assegnazione: any) => {
+                  const macchina = one(assegnazione.macchina);
+                  return (
+                    <li key={assegnazione.id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm">
+                      <p className="font-semibold text-coffee-900">{[macchina?.marca, macchina?.modello, macchina?.matricola].filter(Boolean).join(" · ") || "Macchina"}</p>
+                      <p className="text-coffee-600">{formatDate(assegnazione.data_inizio)} → {assegnazione.data_fine ? formatDate(assegnazione.data_fine) : "attuale"}</p>
+                      {assegnazione.motivo && <p className="mt-1 text-xs text-coffee-500">{assegnazione.motivo}</p>}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </Card>

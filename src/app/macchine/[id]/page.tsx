@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { AgendaActionControls } from "@/components/commercial/AgendaActions";
 import { MachineEditForm } from "@/components/machines/MachineEditForm";
+import { MachineAssignmentForm } from "@/components/machines/MachineAssignmentForm";
 import { Card } from "@/components/ui/Card";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 
@@ -121,6 +122,7 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
     .from("macchine")
     .select(`id, cliente_id, marca, modello, matricola, tipologia, categoria_utilizzo, colore,
       regime_possesso, consumo_annuo_min_override, consumo_annuo_max_override,
+      caffe_giornalieri_attesi_override, numero_utilizzatori_stimati, numero_gruppi_erogatori,
       vita_utile_caffe_stimata, manutenzione_ogni_caffe, stato_ciclo_vita,
       data_ultima_rigenerazione, created_at,
       cliente:clienti(id, ragione_sociale, tipo, piva_cf, indirizzo, telefono, email, canale_preferito,
@@ -140,6 +142,8 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
     { data: riparazioni },
     { data: ordini },
     { data: azioni },
+    { data: assegnazioni },
+    { data: clienti },
   ] = await Promise.all([
     db
       .from("v_score_fedelta_macchine")
@@ -158,13 +162,14 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
       .limit(1),
     db
       .from("riparazioni")
-      .select("id, numero_scheda, stato, data_ingresso, data_riparazione, difetto_cliente, diagnosi_tecnico, importo_preventivo, importo_finale")
+      .select("id, numero_scheda, stato, data_ingresso, data_riparazione, difetto_cliente, diagnosi_tecnico, importo_preventivo, importo_finale, cliente:clienti(ragione_sociale)")
       .eq("macchina_id", params.id)
       .order("data_ingresso", { ascending: false })
       .limit(20),
     db
       .from("ordini_caffe")
       .select(`id, data_ordine, numero_documento, pagato, data_pagamento, metodo_pagamento,
+        cliente:clienti(ragione_sociale),
         righe:righe_ordine_caffe(quantita, prezzo_unitario, caffe_stimati, prodotto:prodotti_caffe(nome, descrizione, formato, categoria))`)
       .eq("macchina_id", params.id)
       .order("data_ordine", { ascending: false })
@@ -177,6 +182,12 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
       .order("data_scadenza", { ascending: true })
       .order("priorita", { ascending: false })
       .limit(20),
+    db
+      .from("assegnazioni_macchina")
+      .select("id, cliente_id, data_inizio, data_fine, motivo, cliente:clienti(ragione_sociale)")
+      .eq("macchina_id", params.id)
+      .order("data_inizio", { ascending: false }),
+    db.from("clienti").select("id, ragione_sociale").order("ragione_sociale", { ascending: true }).limit(1000),
   ]);
 
   const score: any = scoreRows?.[0] ?? null;
@@ -216,7 +227,7 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
-            href="/vendite"
+            href={`/vendite?cliente=${encodeURIComponent(cliente?.id ?? "")}&macchina=${encodeURIComponent(macchina.id)}`}
             className="inline-flex h-10 items-center gap-2 rounded-full bg-arancio px-4 text-sm font-semibold text-white active:scale-95"
           >
             <ShoppingBag className="h-4 w-4" />
@@ -324,6 +335,7 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
             ) : (
               <ul className="divide-y divide-coffee-700">
                 {(ordini ?? []).map((ordine: any) => {
+                  const clienteOrdine = one(ordine.cliente);
                   const righe = ordine.righe ?? [];
                   const valore = righe.reduce((sum: number, row: any) => sum + Number(row.quantita ?? 0) * Number(row.prezzo_unitario ?? 0), 0);
                   const caffe = righe.reduce((sum: number, row: any) => sum + Number(row.caffe_stimati ?? 0), 0);
@@ -332,7 +344,7 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
                           <p className="font-semibold text-coffee-50">{formatDate(ordine.data_ordine)}</p>
-                          <p className="text-coffee-300">{caffe} caffè stimati · {money(valore)}</p>
+                          <p className="text-coffee-300">{clienteOrdine?.ragione_sociale ?? "Cliente"} · {caffe} caffè stimati · {money(valore)}</p>
                         </div>
                         <span className={`rounded-full border px-2 py-0.5 text-xs font-bold ${
                           ordine.pagato ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"
@@ -377,6 +389,7 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
                       <span className="text-xs font-semibold text-coffee-400">{formatDate(r.data_ingresso)}</span>
                     </div>
                     <p className="mt-1 font-semibold text-coffee-50">{r.difetto_cliente || "Difetto non indicato"}</p>
+                    <p className="mt-1 text-xs text-coffee-300">Cliente: {one(r.cliente)?.ragione_sociale ?? "—"}</p>
                     {r.diagnosi_tecnico && <p className="mt-1 text-coffee-300">Fatto: {r.diagnosi_tecnico}</p>}
                     <p className="mt-1 text-xs text-coffee-400">
                       Stato: {r.stato} · Preventivo {money(r.importo_preventivo)} · Finale {money(r.importo_finale)}
@@ -389,6 +402,31 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
         </div>
 
         <aside className="space-y-4">
+          <Card className="sm:p-5">
+            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
+              <History className="h-5 w-5 text-arancio" /> Assegnazioni cliente
+            </h2>
+            <ul className="mb-4 space-y-2">
+              {(assegnazioni ?? []).map((assegnazione: any) => {
+                const assegnatario = one(assegnazione.cliente);
+                return (
+                  <li key={assegnazione.id} className="rounded-xl border border-coffee-700 bg-coffee-800 p-3 text-sm">
+                    <p className="font-semibold text-coffee-50">{assegnatario?.ragione_sociale ?? "Cliente"}</p>
+                    <p className="text-xs text-coffee-300">
+                      {formatDate(assegnazione.data_inizio)} → {assegnazione.data_fine ? formatDate(assegnazione.data_fine) : "attuale"}
+                    </p>
+                    {assegnazione.motivo && <p className="mt-1 text-xs text-coffee-400">{assegnazione.motivo}</p>}
+                  </li>
+                );
+              })}
+            </ul>
+            <MachineAssignmentForm
+              macchinaId={macchina.id}
+              clienteAttualeId={cliente?.id}
+              clienti={(clienti ?? []) as any}
+            />
+          </Card>
+
           <Card className="sm:p-5">
             <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
               <Target className="h-5 w-5 text-arancio" /> Azioni aperte e recenti
@@ -432,7 +470,7 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
                   Chiama cliente
                 </a>
               )}
-              <Link href="/vendite" className="inline-flex items-center gap-2 rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
+              <Link href={`/vendite?cliente=${encodeURIComponent(cliente?.id ?? "")}&macchina=${encodeURIComponent(macchina.id)}`} className="inline-flex items-center gap-2 rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
                 <ShoppingBag className="h-4 w-4" />
                 Registra vendita
               </Link>
@@ -448,7 +486,7 @@ export default async function DettaglioMacchina({ params }: { params: { id: stri
                 <History className="h-4 w-4" />
                 Storico cliente
               </Link>
-              <Link href="/nuova" className="inline-flex items-center gap-2 rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
+              <Link href={`/nuova?cliente=${encodeURIComponent(cliente?.id ?? "")}&macchina=${encodeURIComponent(macchina.id)}`} className="inline-flex items-center gap-2 rounded-lg border border-coffee-700 bg-coffee-800 px-3 py-2 font-semibold text-coffee-50">
                 <Plus className="h-4 w-4" />
                 Nuova scheda assistenza
               </Link>

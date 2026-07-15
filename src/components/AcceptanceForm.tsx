@@ -43,6 +43,18 @@ type AcceptanceFormProps = {
   profiliAttivita?: ProfiloAttivita[];
   initialValue?: Partial<NuovaAccettazione>;
   prenotazioneId?: string;
+  clienteId?: string;
+  macchinaId?: string;
+  macchineCliente?: Array<{
+    id: string;
+    marca?: string | null;
+    modello?: string | null;
+    colore?: string | null;
+    matricola?: string | null;
+    tipologia?: TipoMacchina | null;
+    categoria_utilizzo?: CategoriaUtilizzoMacchina | null;
+    regime_possesso?: RegimePossessoMacchina | null;
+  }>;
 };
 
 function dataIntervento(r: StoricoRiparazione) {
@@ -81,13 +93,14 @@ function trovaDifettoSimile(current?: string | null, storico: StoricoRiparazione
   }) ?? null;
 }
 
-export default function AcceptanceForm({ profiliAttivita = [], initialValue, prenotazioneId }: AcceptanceFormProps) {
+export default function AcceptanceForm({ profiliAttivita = [], initialValue, prenotazioneId, clienteId, macchinaId, macchineCliente = [] }: AcceptanceFormProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [storico, setStorico] = useState<StoricoMacchina | null>(null);
   const [storicoStatus, setStoricoStatus] = useState<"idle" | "loading" | "done" | "empty" | "error">("idle");
+  const [selectedMacchinaId, setSelectedMacchinaId] = useState(macchinaId ?? "");
 
   const [f, setF] = useState<NuovaAccettazione>(() => {
     const base: NuovaAccettazione = {
@@ -187,6 +200,8 @@ export default function AcceptanceForm({ profiliAttivita = [], initialValue, pre
     try {
       const payload: NuovaAccettazione = {
         ...f,
+        cliente_id: clienteId,
+        macchina_id: selectedMacchinaId || undefined,
         scheda: { ...f.scheda, prenotazione_id: prenotazioneId },
       };
       const res = await fetch("/api/riparazioni", {
@@ -308,6 +323,46 @@ export default function AcceptanceForm({ profiliAttivita = [], initialValue, pre
         <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
           <Coffee className="h-5 w-5 text-arancio" /> Macchina
         </h2>
+        {clienteId && macchineCliente.length > 0 && (
+          <div className="mb-4 rounded-xl border border-arancio/20 bg-arancio/5 p-3">
+            <label className={labelCls}>Macchina già associata al cliente</label>
+            <select
+              className={inputCls}
+              value={selectedMacchinaId}
+              onChange={(e) => {
+                const id = e.target.value;
+                setSelectedMacchinaId(id);
+                const macchina = macchineCliente.find((row) => row.id === id);
+                if (!macchina) {
+                  setF((prev) => ({
+                    ...prev,
+                    macchina: { tipologia: "capsule", categoria_utilizzo: "ufficio", regime_possesso: "proprieta_cliente" },
+                  }));
+                  return;
+                }
+                setF((prev) => ({
+                  ...prev,
+                  macchina: {
+                    marca: macchina.marca ?? "",
+                    modello: macchina.modello ?? "",
+                    colore: macchina.colore ?? "",
+                    matricola: macchina.matricola ?? "",
+                    tipologia: macchina.tipologia ?? "capsule",
+                    categoria_utilizzo: macchina.categoria_utilizzo ?? "ufficio",
+                    regime_possesso: macchina.regime_possesso ?? "proprieta_cliente",
+                  },
+                }));
+              }}
+            >
+              <option value="">Nuova macchina</option>
+              {macchineCliente.map((macchina) => (
+                <option key={macchina.id} value={macchina.id}>
+                  {[macchina.marca, macchina.modello, macchina.matricola].filter(Boolean).join(" · ") || "Macchina senza identificazione"}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div><label className={labelCls}>Marca</label>
             <input className={inputCls} value={f.macchina.marca ?? ""}
