@@ -51,7 +51,7 @@ export default async function AdminOperatoriPage() {
           </p>
           <p>
             <strong className="text-coffee-50">3. Reset separato</strong><br />
-            Il reset pulisce i dati operativi, ma lascia attivi admin e operatori.
+            Il reset elimina tutti i dati di test (clienti, macchine, schede, prodotti e dati collegati), ma lascia attivi admin, operatori e configurazioni.
           </p>
         </div>
       </Card>

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser, isAdminEmail, requireAdmin } from "@/lib/supabase/auth-server";
 import { getSessionOperatore } from "@/lib/operator-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
-import { calcolaPrezzoVendita, DEFAULT_IVA_PERCENTUALE, DEFAULT_MARGINE_PERCENTUALE } from "@/lib/pricing";
+import { calcolaDaPrezzoIvaInclusa, calcolaPrezzoVendita, DEFAULT_IVA_PERCENTUALE, DEFAULT_MARGINE_PERCENTUALE } from "@/lib/pricing";
 
 export const runtime = "nodejs";
 
@@ -74,12 +74,15 @@ function payloadFromBody(body: ProductPayload, current?: { costo_standard?: numb
   if (body.note_commerciali !== undefined) patch.note_commerciali = clean(body.note_commerciali) ?? null;
   if (body.attivo !== undefined) patch.attivo = Boolean(body.attivo);
 
-  if (body.costo_standard !== undefined || body.margine_percentuale !== undefined || body.aliquota_iva !== undefined) {
+  if (body.costo_standard !== undefined || body.margine_percentuale !== undefined || body.aliquota_iva !== undefined || body.prezzo_standard !== undefined) {
     const costo = cleanNumber(body.costo_standard) ?? current?.costo_standard;
     const marginePercentuale = cleanNumber(body.margine_percentuale) ?? current?.margine_percentuale ?? DEFAULT_MARGINE_PERCENTUALE;
     const aliquotaIva = cleanNumber(body.aliquota_iva) ?? current?.aliquota_iva ?? DEFAULT_IVA_PERCENTUALE;
     if (costo != null) {
-      const calcolo = calcolaPrezzoVendita(Number(costo), Number(marginePercentuale), Number(aliquotaIva));
+      const prezzoIvaInclusa = cleanNumber(body.prezzo_standard);
+      const calcolo = prezzoIvaInclusa == null
+        ? calcolaPrezzoVendita(Number(costo), Number(marginePercentuale), Number(aliquotaIva))
+        : calcolaDaPrezzoIvaInclusa(Number(costo), prezzoIvaInclusa, Number(aliquotaIva));
       patch.costo_standard = calcolo.costo;
       patch.margine_percentuale = calcolo.marginePercentuale;
       patch.aliquota_iva = calcolo.aliquotaIva;
