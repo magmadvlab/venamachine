@@ -1,5 +1,5 @@
--- Venamachine - Reset dati di test
--- Lascia intatti operatori, utenti Supabase Auth e configurazioni di sistema.
+-- Venamachine - Estende il reset amministrativo a tutti i dati di test.
+-- Conserva operatori, Auth e tabelle di configurazione/cataloghi predefiniti.
 
 create or replace function public.admin_reset_operational_data()
 returns void

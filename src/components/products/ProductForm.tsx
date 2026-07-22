@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { Loader2, Save } from "lucide-react";
-import { calcolaPrezzoVendita, DEFAULT_IVA_PERCENTUALE, DEFAULT_MARGINE_PERCENTUALE } from "@/lib/pricing";
+import { calcolaDaPrezzoIvaInclusa, calcolaPrezzoVendita, DEFAULT_IVA_PERCENTUALE, DEFAULT_MARGINE_PERCENTUALE } from "@/lib/pricing";
 
 type Product = {
   id?: string;
@@ -55,6 +55,9 @@ export function ProductForm({ product }: { product?: Product }) {
   const [aliquotaIva, setAliquotaIva] = useState(
     product?.aliquota_iva == null ? String(DEFAULT_IVA_PERCENTUALE) : String(product.aliquota_iva),
   );
+  const [prezzoIvaInclusa, setPrezzoIvaInclusa] = useState(
+    product?.prezzo_standard == null ? "" : String(product.prezzo_standard),
+  );
   const [tipologie, setTipologie] = useState(joinList(product?.compatibilita_tipologie));
   const [categorieUso, setCategorieUso] = useState(joinList(product?.compatibilita_categorie_uso));
   const [note, setNote] = useState(product?.note_commerciali ?? "");
@@ -65,6 +68,22 @@ export function ProductForm({ product }: { product?: Product }) {
     Number(marginePercentuale || 0),
     Number(aliquotaIva || 0),
   ), [aliquotaIva, costo, marginePercentuale]);
+
+  function aggiornaDaCalcolo(costoSuccessivo: string, margineSuccessivo: string, ivaSuccessiva: string) {
+    if (!costoSuccessivo) {
+      setPrezzoIvaInclusa("");
+      return;
+    }
+    const calcolo = calcolaPrezzoVendita(Number(costoSuccessivo), Number(margineSuccessivo || 0), Number(ivaSuccessiva || 0));
+    setPrezzoIvaInclusa(calcolo.prezzoFinale.toFixed(2));
+  }
+
+  function aggiornaPrezzoIvaInclusa(value: string) {
+    setPrezzoIvaInclusa(value);
+    if (!costo || value === "") return;
+    const calcolo = calcolaDaPrezzoIvaInclusa(Number(costo), Number(value), Number(aliquotaIva || 0));
+    setMarginePercentuale(String(calcolo.marginePercentuale));
+  }
 
   async function submit() {
     if (savingRef.current) return;
@@ -87,6 +106,7 @@ export function ProductForm({ product }: { product?: Product }) {
         costo_standard: costo ? Number(costo) : undefined,
         margine_percentuale: Number(marginePercentuale || DEFAULT_MARGINE_PERCENTUALE),
         aliquota_iva: Number(aliquotaIva || DEFAULT_IVA_PERCENTUALE),
+        prezzo_standard: prezzoIvaInclusa ? Number(prezzoIvaInclusa) : undefined,
         compatibilita_tipologie: splitList(tipologie),
         compatibilita_categorie_uso: splitList(categorieUso),
         note_commerciali: note,
@@ -109,6 +129,7 @@ export function ProductForm({ product }: { product?: Product }) {
         setCosto("");
         setMarginePercentuale(String(DEFAULT_MARGINE_PERCENTUALE));
         setAliquotaIva(String(DEFAULT_IVA_PERCENTUALE));
+        setPrezzoIvaInclusa("");
         setNote("");
       }
       router.refresh();
@@ -172,19 +193,19 @@ export function ProductForm({ product }: { product?: Product }) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <label>
           <span className={labelCls}>Costo acquisto netto</span>
-          <input className={inputCls} type="number" step="0.01" min="0" value={costo} onChange={(e) => setCosto(e.target.value)} />
+          <input className={inputCls} type="number" step="0.01" min="0" value={costo} onChange={(e) => { setCosto(e.target.value); aggiornaDaCalcolo(e.target.value, marginePercentuale, aliquotaIva); }} />
         </label>
         <label>
           <span className={labelCls}>Margine %</span>
-          <input className={inputCls} type="number" step="0.1" min="0" value={marginePercentuale} onChange={(e) => setMarginePercentuale(e.target.value)} />
+          <input className={inputCls} type="number" step="0.1" min="0" value={marginePercentuale} onChange={(e) => { setMarginePercentuale(e.target.value); aggiornaDaCalcolo(costo, e.target.value, aliquotaIva); }} />
         </label>
         <label>
           <span className={labelCls}>IVA %</span>
-          <input className={inputCls} type="number" step="0.1" min="0" value={aliquotaIva} onChange={(e) => setAliquotaIva(e.target.value)} />
+          <input className={inputCls} type="number" step="0.1" min="0" value={aliquotaIva} onChange={(e) => { setAliquotaIva(e.target.value); aggiornaDaCalcolo(costo, marginePercentuale, e.target.value); }} />
         </label>
         <label>
           <span className={labelCls}>Prezzo vendita IVA incl.</span>
-          <input className={`${inputCls} font-bold`} readOnly value={costo ? prezzoCalcolato.prezzoFinale.toFixed(2) : ""} placeholder="automatico" />
+          <input className={`${inputCls} font-bold`} type="number" step="0.01" min="0" value={prezzoIvaInclusa} onChange={(e) => aggiornaPrezzoIvaInclusa(e.target.value)} placeholder="Inserisci o calcola" />
         </label>
       </div>
       {costo && (

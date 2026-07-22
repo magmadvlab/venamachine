@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { getSessionOperatore } from "@/lib/operator-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
-import { calcolaPrezzoVendita, DEFAULT_IVA_PERCENTUALE, DEFAULT_MARGINE_PERCENTUALE } from "@/lib/pricing";
+import { calcolaDaPrezzoIvaInclusa, calcolaPrezzoVendita, DEFAULT_IVA_PERCENTUALE, DEFAULT_MARGINE_PERCENTUALE } from "@/lib/pricing";
 
 export const runtime = "nodejs";
 
@@ -60,7 +60,12 @@ function payloadFromBody(body: ProductPayload) {
   const costo = cleanNumber(body.costo_standard);
   const marginePercentuale = cleanNumber(body.margine_percentuale) ?? DEFAULT_MARGINE_PERCENTUALE;
   const aliquotaIva = cleanNumber(body.aliquota_iva) ?? DEFAULT_IVA_PERCENTUALE;
-  const calcolo = costo == null ? null : calcolaPrezzoVendita(costo, marginePercentuale, aliquotaIva);
+  const prezzoIvaInclusa = cleanNumber(body.prezzo_standard);
+  const calcolo = costo == null
+    ? null
+    : prezzoIvaInclusa == null
+      ? calcolaPrezzoVendita(costo, marginePercentuale, aliquotaIva)
+      : calcolaDaPrezzoIvaInclusa(costo, prezzoIvaInclusa, aliquotaIva);
 
   return {
     value: {
@@ -70,10 +75,10 @@ function payloadFromBody(body: ProductPayload) {
       formato: clean(body.formato) ?? "cartone",
       caffe_stimati_per_unita: cleanNumber(body.caffe_stimati_per_unita) ?? 0,
       sku: clean(body.sku) ?? null,
-      prezzo_standard: calcolo?.prezzoFinale ?? cleanNumber(body.prezzo_standard) ?? null,
+      prezzo_standard: calcolo?.prezzoFinale ?? prezzoIvaInclusa ?? null,
       costo_standard: costo ?? null,
       margine_standard: calcolo?.margineNetto ?? cleanNumber(body.margine_standard) ?? null,
-      margine_percentuale: marginePercentuale,
+      margine_percentuale: calcolo?.marginePercentuale ?? marginePercentuale,
       aliquota_iva: aliquotaIva,
       compatibilita_tipologie: cleanArray(body.compatibilita_tipologie),
       compatibilita_categorie_uso: cleanArray(body.compatibilita_categorie_uso),
