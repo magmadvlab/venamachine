@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Coffee, Gauge, Pencil, Phone, Plus, ShoppingBag, Target, Wrench } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { CustomerEditForm } from "@/components/customers/CustomerEditForm";
+import { AddMachineForm } from "@/components/customers/AddMachineForm";
 import { CustomerNoteForm } from "@/components/customers/CustomerNoteForm";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 
@@ -221,6 +222,7 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
                 ))}
               </ul>
             )}
+            <AddMachineForm clienteId={cliente.id} />
           </Card>
 
           <Card className="p-4 sm:p-5">
