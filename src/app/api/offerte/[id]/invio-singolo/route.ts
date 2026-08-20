@@ -1,27 +1,15 @@
 import { NextResponse } from "next/server";
 import { getPublicAppUrl } from "@/lib/app-url";
-import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
+import { queueMessage } from "@/lib/outbox";
+import { requireAdmin } from "@/lib/supabase/auth-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
+import { dbError, offerMessage } from "@/app/api/offerte/_helpers";
 
 export const runtime = "nodejs";
 
 type SingleSendPayload = {
   cliente_id?: string;
 };
-
-async function requireAdmin() {
-  const user = await getCurrentUser();
-  return isAdminEmail(user?.email);
-}
-
-function dbError(step: string, error: { message: string; code?: string; details?: string | null; hint?: string | null }) {
-  return NextResponse.json({
-    error: `${step}: ${error.message}`,
-    code: error.code,
-    details: error.details,
-    hint: error.hint,
-  }, { status: 400 });
-}
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   if (!hasServiceConfig()) {
@@ -51,12 +39,15 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
   const { data: cliente, error: clienteError } = await db
     .from("clienti")
-    .select("id, ragione_sociale, telefono, consenso_marketing")
+    .select("id, ragione_sociale, telefono, consenso_marketing, archiviato_at")
     .eq("id", body.cliente_id)
     .maybeSingle();
 
   if (clienteError) return dbError("Lettura cliente", clienteError);
   if (!cliente) return NextResponse.json({ error: "Cliente non trovato." }, { status: 404 });
+  if (cliente.archiviato_at) {
+    return NextResponse.json({ error: "Il cliente è archiviato." }, { status: 400 });
+  }
   if (!cliente.consenso_marketing) {
     return NextResponse.json({ error: "Il cliente non ha consenso marketing attivo." }, { status: 400 });
   }
@@ -66,7 +57,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
 
   const offertaUrl = `${getPublicAppUrl()}/offerte/${campagna.slug}`;
-  const { error: insertError } = await db
+  const { data: invio, error: insertError } = await db
     .from("campagne_offerte_invii")
     .upsert({
       campagna_id: campagna.id,
@@ -83,9 +74,31 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       },
     }, {
       onConflict: "campagna_id,cliente_id,canale",
-    });
+    })
+    .select("id, cliente_id, destinatario")
+    .single();
 
   if (insertError) return dbError("Preparazione invio singolo", insertError);
+
+  await queueMessage({
+    db,
+    canale: "whatsapp",
+    tipo: "offerta_singola",
+    destinatario,
+    testo: offerMessage({ titolo: campagna.titolo, offertaUrl, validaAl: campagna.valida_al }),
+    priorita: 55,
+    payload: {
+      offertaUrl,
+      titolo: campagna.titolo,
+      valida_al: campagna.valida_al ?? null,
+      campagna_id: campagna.id,
+      invio_id: invio.id,
+    },
+    sourceTable: "campagne_offerte_invii",
+    sourceId: invio.id,
+    clienteId: invio.cliente_id,
+    dedupeSource: true,
+  });
 
   return NextResponse.json({
     ok: true,
@@ -95,6 +108,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     titolo: campagna.titolo,
     valida_al: campagna.valida_al ?? null,
     stato: "in_coda",
-    nota: "Invio WhatsApp singolo preparato. Collega un provider WhatsApp per l'invio reale.",
+    outbox: 1,
+    nota: "Invio WhatsApp accodato nella outbox. Il worker Railway lo invia quando il servizio WhatsApp è configurato.",
   });
 }

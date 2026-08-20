@@ -39,7 +39,16 @@ Per questo, in locale sono state applicate le migrazioni SQL pure:
   -f supabase/02_notifiche.sql \
   -f supabase/04_possesso_preventivo.sql \
   -f supabase/05_auth_operatori.sql \
-  -f supabase/07_vendite_fedelta.sql
+  -f supabase/07_vendite_fedelta.sql \
+  -f supabase/08_riordino_caffe.sql \
+  -f supabase/09_pagamenti_vendite.sql \
+  -f supabase/10_macchine_consumi_opportunita.sql \
+  -f supabase/11_score_fedelta_categorie_macchina.sql \
+  -f supabase/12_azioni_commerciali.sql \
+  -f supabase/13_piani_operativi_completi.sql \
+  -f supabase/15_agenda_prenotazioni.sql \
+  -f supabase/18_pagamenti_riparazioni.sql \
+  -f supabase/21_cliente_centrale.sql
 ```
 
 Le migrazioni `03_storage.sql` e `06_reset_operational_data.sql` restano legate

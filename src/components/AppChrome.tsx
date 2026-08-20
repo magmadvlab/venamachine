@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BadgePercent,
   Banknote,
   BarChart3,
+  Bell,
   BookOpen,
   CalendarDays,
   Coffee,
@@ -15,49 +15,77 @@ import {
   PackageSearch,
   Plus,
   Settings,
-  Target,
+  ShoppingBag,
   Users,
-  UserRound,
-  Wrench,
   X,
 } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
 import { cn } from "@/lib/cn";
 
-const primaryLinks = [
-  { href: "/", label: "Schede", icon: Home },
-  { href: "/clienti", label: "Clienti", icon: Users },
-  { href: "/agenda", label: "Agenda", icon: CalendarDays },
-  { href: "/manutenzioni", label: "Manutenzioni", icon: Wrench },
-  { href: "/opportunita", label: "Opportunità", icon: Target },
-  { href: "/prodotti", label: "Prodotti", icon: PackageSearch },
-  { href: "/dashboard-commerciale", label: "Report", icon: BarChart3 },
-  { href: "/manuale", label: "Manuale", icon: BookOpen },
+type NavItem = { href: string; label: string; icon: typeof Home; highlight?: boolean };
+
+const navGroups: { label: string; items: NavItem[] }[] = [
+  {
+    label: "Lavoro quotidiano",
+    items: [
+      { href: "/", label: "Dashboard", icon: Home },
+      { href: "/agenda", label: "Agenda", icon: CalendarDays },
+    ],
+  },
+  {
+    label: "Clienti",
+    items: [
+      { href: "/clienti", label: "Clienti", icon: Users },
+    ],
+  },
+  {
+    label: "Report",
+    items: [
+      { href: "/dashboard-commerciale", label: "Report", icon: BarChart3 },
+      { href: "/vendite", label: "Vendite", icon: ShoppingBag },
+      { href: "/incassi", label: "Incassi", icon: Banknote },
+    ],
+  },
 ];
 
-const operatorUtilityLinks = [
+const allGroupedLinks = navGroups.flatMap((group) => group.items);
+
+const operatorUtilityLinks: NavItem[] = [
   { href: "/nuova", label: "Nuova scheda", icon: Plus, highlight: true },
+  { href: "/prodotti", label: "Prodotti", icon: PackageSearch },
+  { href: "/manuale", label: "Manuale", icon: BookOpen },
+  { href: "/notifiche", label: "Notifiche", icon: Bell },
 ];
 
-const adminUtilityLinks = [
-  { href: "/offerte", label: "Offerte", icon: BadgePercent },
-  { href: "/configurazione", label: "Configurazione", icon: Settings },
-  { href: "/admin/operatori", label: "Operatori", icon: UserRound },
+const adminUtilityLinks: NavItem[] = [
+  { href: "/admin", label: "Admin", icon: Settings },
 ];
+
+const allLinks = [...allGroupedLinks, ...operatorUtilityLinks, ...adminUtilityLinks];
+
+// Lancia in fase di module-eval (non a runtime condizionale) se un href non corrisponde
+// a nessuna voce: AppChrome è nel root layout, quindi un typo qui blocca subito la build/dev
+// invece di far sparire silenziosamente una voce di navigazione (come il bug del badge Incassi).
+function findLink(href: string): NavItem {
+  const link = allLinks.find((item) => item.href === href);
+  if (!link) throw new Error(`AppChrome: nessuna voce di navigazione per ${href}`);
+  return link;
+}
 
 const mobilePrimaryLinks = [
-  primaryLinks[0], // Schede
-  primaryLinks[3], // Manutenzioni
-  operatorUtilityLinks[0], // Nuova scheda
-  primaryLinks[6], // Report
+  findLink("/"),
+  findLink("/agenda"),
+  findLink("/nuova"),
+  findLink("/clienti"),
 ];
 
 const baseMobileMoreLinks = [
-  primaryLinks[1], // Clienti
-  primaryLinks[2], // Agenda
-  primaryLinks[4], // Opportunità
-  primaryLinks[5], // Prodotti
-  primaryLinks[7], // Manuale
+  findLink("/dashboard-commerciale"),
+  findLink("/vendite"),
+  findLink("/incassi"),
+  findLink("/prodotti"),
+  findLink("/manuale"),
+  findLink("/notifiche"),
 ];
 
 function isActive(pathname: string, href: string) {
@@ -65,7 +93,7 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function NavLink({ item, pathname, compact = false, badge = 0 }: { item: any; pathname: string; compact?: boolean; badge?: number }) {
+function NavLink({ item, pathname, compact = false, badge = 0 }: { item: NavItem; pathname: string; compact?: boolean; badge?: number }) {
   const Icon = item.icon;
   const active = isActive(pathname, item.href);
   return (
@@ -94,7 +122,7 @@ function NavLink({ item, pathname, compact = false, badge = 0 }: { item: any; pa
   );
 }
 
-function MobileNavLink({ item, pathname }: { item: any; pathname: string }) {
+function MobileNavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const Icon = item.icon;
   const active = isActive(pathname, item.href);
 
@@ -123,7 +151,11 @@ function MobileNavLink({ item, pathname }: { item: any; pathname: string }) {
 }
 
 function shouldHideChrome(pathname: string) {
-  return pathname === "/login" || pathname.startsWith("/r/") || (pathname !== "/offerte" && pathname.startsWith("/offerte/"));
+  return pathname === "/login"
+    || pathname.startsWith("/r/")
+    || pathname.startsWith("/manutenzione/")
+    || pathname.startsWith("/prenotazioni/")
+    || (pathname !== "/offerte" && pathname.startsWith("/offerte/"));
 }
 
 export function AppChrome({ children, admin = false, incassiCount = 0 }: { children: React.ReactNode; admin?: boolean; incassiCount?: number }) {
@@ -171,8 +203,15 @@ export function AppChrome({ children, admin = false, incassiCount = 0 }: { child
         </Link>
 
         <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
-          {primaryLinks.map((item) => (
-            <NavLink key={item.href} item={item} pathname={pathname} badge={item.href === "/incassi" ? incassiCount : 0} />
+          {navGroups.map((group) => (
+            <div key={group.label} className="mb-3">
+              <p className="mb-1 px-3 text-[10px] font-bold uppercase tracking-wide text-white/40">
+                {group.label}
+              </p>
+              {group.items.map((item) => (
+                <NavLink key={item.href} item={item} pathname={pathname} badge={item.href === "/incassi" ? incassiCount : 0} />
+              ))}
+            </div>
           ))}
           <div className="my-3 border-t border-white/10" />
           {utilityLinks.map((item) => (

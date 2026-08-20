@@ -1,5 +1,5 @@
--- Coffee Express - Reset dati operativi
--- Lascia intatti operatori e utenti Supabase Auth.
+-- Venamachine - Reset dati di test
+-- Lascia intatti operatori, utenti Supabase Auth e configurazioni di sistema.
 
 create or replace function public.admin_reset_operational_data()
 returns void
@@ -9,9 +9,24 @@ set search_path = public, storage
 as $$
 begin
   delete from storage.objects
-  where bucket_id = 'riparazioni-foto';
+  where bucket_id in ('riparazioni-foto', 'offerte-foto');
 
   truncate table
+    public.messaggi_outbox,
+    public.campagne_offerte_invii,
+    public.campagne_offerte_righe,
+    public.campagne_offerte,
+    public.prenotazioni,
+    public.agenda_eccezioni,
+    public.suggerimenti_clienti,
+    public.contatti_commerciali,
+    public.azioni_commerciali,
+    public.manutenzioni_programmate,
+    public.note_cliente,
+    public.compatibilita_prodotti_macchine,
+    public.righe_ordine_caffe,
+    public.ordini_caffe,
+    public.prodotti_caffe,
     public.notifiche,
     public.foto_riparazione,
     public.riparazioni,

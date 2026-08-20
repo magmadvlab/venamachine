@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CategoriaUtilizzoMacchina, NuovaAccettazione, ProfiloAttivita, RegimePossessoMacchina, TipoMacchina } from "@/lib/types";
-import { AlertTriangle, Coffee, ClipboardList, Clock, LineChart, User } from "lucide-react";
+import { AlertTriangle, CalendarDays, Coffee, ClipboardList, Clock, LineChart, User } from "lucide-react";
 
 const ACCESSORI = ["Serbatoio", "Vassoio", "Cavo alim.", "Portacialde"];
 const RIENTRO_RAVVICINATO_DAYS = 90;
@@ -41,6 +41,20 @@ type StoricoMacchina = {
 
 type AcceptanceFormProps = {
   profiliAttivita?: ProfiloAttivita[];
+  initialValue?: Partial<NuovaAccettazione>;
+  prenotazioneId?: string;
+  clienteId?: string;
+  macchinaId?: string;
+  macchineCliente?: Array<{
+    id: string;
+    marca?: string | null;
+    modello?: string | null;
+    colore?: string | null;
+    matricola?: string | null;
+    tipologia?: TipoMacchina | null;
+    categoria_utilizzo?: CategoriaUtilizzoMacchina | null;
+    regime_possesso?: RegimePossessoMacchina | null;
+  }>;
 };
 
 function dataIntervento(r: StoricoRiparazione) {
@@ -79,19 +93,29 @@ function trovaDifettoSimile(current?: string | null, storico: StoricoRiparazione
   }) ?? null;
 }
 
-export default function AcceptanceForm({ profiliAttivita = [] }: AcceptanceFormProps) {
+export default function AcceptanceForm({ profiliAttivita = [], initialValue, prenotazioneId, clienteId, macchinaId, macchineCliente = [] }: AcceptanceFormProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [storico, setStorico] = useState<StoricoMacchina | null>(null);
   const [storicoStatus, setStoricoStatus] = useState<"idle" | "loading" | "done" | "empty" | "error">("idle");
+  const [selectedMacchinaId, setSelectedMacchinaId] = useState(macchinaId ?? "");
 
-  const [f, setF] = useState<NuovaAccettazione>({
-    cliente: { tipo: "privato", ragione_sociale: "", telefono: "", email: "",
-      consenso_gdpr: false, canale_preferito: "email" },
-    macchina: { tipologia: "capsule", categoria_utilizzo: "ufficio", regime_possesso: "proprieta_cliente" },
-    scheda: { accessori: [], preventivo_richiesto: false },
+  const [f, setF] = useState<NuovaAccettazione>(() => {
+    const base: NuovaAccettazione = {
+      cliente: { tipo: "privato", ragione_sociale: "", telefono: "", email: "",
+        consenso_gdpr: false, canale_preferito: "email" },
+      macchina: { tipologia: "capsule", categoria_utilizzo: "ufficio", regime_possesso: "proprieta_cliente" },
+      scheda: { accessori: [], preventivo_richiesto: false },
+    };
+    return {
+      ...base,
+      ...initialValue,
+      cliente: { ...base.cliente, ...initialValue?.cliente },
+      macchina: { ...base.macchina, ...initialValue?.macchina },
+      scheda: { ...base.scheda, ...initialValue?.scheda },
+    };
   });
 
   const set = (path: string, val: any) =>
@@ -176,7 +200,9 @@ export default function AcceptanceForm({ profiliAttivita = [] }: AcceptanceFormP
     try {
       const payload: NuovaAccettazione = {
         ...f,
-        scheda: { ...f.scheda },
+        cliente_id: clienteId,
+        macchina_id: selectedMacchinaId || undefined,
+        scheda: { ...f.scheda, prenotazione_id: prenotazioneId },
       };
       const res = await fetch("/api/riparazioni", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
@@ -208,6 +234,18 @@ export default function AcceptanceForm({ profiliAttivita = [] }: AcceptanceFormP
 
   return (
     <div className="space-y-5 sm:space-y-6">
+      {prenotazioneId && (
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm shadow-blue-950/5">
+          <div className="flex items-start gap-3">
+            <CalendarDays className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <p className="font-semibold">Scheda da prenotazione agenda</p>
+              <p className="mt-1">Cliente e macchina sono gia precompilati. Alla creazione, la prenotazione passa in lavorazione.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CLIENTE */}
       <section className="rounded-2xl border border-coffee-100 bg-white p-4 shadow-sm shadow-coffee-900/5 sm:p-5">
         <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
@@ -285,6 +323,46 @@ export default function AcceptanceForm({ profiliAttivita = [] }: AcceptanceFormP
         <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-900">
           <Coffee className="h-5 w-5 text-arancio" /> Macchina
         </h2>
+        {clienteId && macchineCliente.length > 0 && (
+          <div className="mb-4 rounded-xl border border-arancio/20 bg-arancio/5 p-3">
+            <label className={labelCls}>Macchina già associata al cliente</label>
+            <select
+              className={inputCls}
+              value={selectedMacchinaId}
+              onChange={(e) => {
+                const id = e.target.value;
+                setSelectedMacchinaId(id);
+                const macchina = macchineCliente.find((row) => row.id === id);
+                if (!macchina) {
+                  setF((prev) => ({
+                    ...prev,
+                    macchina: { tipologia: "capsule", categoria_utilizzo: "ufficio", regime_possesso: "proprieta_cliente" },
+                  }));
+                  return;
+                }
+                setF((prev) => ({
+                  ...prev,
+                  macchina: {
+                    marca: macchina.marca ?? "",
+                    modello: macchina.modello ?? "",
+                    colore: macchina.colore ?? "",
+                    matricola: macchina.matricola ?? "",
+                    tipologia: macchina.tipologia ?? "capsule",
+                    categoria_utilizzo: macchina.categoria_utilizzo ?? "ufficio",
+                    regime_possesso: macchina.regime_possesso ?? "proprieta_cliente",
+                  },
+                }));
+              }}
+            >
+              <option value="">Nuova macchina</option>
+              {macchineCliente.map((macchina) => (
+                <option key={macchina.id} value={macchina.id}>
+                  {[macchina.marca, macchina.modello, macchina.matricola].filter(Boolean).join(" · ") || "Macchina senza identificazione"}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div><label className={labelCls}>Marca</label>
             <input className={inputCls} value={f.macchina.marca ?? ""}

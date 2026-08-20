@@ -117,6 +117,30 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     patch.consumo_annuo_max_override = value;
   }
 
+  if (body.caffe_giornalieri_attesi_override !== undefined) {
+    const value = nullableNumber(body.caffe_giornalieri_attesi_override);
+    if (value === undefined || (value != null && value < 0)) {
+      return NextResponse.json({ error: "Consumo giornaliero atteso non valido." }, { status: 400 });
+    }
+    patch.caffe_giornalieri_attesi_override = value;
+  }
+
+  if (body.numero_utilizzatori_stimati !== undefined) {
+    const value = nullableNumber(body.numero_utilizzatori_stimati);
+    if (value === undefined || (value != null && (!Number.isInteger(value) || value <= 0))) {
+      return NextResponse.json({ error: "Numero utilizzatori non valido." }, { status: 400 });
+    }
+    patch.numero_utilizzatori_stimati = value;
+  }
+
+  if (body.numero_gruppi_erogatori !== undefined) {
+    const value = nullableNumber(body.numero_gruppi_erogatori);
+    if (value === undefined || (value != null && (!Number.isInteger(value) || value <= 0))) {
+      return NextResponse.json({ error: "Numero gruppi erogatori non valido." }, { status: 400 });
+    }
+    patch.numero_gruppi_erogatori = value;
+  }
+
   if (body.vita_utile_caffe_stimata !== undefined) {
     const value = nullableNumber(body.vita_utile_caffe_stimata);
     if (value === undefined || (value != null && value < 0)) {

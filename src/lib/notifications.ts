@@ -1,6 +1,8 @@
+import { formatSlotDate } from "@/lib/agenda";
 import { getPublicAppUrl } from "@/lib/app-url";
-import { inviaAggiornamentoStato, inviaRicevuta, inviaSollecitoRitiro } from "@/lib/email";
-import type { Canale, StatoRiparazione } from "@/lib/types";
+import { inviaAggiornamentoStato, inviaAnnulloPrenotazione, inviaConfermaPrenotazione, inviaRicevuta, inviaSollecitoRitiro } from "@/lib/email";
+import { queueMessage } from "@/lib/outbox";
+import { stadioCliente, type Canale, type StatoRiparazione } from "@/lib/types";
 
 type DbClient = any;
 
@@ -8,6 +10,7 @@ type ClienteContatto = {
   email?: string | null;
   telefono?: string | null;
   canale_preferito?: Canale | string | null;
+  archiviato_at?: string | null;
 };
 
 type NotificaBase = {
@@ -38,7 +41,7 @@ async function logNotifica(opts: {
   tipo: string;
   canale: Canale;
   destinatario: string;
-  stato: "inviata" | "errore";
+  stato: "in_coda" | "inviata" | "errore";
   errore?: string;
   payload?: Record<string, unknown>;
 }) {
@@ -54,19 +57,36 @@ async function logNotifica(opts: {
   });
 }
 
-async function logCanaleNonConfigurato(opts: {
+async function queueWhatsAppNotification(opts: {
   db: DbClient;
   riparazioneId: string;
   tipo: string;
-  canale: Canale;
   destinatario: string;
+  testo: string;
+  priorita?: number;
   payload?: Record<string, unknown>;
 }) {
-  await logNotifica({
-    ...opts,
-    stato: "errore",
-    errore: `${opts.canale.toUpperCase()} predisposto ma non configurato. Invio email attivo.`,
+  const queued = await queueMessage({
+    db: opts.db,
+    canale: "whatsapp",
+    tipo: opts.tipo,
+    destinatario: opts.destinatario,
+    testo: opts.testo,
+    priorita: opts.priorita ?? 70,
+    payload: opts.payload,
+    sourceTable: "notifiche",
+    riparazioneId: opts.riparazioneId,
   });
+  await logNotifica({
+    db: opts.db,
+    riparazioneId: opts.riparazioneId,
+    tipo: opts.tipo,
+    canale: "whatsapp",
+    destinatario: opts.destinatario,
+    stato: "in_coda",
+    payload: { ...(opts.payload ?? {}), outboxId: queued.id },
+  });
+  return queued;
 }
 
 export async function notificaRicevuta(opts: NotificaBase & {
@@ -74,33 +94,30 @@ export async function notificaRicevuta(opts: NotificaBase & {
   pdf: Buffer;
   trackingUrl: string;
 }) {
+  if (opts.cliente.archiviato_at) {
+    return { inviata: false, canale: "email" as const, motivo: "cliente_archiviato" };
+  }
   const canaleRichiesto = canalePreferito(opts.cliente);
   const destinatario = emailDestinatario(opts.cliente);
-  if (!destinatario) {
-    const telefono = telefonoDestinatario(opts.cliente);
-    if (telefono && canaleRichiesto !== "email") {
-      await logCanaleNonConfigurato({
-        db: opts.db,
-        riparazioneId: opts.riparazioneId,
-        tipo: "ricevuta",
-        canale: canaleRichiesto,
-        destinatario: telefono,
-        payload: { trackingUrl: opts.trackingUrl },
-      });
-      return { inviata: false, canale: canaleRichiesto, motivo: "canale_non_configurato" };
-    }
-    return { inviata: false, canale: "email" as const, motivo: "destinatario_mancante" };
-  }
-
-  if (canaleRichiesto !== "email") {
-    await logCanaleNonConfigurato({
+  const telefono = telefonoDestinatario(opts.cliente);
+  if (canaleRichiesto === "whatsapp" && telefono) {
+    await queueWhatsAppNotification({
       db: opts.db,
       riparazioneId: opts.riparazioneId,
       tipo: "ricevuta",
-      canale: canaleRichiesto,
-      destinatario: telefonoDestinatario(opts.cliente) ?? destinatario,
-      payload: { trackingUrl: opts.trackingUrl },
+      destinatario: telefono,
+      testo: [
+        "Vena Coffee Machine",
+        `Abbiamo preso in carico la tua macchina. Scheda ${opts.numeroScheda}.`,
+        `Segui lo stato qui: ${opts.trackingUrl}`,
+      ].join("\n"),
+      payload: { trackingUrl: opts.trackingUrl, numeroScheda: opts.numeroScheda },
     });
+    return { inviata: false, canale: "whatsapp" as const, motivo: "in_coda" };
+  }
+
+  if (!destinatario) {
+    return { inviata: false, canale: "email" as const, motivo: "destinatario_mancante" };
   }
 
   try {
@@ -141,34 +158,33 @@ export async function notificaAggiornamentoStato(opts: NotificaBase & {
   stato: StatoRiparazione;
   macchina?: string;
 }) {
+  if (opts.cliente.archiviato_at) {
+    return { inviata: false, canale: "email" as const, motivo: "cliente_archiviato" };
+  }
   const canaleRichiesto = canalePreferito(opts.cliente);
   const destinatario = emailDestinatario(opts.cliente);
   const trackingUrl = `${getPublicAppUrl()}/r/${opts.tokenPubblico}`;
-  if (!destinatario) {
-    const telefono = telefonoDestinatario(opts.cliente);
-    if (telefono && canaleRichiesto !== "email") {
-      await logCanaleNonConfigurato({
-        db: opts.db,
-        riparazioneId: opts.riparazioneId,
-        tipo: "aggiornamento_stato",
-        canale: canaleRichiesto,
-        destinatario: telefono,
-        payload: { stato: opts.stato, trackingUrl },
-      });
-      return { inviata: false, canale: canaleRichiesto, motivo: "canale_non_configurato" };
-    }
-    return { inviata: false, canale: "email" as const, motivo: "destinatario_mancante" };
-  }
-
-  if (canaleRichiesto !== "email") {
-    await logCanaleNonConfigurato({
+  const telefono = telefonoDestinatario(opts.cliente);
+  if (canaleRichiesto === "whatsapp" && telefono) {
+    const stadio = stadioCliente(opts.stato);
+    await queueWhatsAppNotification({
       db: opts.db,
       riparazioneId: opts.riparazioneId,
       tipo: "aggiornamento_stato",
-      canale: canaleRichiesto,
-      destinatario: telefonoDestinatario(opts.cliente) ?? destinatario,
-      payload: { stato: opts.stato, trackingUrl },
+      destinatario: telefono,
+      testo: [
+        "Vena Coffee Machine",
+        `Aggiornamento scheda ${opts.numeroScheda}: ${stadio}.`,
+        opts.macchina ? `Macchina: ${opts.macchina}` : null,
+        `Dettagli: ${trackingUrl}`,
+      ].filter(Boolean).join("\n"),
+      payload: { stato: opts.stato, trackingUrl, numeroScheda: opts.numeroScheda },
     });
+    return { inviata: false, canale: "whatsapp" as const, motivo: "in_coda" };
+  }
+
+  if (!destinatario) {
+    return { inviata: false, canale: "email" as const, motivo: "destinatario_mancante" };
   }
 
   try {
@@ -209,34 +225,32 @@ export async function notificaSollecitoRitiro(opts: NotificaBase & {
   tokenPubblico: string;
   macchina?: string;
 }) {
+  if (opts.cliente.archiviato_at) {
+    return { inviata: false, canale: "email" as const, motivo: "cliente_archiviato" };
+  }
   const canaleRichiesto = canalePreferito(opts.cliente);
   const destinatario = emailDestinatario(opts.cliente);
   const trackingUrl = `${getPublicAppUrl()}/r/${opts.tokenPubblico}`;
-  if (!destinatario) {
-    const telefono = telefonoDestinatario(opts.cliente);
-    if (telefono && canaleRichiesto !== "email") {
-      await logCanaleNonConfigurato({
-        db: opts.db,
-        riparazioneId: opts.riparazioneId,
-        tipo: "sollecito",
-        canale: canaleRichiesto,
-        destinatario: telefono,
-        payload: { trackingUrl },
-      });
-      return { inviata: false, canale: canaleRichiesto, motivo: "canale_non_configurato" };
-    }
-    return { inviata: false, canale: "email" as const, motivo: "destinatario_mancante" };
-  }
-
-  if (canaleRichiesto !== "email") {
-    await logCanaleNonConfigurato({
+  const telefono = telefonoDestinatario(opts.cliente);
+  if (canaleRichiesto === "whatsapp" && telefono) {
+    await queueWhatsAppNotification({
       db: opts.db,
       riparazioneId: opts.riparazioneId,
       tipo: "sollecito",
-      canale: canaleRichiesto,
-      destinatario: telefonoDestinatario(opts.cliente) ?? destinatario,
-      payload: { trackingUrl },
+      destinatario: telefono,
+      testo: [
+        "Vena Coffee Machine",
+        `Promemoria scheda ${opts.numeroScheda}: la macchina risulta pronta per il ritiro.`,
+        opts.macchina ? `Macchina: ${opts.macchina}` : null,
+        `Dettagli: ${trackingUrl}`,
+      ].filter(Boolean).join("\n"),
+      payload: { trackingUrl, numeroScheda: opts.numeroScheda },
     });
+    return { inviata: false, canale: "whatsapp" as const, motivo: "in_coda" };
+  }
+
+  if (!destinatario) {
+    return { inviata: false, canale: "email" as const, motivo: "destinatario_mancante" };
   }
 
   try {
@@ -268,5 +282,82 @@ export async function notificaSollecitoRitiro(opts: NotificaBase & {
       payload: { trackingUrl, canaleRichiesto },
     });
     return { inviata: false, canale: "email" as const, motivo: "errore_provider" };
+  }
+}
+
+export async function notificaManuale(opts: NotificaBase & { testo: string }) {
+  if (opts.cliente.archiviato_at) {
+    return { ok: false as const, motivo: "cliente_archiviato" as const };
+  }
+  const canaleRichiesto = canalePreferito(opts.cliente);
+  const telefono = telefonoDestinatario(opts.cliente);
+
+  if (canaleRichiesto !== "whatsapp" || !telefono) {
+    return { ok: false as const, motivo: "canale_non_disponibile" as const };
+  }
+
+  await queueWhatsAppNotification({
+    db: opts.db,
+    riparazioneId: opts.riparazioneId,
+    tipo: "manuale",
+    destinatario: telefono,
+    testo: opts.testo,
+  });
+
+  return { ok: true as const, motivo: "in_coda" as const };
+}
+
+export async function notificaPrenotazione(opts: {
+  db: DbClient;
+  cliente: ClienteContatto;
+  clienteId: string;
+  prenotazioneId: string;
+  tipo: "confermata" | "annullata";
+  titolo: string;
+  inizio: string;
+  tokenPubblico: string;
+}) {
+  if (opts.cliente.archiviato_at) {
+    return { canale: null, inviata: false };
+  }
+  const canaleRichiesto = canalePreferito(opts.cliente);
+  const telefono = telefonoDestinatario(opts.cliente);
+  const email = emailDestinatario(opts.cliente);
+  const trackingUrl = `${getPublicAppUrl()}/prenotazioni/${opts.tokenPubblico}`;
+  const inizioFormattato = formatSlotDate(opts.inizio);
+  const etichetta = opts.tipo === "confermata" ? "confermata" : "annullata";
+
+  if (canaleRichiesto === "whatsapp" && telefono) {
+    await queueMessage({
+      db: opts.db,
+      canale: "whatsapp",
+      tipo: `prenotazione_${opts.tipo}`,
+      destinatario: telefono,
+      testo: [
+        "Vena Coffee Machine",
+        `Prenotazione ${etichetta}: ${inizioFormattato}`,
+        opts.titolo,
+        `Dettagli: ${trackingUrl}`,
+      ].join("\n"),
+      sourceTable: "prenotazioni",
+      sourceId: opts.prenotazioneId,
+      clienteId: opts.clienteId,
+      dedupeSource: true,
+    });
+    return { canale: "whatsapp" as const, inviata: false };
+  }
+
+  if (!email) return { canale: null, inviata: false };
+
+  try {
+    if (opts.tipo === "confermata") {
+      await inviaConfermaPrenotazione({ to: email, titolo: opts.titolo, inizio: inizioFormattato, trackingUrl });
+    } else {
+      await inviaAnnulloPrenotazione({ to: email, titolo: opts.titolo, inizio: inizioFormattato, trackingUrl });
+    }
+    return { canale: "email" as const, inviata: true };
+  } catch (err: any) {
+    console.error("notificaPrenotazione: invio email fallito", { prenotazioneId: opts.prenotazioneId, err: String(err?.message || err) });
+    return { canale: "email" as const, inviata: false };
   }
 }

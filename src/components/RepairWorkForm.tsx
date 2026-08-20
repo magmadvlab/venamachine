@@ -13,6 +13,7 @@ export function RepairWorkForm({
   statoPagamento,
   metodoPagamento,
   dataPagamento,
+  paymentEnabled = true,
 }: {
   id: string;
   diagnosi?: string | null;
@@ -21,6 +22,7 @@ export function RepairWorkForm({
   statoPagamento?: StatoPagamento | null;
   metodoPagamento?: string | null;
   dataPagamento?: string | null;
+  paymentEnabled?: boolean;
 }) {
   const router = useRouter();
   const [diagnosiTecnico, setDiagnosiTecnico] = useState(diagnosi ?? "");
@@ -48,9 +50,11 @@ export function RepairWorkForm({
           diagnosi_tecnico: diagnosiTecnico,
           importo_preventivo: preventivo,
           importo_finale: finale,
-          stato_pagamento: payment.stato_pagamento || null,
-          metodo_pagamento: payment.metodo_pagamento || null,
-          data_pagamento: payment.data_pagamento || null,
+          ...(paymentEnabled ? {
+            stato_pagamento: payment.stato_pagamento || null,
+            metodo_pagamento: payment.metodo_pagamento || null,
+            data_pagamento: payment.data_pagamento || null,
+          } : {}),
         }),
       });
       const out = await res.json();
@@ -107,7 +111,13 @@ export function RepairWorkForm({
         </div>
       </div>
 
-      <PaymentForm value={payment} onChange={setPayment} />
+      {paymentEnabled ? (
+        <PaymentForm value={payment} onChange={setPayment} />
+      ) : (
+        <p className="rounded-xl border border-amber-800/50 bg-amber-900/20 px-3 py-2 text-sm font-semibold text-amber-200">
+          Incassi riparazione non ancora attivi su questo database. Puoi salvare diagnosi e importi; lo stato pagamento sara' disponibile dopo la migrazione.
+        </p>
+      )}
 
       <button
         type="button"
