@@ -2,43 +2,9 @@ import { NextResponse } from "next/server";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { getSessionOperatore } from "@/lib/operator-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
+import { CATEGORIE, TIPOLOGIE, REGIMI, STATI_CICLO, clean, nullableText, nullableEnum, nullableNumber } from "@/lib/macchine-validation";
 
 export const runtime = "nodejs";
-
-const CATEGORIE = new Set(["casa", "ufficio", "horeca"]);
-const TIPOLOGIE = new Set(["cialde", "capsule", "macinato", "altro"]);
-const REGIMI = new Set(["proprieta_cliente", "comodato_uso"]);
-const STATI_CICLO = new Set([
-  "assegnata",
-  "venduta",
-  "in_manutenzione",
-  "da_rigenerare",
-  "rigenerata",
-  "riallocabile",
-  "dismessa",
-]);
-
-function clean(value: unknown) {
-  if (typeof value !== "string") return undefined;
-  const trimmed = value.trim();
-  return trimmed || undefined;
-}
-
-function nullableText(value: unknown) {
-  return clean(value) ?? null;
-}
-
-function nullableEnum(value: unknown, allowed: Set<string>) {
-  const cleaned = clean(value);
-  if (!cleaned) return null;
-  return allowed.has(cleaned) ? cleaned : undefined;
-}
-
-function nullableNumber(value: unknown) {
-  if (value === "" || value == null) return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : undefined;
-}
 
 async function canEditMacchina(db: any) {
   let operatore = null;

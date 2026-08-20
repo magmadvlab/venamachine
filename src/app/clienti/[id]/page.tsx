@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Clock, Coffee, Gauge, Pencil, Phone, Plus, ShoppingBag, Target, Wrench } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { CustomerEditForm } from "@/components/customers/CustomerEditForm";
+import { AddMachineForm } from "@/components/customers/AddMachineForm";
 import { CustomerNoteForm } from "@/components/customers/CustomerNoteForm";
 import { SendWhatsAppButton } from "@/components/SendWhatsAppButton";
 import { ProponiManutenzioneButton } from "@/components/customers/ProponiManutenzioneButton";
@@ -409,6 +410,7 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
                 ))}
               </ul>
             )}
+            <AddMachineForm clienteId={cliente.id} />
           </Card>
 
           {(macchine ?? []).length > 0 && !cliente.archiviato_at && (

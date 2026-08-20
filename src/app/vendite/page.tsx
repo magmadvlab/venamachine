@@ -40,7 +40,7 @@ function riordinoTone(stato?: string | null) {
   return "border-emerald-200 bg-emerald-50 text-emerald-800";
 }
 
-export default async function VenditePage({ searchParams }: { searchParams?: { cliente?: string; macchina?: string } }) {
+export default async function VenditePage({ searchParams }: { searchParams?: { cliente?: string } }) {
   const missingEnv = missingSupabaseEnv();
   if (missingEnv.length > 0) {
     return (
@@ -109,7 +109,6 @@ export default async function VenditePage({ searchParams }: { searchParams?: { c
               macchine={(macchine ?? []) as any}
               prodotti={(prodotti ?? []) as any}
               initialClienteId={searchParams?.cliente}
-              initialMacchinaId={searchParams?.macchina}
             />
           </Card>
 

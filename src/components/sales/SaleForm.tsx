@@ -42,7 +42,6 @@ type SaleFormProps = {
   macchine: MacchinaOption[];
   prodotti: ProdottoOption[];
   initialClienteId?: string;
-  initialMacchinaId?: string;
 };
 
 const inputCls = "w-full rounded-xl border border-coffee-200 bg-white px-3 py-3 text-base text-coffee-900 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20 sm:py-2.5 sm:text-sm";
@@ -56,17 +55,12 @@ function macchinaLabel(m: MacchinaOption) {
   return `${nome}${matricola}${categoria}${regime}`;
 }
 
-export function SaleForm({ clienti, macchine, prodotti, initialClienteId = "", initialMacchinaId = "" }: SaleFormProps) {
+export function SaleForm({ clienti, macchine, prodotti, initialClienteId }: SaleFormProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
-  const initialMachine = macchine.find((m) => m.id === initialMacchinaId);
-  const safeInitialClienteId = clienti.some((c) => c.id === initialClienteId)
-    ? initialClienteId
-    : initialMachine?.cliente_id ?? "";
-  const safeInitialMacchinaId = initialMachine?.cliente_id === safeInitialClienteId ? initialMachine.id : "";
-  const [clienteId, setClienteId] = useState(safeInitialClienteId);
-  const [macchinaId, setMacchinaId] = useState(safeInitialMacchinaId);
+  const [clienteId, setClienteId] = useState(initialClienteId ?? "");
+  const [macchinaId, setMacchinaId] = useState("");
   const [prodottoId, setProdottoId] = useState("");
   const [nomeProdotto, setNomeProdotto] = useState("");
   const [descrizione, setDescrizione] = useState("");
