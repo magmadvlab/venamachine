@@ -48,7 +48,7 @@ export default async function PublicMaintenancePage({ params }: { params: { toke
               <Coffee className="h-5 w-5" />
             </span>
             <div>
-              <p className="font-display text-xl font-bold">Vena Coffee Machine</p>
+              <p className="font-display text-xl font-bold">Coffee Express Officina</p>
               <p className="text-xs font-semibold text-white/60">Manutenzione programmata</p>
             </div>
           </div>
@@ -75,7 +75,7 @@ export default async function PublicMaintenancePage({ params }: { params: { toke
         {data.stato_proposta === "prenotata" ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
             <p className="font-display text-xl font-bold">Manutenzione gia prenotata</p>
-            <p className="mt-1 text-sm">Per modifiche contatta Vena Coffee Machine.</p>
+            <p className="mt-1 text-sm">Per modifiche contatta Coffee Express Officina.</p>
           </div>
         ) : (
           <PublicMaintenanceBooking token={params.token} durationMinutes={data.durata_stimata_minuti ?? 60} />

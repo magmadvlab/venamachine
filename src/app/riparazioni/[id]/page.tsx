@@ -109,7 +109,7 @@ export default async function DettaglioRiparazione({ params }: { params: { id: s
   const macchinaLabel = [macchina?.marca, macchina?.modello, macchina?.matricola].filter(Boolean).join(" ");
   const trackingUrl = `${getPublicAppUrl()}/r/${data.token_pubblico}`;
   const defaultTestoWhatsApp = [
-    "Vena Coffee Machine",
+    "Coffee Express Officina",
     `Aggiornamento scheda ${data.numero_scheda}: ${stadio}.`,
     macchinaLabel ? `Macchina: ${macchinaLabel}` : null,
     `Dettagli: ${trackingUrl}`,

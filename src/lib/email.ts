@@ -240,7 +240,7 @@ export async function inviaNotificaAdminSospeso(opts: {
   return resend.emails.send({
     from: fromAddress(),
     to: opts.adminEmail,
-    subject: `⚠️ Pagamento sospeso: ${opts.riferimento} (${opts.tipo === "riparazione" ? "Riparazione" : "Vendita"}) · Vena`,
+    subject: `⚠️ Pagamento sospeso: ${opts.riferimento} (${opts.tipo === "riparazione" ? "Riparazione" : "Vendita"}) · Coffee Express`,
     text: `Pagamento sospeso.\nTipo: ${tipoLabel}\nRiferimento: ${opts.riferimento}\nCliente: ${opts.cliente}\nImporto: ${importoLabel}\nTotale sospesi: ${opts.totaleSospesi}`,
     html: emailLayout({
       title: "Pagamento sospeso",
@@ -264,7 +264,7 @@ export async function inviaConfermaPrenotazione(opts: {
     "",
     `Dettagli: ${opts.trackingUrl}`,
     "",
-    "Vena Coffee Machine",
+    "Coffee Express Officina",
   ].join("\n");
 
   const bodyHtml = `
@@ -275,7 +275,7 @@ export async function inviaConfermaPrenotazione(opts: {
   return resend.emails.send({
     from: fromAddress(),
     to: opts.to,
-    subject: `Prenotazione confermata · Vena Coffee Machine`,
+    subject: `Prenotazione confermata · Coffee Express Officina`,
     text,
     html: emailLayout({
       title: "Prenotazione confermata",
@@ -300,7 +300,7 @@ export async function inviaAnnulloPrenotazione(opts: {
     "",
     `Dettagli: ${opts.trackingUrl}`,
     "",
-    "Vena Coffee Machine",
+    "Coffee Express Officina",
   ].join("\n");
 
   const bodyHtml = `
@@ -311,7 +311,7 @@ export async function inviaAnnulloPrenotazione(opts: {
   return resend.emails.send({
     from: fromAddress(),
     to: opts.to,
-    subject: `Prenotazione annullata · Vena Coffee Machine`,
+    subject: `Prenotazione annullata · Coffee Express Officina`,
     text,
     html: emailLayout({
       title: "Prenotazione annullata",
