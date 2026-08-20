@@ -165,7 +165,7 @@ export function AppChrome({ children, admin = false, incassiCount = 0 }: { child
             <Coffee className="h-5 w-5" />
           </span>
           <span className="leading-tight">
-            <span className="block font-display text-lg font-bold">Vena Coffee Machine</span>
+            <span className="block font-display text-lg font-bold">Coffee Express Officina</span>
             <span className="block text-xs font-semibold text-white/55">Officina</span>
           </span>
         </Link>

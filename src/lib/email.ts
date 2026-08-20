@@ -12,7 +12,7 @@ function getResend() {
 }
 
 function fromAddress() {
-  return process.env.MAIL_FROM || "Vena Coffee Machine <onboarding@resend.dev>";
+  return process.env.MAIL_FROM || "Coffee Express Officina <onboarding@resend.dev>";
 }
 
 function escapeHtml(value: string) {
@@ -54,7 +54,7 @@ function emailLayout(opts: {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;background:#ffffff;border:1px solid ${COLORS.bordo};border-radius:16px;overflow:hidden;">
       <tr>
         <td style="background:${COLORS.espresso};padding:18px 24px;">
-          <div style="color:#ffffff;font-size:18px;line-height:1.2;font-weight:bold;">Vena Coffee Machine</div>
+          <div style="color:#ffffff;font-size:18px;line-height:1.2;font-weight:bold;">Coffee Express Officina</div>
           <div style="color:rgba(255,255,255,0.62);font-size:12px;line-height:1.4;font-weight:bold;">Officina</div>
         </td>
       </tr>
@@ -69,7 +69,7 @@ function emailLayout(opts: {
       </tr>
       <tr>
         <td style="padding:16px 24px;background:${COLORS.crema};border-top:1px solid ${COLORS.bordo};font-size:12px;color:${COLORS.muted};">
-          Vena Coffee Machine
+          Coffee Express Officina
         </td>
       </tr>
     </table>
@@ -95,7 +95,7 @@ export async function inviaRicevuta(opts: {
     "",
     "In allegato trovi la ricevuta di deposito in PDF.",
     "",
-    "Vena Coffee Machine",
+    "Coffee Express Officina",
   ].join("\n");
 
   const bodyHtml = `
@@ -106,7 +106,7 @@ export async function inviaRicevuta(opts: {
   return resend.emails.send({
     from: fromAddress(),
     to: opts.to,
-    subject: `Ricevuta di deposito ${opts.numeroScheda} · Vena Coffee Machine`,
+    subject: `Ricevuta di deposito ${opts.numeroScheda} · Coffee Express Officina`,
     text,
     html: emailLayout({
       title: "Macchina ricevuta in officina",
@@ -141,7 +141,7 @@ export async function inviaAggiornamentoStato(opts: {
     "",
     `Puoi seguire la riparazione qui: ${opts.trackingUrl}`,
     "",
-    "Vena Coffee Machine",
+    "Coffee Express Officina",
   ].filter((line) => line !== "").join("\n");
 
   const statoPill = `<span style="display:inline-block;background:${COLORS.arancio};color:#ffffff;border-radius:999px;padding:4px 12px;font-weight:bold;font-size:13px;">${escapeHtml(stadio)}</span>`;
@@ -181,7 +181,7 @@ export async function inviaSollecitoRitiro(opts: {
     "",
     `Puoi consultare lo stato qui: ${opts.trackingUrl}`,
     "",
-    "Vena Coffee Machine",
+    "Coffee Express Officina",
   ].filter((line) => line !== "").join("\n");
 
   const bodyHtml = `
@@ -192,7 +192,7 @@ export async function inviaSollecitoRitiro(opts: {
   return resend.emails.send({
     from: fromAddress(),
     to: opts.to,
-    subject: `Promemoria ritiro ${opts.numeroScheda} · Vena Coffee Machine`,
+    subject: `Promemoria ritiro ${opts.numeroScheda} · Coffee Express Officina`,
     text,
     html: emailLayout({
       title: "Macchina pronta per il ritiro",

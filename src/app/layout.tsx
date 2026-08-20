@@ -6,14 +6,14 @@ import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Vena Coffee Machine · Officina",
+  title: "Coffee Express Officina · Officina",
   description: "Accettazione e tracking riparazioni macchine da caffè",
   manifest: "/manifest.webmanifest",
-  applicationName: "Vena Coffee Machine",
+  applicationName: "Coffee Express Officina",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Vena Coffee Machine",
+    title: "Coffee Express Officina",
   },
   other: {
     "mobile-web-app-capable": "yes",

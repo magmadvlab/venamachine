@@ -78,7 +78,7 @@ function SospesiDocument({ items, generatoIl }: { items: SospesoItem[]; generato
       <Page size="A4" orientation="landscape" style={s.page}>
         <View style={s.header}>
           <Text style={s.title}>Incassi Sospesi</Text>
-          <Text style={s.subtitle}>Vena Coffee Machine · Generato il {generatoIl} · {items.length} pratiche</Text>
+          <Text style={s.subtitle}>Coffee Express Officina · Generato il {generatoIl} · {items.length} pratiche</Text>
         </View>
         <View style={s.table}>
           <View style={s.thead}>

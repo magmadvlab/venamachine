@@ -18,7 +18,7 @@ export default function LoginPage() {
             <Coffee className="h-10 w-10 text-white" />
           </div>
           <div className="text-center">
-            <p className="font-display text-2xl font-bold text-coffee-900">Vena Coffee Machine</p>
+            <p className="font-display text-2xl font-bold text-coffee-900">Coffee Express Officina</p>
             <p className="mt-1 text-sm font-semibold text-coffee-400">Officina</p>
           </div>
         </div>

@@ -10,7 +10,7 @@ function buildWaText(opts: {
   valida_al?: string | null;
 }): string {
   const lines = [
-    "Ciao! Vena Coffee Machine ha nuove offerte per te 🎉",
+    "Ciao! Coffee Express Officina ha nuove offerte per te 🎉",
     "",
     opts.titolo,
     "",
