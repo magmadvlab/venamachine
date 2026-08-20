@@ -253,7 +253,7 @@ export async function GET(
             {offertaUrl}
           </span>
           <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 11 }}>
-            Contatta Vena Coffee Machine per ordini
+            Contatta Coffee Express Officina per ordini
           </span>
         </div>
       </div>

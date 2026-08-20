@@ -21,7 +21,7 @@ export function BrandHeader({
           <Coffee className="h-4 w-4" />
         </span>
         <div className="leading-tight text-white">
-          <p className="font-display text-lg font-bold">Vena Coffee Machine</p>
+          <p className="font-display text-lg font-bold">Coffee Express Officina</p>
           <p className="text-xs font-semibold text-white/60">Officina</p>
         </div>
       </div>

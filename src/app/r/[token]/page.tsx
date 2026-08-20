@@ -45,7 +45,7 @@ export default async function Tracking({ params }: { params: { token: string } }
       <div className="overflow-hidden rounded-2xl border border-coffee-100 bg-white shadow-sm shadow-coffee-900/5">
         <div className="flex items-center gap-2.5 bg-coffee-900 px-6 py-4">
           <div className="leading-tight text-white">
-            <p className="font-display text-xl font-bold">Vena Coffee Machine</p>
+            <p className="font-display text-xl font-bold">Coffee Express Officina</p>
             <p className="text-xs font-semibold text-white/60">Officina</p>
           </div>
         </div>
@@ -117,7 +117,7 @@ export default async function Tracking({ params }: { params: { token: string } }
         </div>
       </div>
       <p className="mt-4 text-center text-xs text-coffee-400">
-        Vena Coffee Machine
+        Coffee Express Officina
       </p>
     </main>
   );

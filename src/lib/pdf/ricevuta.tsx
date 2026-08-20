@@ -56,7 +56,7 @@ export function Ricevuta(d: RicevutaData) {
         <View style={s.brandRow}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <View>
-              <Text style={s.name}>Vena Coffee Machine</Text>
+              <Text style={s.name}>Coffee Express Officina</Text>
               <Text style={s.sub}>Officina macchine da caffe</Text>
             </View>
           </View>

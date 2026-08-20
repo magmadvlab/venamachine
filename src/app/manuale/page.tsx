@@ -124,7 +124,7 @@ export default async function ManualePage() {
     <main className="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
       <header className="mb-5">
         <p className="text-sm font-semibold text-arancio">Guida operativa</p>
-        <h1 className="font-display text-2xl font-bold text-coffee-50">Manuale Vena Coffee Machine</h1>
+        <h1 className="font-display text-2xl font-bold text-coffee-50">Manuale Coffee Express Officina</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-coffee-200">
           Questa guida spiega le voci principali dell'app e il flusso di lavoro consigliato per coordinare
           assistenza, vendite, manutenzioni e fidelizzazione dei clienti.
