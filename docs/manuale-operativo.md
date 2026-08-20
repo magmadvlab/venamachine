@@ -1,6 +1,6 @@
 # Manuale operativo Vena Coffee Machine
 
-Ultimo aggiornamento: 15 giugno 2026.
+Ultimo aggiornamento: 15 luglio 2026.
 
 Questo manuale spiega le voci principali dell'app e il flusso di lavoro consigliato. Va aggiornato ogni volta che vengono aggiunte nuove funzioni operative o cambiano i campi usati dagli operatori.
 
@@ -21,23 +21,40 @@ L'app richiede accesso operatore. La schermata di login accetta nome operatore o
 La navigazione principale e nella barra laterale su desktop e nella barra bassa su mobile. Le voci operative sono:
 
 - `Schede`
-- `Manuale`
-- `Dashboard`
 - `Agenda`
 - `Manutenzioni`
 - `Opportunita`
 - `Clienti`
-- `Vendite`
 - `Prodotti`
-- `Solleciti`
+- `Report`
+- `Manuale`
 
-Le voci di servizio sono:
+Le voci admin o di servizio sono:
 
 - `Nuova scheda`
-- `Configurazione`
-- `Operatori`
+- `Admin`
 
-Le pagine pubbliche cliente `/r/[token]` non mostrano la navigazione interna e non richiedono login.
+Dentro `Admin` trovi:
+
+- `Offerte`;
+- `Configurazione`;
+- `Operatori`;
+- collegamento WhatsApp.
+
+Le pagine pubbliche non mostrano la navigazione interna e non richiedono login:
+
+- `/r/[token]`: pagina cliente della riparazione;
+- `/manutenzione/[token]`: prenotazione manutenzione ordinaria;
+- `/offerte/[slug]`: volantino pubblico.
+
+### Nuove funzioni esposte nel frontend
+
+- `Agenda`: calendario settimanale, manutenzioni da convertire in appuntamento, consigli utili con CTA e azioni commerciali.
+- `Manutenzioni`: generazione preventiva, stati, proposta cliente e link pubblico di prenotazione.
+- `Admin`: macro-area riservata con campagne offerte, configurazione, operatori e collegamento WhatsApp.
+- `Manuale`: guida interna consultabile dagli operatori.
+
+Queste funzioni non sostituiscono le riparazioni: lavorano in parallelo. Le riparazioni restano il flusso tecnico; agenda, manutenzioni, consigli e offerte servono a prevenire rotture, distribuire gli appuntamenti e trasformare vendite/manutenzione in azioni proattive.
 
 ## Voci del menu
 
@@ -138,7 +155,7 @@ Mostra anagrafica clienti, macchine associate, score e ultime schede. Da qui puo
 - creare una nuova scheda;
 - leggere rischio, copertura vendite e storico assistenza.
 
-La pagina dettaglio cliente `/clienti/[id]` contiene timeline completa con vendite, riparazioni, azioni, contatti e note. Va usata prima di chiamare un cliente importante, per capire cosa e successo di recente.
+La pagina dettaglio cliente `/clienti/[id]` contiene timeline, score cliente, previsione generale e per singolo prodotto del prossimo acquisto, vendite, riparazioni, incassi e storico delle assegnazioni macchina. Lo score cliente comprende tutte le vendite del cliente, anche quando non sono riferite a una macchina specifica.
 
 ### Macchine
 
@@ -149,15 +166,16 @@ La scheda macchina si apre da dettaglio assistenza, dettaglio cliente o viste op
 - riparazioni collegate;
 - vendite collegate;
 - indicatori commerciali e di consumo.
+- storico dei clienti ai quali la macchina e stata assegnata.
 
 Usala quando devi capire se una macchina e coerente con il cliente, se rientra troppo spesso o se genera opportunita di upgrade o riallocazione.
 
 ### Vendite
 
-Serve per registrare acquisti certi di caffe o prodotti collegati a cliente e, quando possibile, a macchina. I dati richiesti sono:
+Serve per registrare acquisti certi di caffe o prodotti. Il cliente e sempre obbligatorio; la macchina e facoltativa, perche si puo vendere anche a clienti che non hanno macchine associate. I dati richiesti sono:
 
 - cliente;
-- macchina collegata;
+- macchina collegata, quando la vendita riguarda una macchina specifica;
 - prodotto esistente o descrizione libera;
 - categoria e formato;
 - caffe stimati per unita;
@@ -172,6 +190,14 @@ Se selezioni un prodotto dal catalogo, l'app compila prezzo, categoria, formato 
 
 Questi dati sono fondamentali per capire se il cliente sta acquistando da noi o da concorrenti.
 
+Una vendita senza macchina alimenta score e previsione di riacquisto del cliente, ma non viene distribuita automaticamente sulle sue macchine. Lo score macchina usa soltanto le vendite collegate esplicitamente a quella macchina.
+
+La previsione di riordino puo essere configurata nella scheda macchina. L'operatore puo inserire direttamente i caffe al giorno oppure indicare il numero di utilizzatori per casa/ufficio o il numero di gruppi erogatori per Ho.Re.Ca. La stima guidata propone 2,5 caffe per persona in casa, 2 per utilizzatore in ufficio e 80 per gruppo Ho.Re.Ca.; il valore resta sempre modificabile.
+
+L'ordine di priorita e: valore manuale macchina, stima guidata, valore manuale cliente, fascia annuale specifica della macchina, media storica degli acquisti e profilo attivita. Negli avvisi e indicata la fonte usata. Per una macchina trasferita lo storico riparte dagli acquisti della nuova assegnazione.
+
+Quando una macchina cambia cliente, usa `Cambia assegnazione` nella scheda macchina: l'assegnazione precedente viene chiusa e il nuovo cliente diventa quello attuale. Vendite e riparazioni gia registrate restano associate al cliente storico.
+
 ### Prodotti
 
 Gestisce il catalogo prodotti. Per ogni prodotto puoi indicare:
@@ -180,14 +206,16 @@ Gestisce il catalogo prodotti. Per ogni prodotto puoi indicare:
 - categoria: grani, cialde, capsule, kit, altro;
 - formato: cartone, busta, kg, kit, pezzo;
 - caffe stimati per unita;
-- prezzo standard;
-- costo standard;
-- margine stimato;
+- costo di acquisto netto;
+- percentuale di margine e aliquota IVA;
+- prezzo finale IVA inclusa, calcolato automaticamente;
 - compatibilita con tipologie e categorie macchina;
 - note commerciali;
 - stato attivo/non attivo.
 
-Quando registri una vendita, l'app usa il catalogo per stimare caffe coperti, margine e coerenza con la macchina.
+Quando salvi il prodotto, l'app calcola il prezzo netto applicando il margine al costo e aggiunge poi l'IVA per ottenere il prezzo finale. Lo stesso calcolo viene ripetuto sul server, per evitare prezzi incoerenti. Quando registri una vendita, l'app usa il catalogo per stimare caffe coperti, margine e coerenza con la macchina.
+
+Gli amministratori vedono in ogni scheda prodotto due azioni dedicate: **Archivia/Riattiva** (reversibile — un prodotto archiviato sparisce dal form di nuova vendita e dai suggerimenti automatici, ma lo storico ordini resta intatto) ed **Elimina definitivamente** (irreversibile, disponibile solo per prodotti già archiviati e mai usati in un ordine; richiede di digitare il nome esatto del prodotto prima di confermare).
 
 ### Offerte prodotti
 
@@ -203,11 +231,30 @@ Per ogni campagna puoi indicare:
 - link prodotto esterno, utile per e-commerce o PrestaShop;
 - pagina pubblica del volantino.
 
-Il batch WhatsApp prepara gli invii per tutti i clienti con telefono e consenso marketing attivo. Dalla stessa campagna puoi anche preparare l'invio singolo a un cliente specifico. Gli invii vengono registrati nella tabella `campagne_offerte_invii`; l'invio automatico reale richiede il collegamento di un provider WhatsApp.
+Nel frontend l'admin vede:
+
+- form `Nuovo volantino`;
+- lista campagne con stato, validita, righe offerta e invii preparati;
+- pulsante `Anteprima` verso `/offerte/[slug]`;
+- pulsante per pubblicare la campagna;
+- batch WhatsApp per clienti con telefono e consenso marketing;
+- invio singolo verso un cliente marketing;
+- wizard per caricare foto, generare anteprima PNG e scaricare il volantino.
+
+Il batch WhatsApp prepara gli invii per tutti i clienti con telefono e consenso marketing attivo. Dalla stessa campagna puoi anche preparare l'invio singolo a un cliente specifico. Gli invii vengono registrati nella tabella `campagne_offerte_invii` e accodati anche in `messaggi_outbox`; il worker WhatsApp su Railway li invia quando il servizio WhatsApp Baileys e configurato.
 
 ### Agenda
 
-E la lista delle azioni commerciali da fare. Le azioni possono nascere da:
+E la vista operativa giornaliera. Non contiene solo azioni commerciali: unisce calendario, manutenzioni da convertire, consigli utili e azioni da fare.
+
+In alto mostra:
+
+- calendario settimanale delle prenotazioni;
+- manutenzioni `Da convertire`, con link cliente per prenotare;
+- consigli utili una tantum con testo copiabile, CTA prodotto e stato;
+- pulsanti per rigenerare agenda e consigli.
+
+Le azioni commerciali possono nascere da:
 
 - comodato con vendite sotto soglia;
 - Ho.Re.Ca. sotto consumo atteso;
@@ -218,6 +265,8 @@ E la lista delle azioni commerciali da fare. Le azioni possono nascere da:
 - segnali tecnici di caffe non idoneo.
 
 Ogni azione ha priorita, scadenza, motivo e stato. Dopo la chiamata va registrato l'esito e, se serve, un follow-up.
+
+I consigli utili sono messaggi una tantum per aiutare il cliente a usare meglio la macchina. Possono includere una CTA verso un prodotto o accessorio. L'operatore puo copiare il testo, segnare il consiglio come inviato, convertito o scartato. Se manca il consenso marketing, il frontend lo segnala e il contatto va gestito solo come comunicazione operativa o su richiesta esplicita.
 
 ### Manutenzioni
 
@@ -231,6 +280,35 @@ Serve per programmare manutenzioni preventive. Il generatore considera:
 - segnali di caffe non idoneo.
 
 Una manutenzione puo essere da pianificare, pianificata, fatta, saltata o annullata. Quando viene eseguita, puo essere collegata a una scheda riparazione.
+
+Nel frontend ogni manutenzione mostra:
+
+- cliente, macchina e matricola;
+- data prevista e giorni alla scadenza;
+- priorita;
+- stato tecnico;
+- stato proposta cliente: da proporre, proposta inviata, prenotata, scaduta o rifiutata;
+- caffe stimati e giorni dall'ultimo intervento;
+- motivo generato dal motore.
+
+Azioni disponibili:
+
+- `Genera manutenzioni`;
+- segnare `Fatta` o `Annulla`;
+- pianificare data/stato e collegare una scheda riparazione;
+- `Prepara proposta`, che genera testo e link da inviare al cliente;
+- aprire `Link cliente` su `/manutenzione/[token]`.
+
+La pagina pubblica `/manutenzione/[token]` permette al cliente di scegliere uno slot disponibile per manutenzione ordinaria senza accedere all'area operatori. Quando la prenotazione viene presa, la manutenzione risulta `Prenotata` e appare nel calendario agenda.
+
+### Eliminazione clienti
+
+Un cliente non viene mai cancellato direttamente. Ci sono due azioni distinte, entrambe riservate agli amministratori:
+
+- **Archivia** (dalla scheda cliente): reversibile. Il cliente sparisce da liste, ricerche, dashboard, agenda e campagne WhatsApp, ma tutto lo storico resta intatto. Se il cliente si ripresenta con una nuova scheda riparazione, viene riattivato automaticamente. I pagamenti sospesi di un cliente archiviato restano visibili in Incassi.
+- **Elimina definitivamente** (da Admin > Clienti archiviati, solo su clienti gia archiviati): irreversibile. Cancella il cliente, le sue macchine e tutte le schede riparazione collegate. Richiede di digitare il nome esatto del cliente prima di confermare.
+
+Da Admin > Clienti archiviati si puo anche ripristinare un cliente archiviato per errore.
 
 ### Opportunita
 
@@ -288,6 +366,22 @@ Sezione riservata agli amministratori. Serve per:
 
 Il reset elimina schede, clienti, macchine, notifiche e foto. Admin e operatori restano attivi. Va usato solo quando si vuole ripartire con dati operativi puliti.
 
+### Collegare il numero WhatsApp
+
+L'invio WhatsApp (automatico e manuale) passa dal servizio Baileys dedicato (`wzapp-venamachine` su Railway). Il servizio funziona come WhatsApp Web: va collegato una volta al numero di telefono dell'attivita scansionando un QR code, poi resta connesso stabilmente (la sessione e salvata su un volume persistente, non va rifatta a ogni deploy).
+
+Per collegare o ricollegare il numero:
+
+1. Entra nell'app come admin e apri **Admin → WhatsApp**.
+2. Sul telefono con il numero WhatsApp dell'attivita: apri WhatsApp → **Impostazioni** → **Dispositivi collegati** → **Collega un dispositivo**.
+3. Inquadra il QR mostrato nella pagina dell'app col telefono.
+4. La pagina si aggiorna da sola e mostra "WhatsApp connesso" quando l'abbinamento e riuscito.
+5. Da quel momento gli invii (automatici sulle riparazioni e manuali dal bottone "Invia WhatsApp") partono davvero.
+
+Se il numero risulta scollegato (es. dopo un logout dal telefono, o cambio numero), basta ripetere gli stessi passi: il servizio genera un nuovo QR da scansionare.
+
+La pagina **Admin → WhatsApp** mostra anche lo stato attuale del gateway e indica se la sessione risulta connessa.
+
 ## Stati riparazione
 
 Gli stati interni vengono mostrati al cliente come stadi piu semplici:
@@ -314,9 +408,12 @@ Aggiorna lo stato appena cambia la situazione reale: e il dato che il cliente ve
 7. Durante il lavoro tecnico aggiorna stato, diagnosi, preventivo e importo finale dal dettaglio assistenza.
 8. Registra ogni vendita da `Vendite`, collegandola alla macchina quando possibile.
 9. Controlla `Agenda` ogni giorno e salva esiti/follow-up.
-10. Genera e controlla `Manutenzioni` almeno una volta a settimana.
-11. Usa `Dashboard` per capire dove si perde valore.
-12. Aggiorna `Prodotti` e `Configurazione` quando cambiano prezzi, soglie o regole.
+10. Dalla stessa Agenda controlla manutenzioni da convertire e consigli utili con CTA.
+11. Genera e controlla `Manutenzioni` almeno una volta a settimana.
+12. Prepara il link cliente per le manutenzioni ordinarie e distribuisci gli appuntamenti sul calendario.
+13. Crea offerte solo da admin e usa il batch solo per clienti con consenso marketing.
+14. Usa `Report` per capire dove si perde valore.
+15. Aggiorna `Prodotti` e `Configurazione` quando cambiano prezzi, soglie o regole.
 
 ## Regole pratiche di lettura
 
@@ -328,6 +425,8 @@ Aggiorna lo stato appena cambia la situazione reale: e il dato che il cliente ve
 - Un rientro ravvicinato entro 90 giorni va controllato come possibile ricontrollo o garanzia.
 - Un difetto simile gia segnalato va letto insieme allo storico tecnico.
 - Il dato vendita e il dato piu importante per rendere lo score affidabile.
+- Una manutenzione proposta prima della rottura riduce sovraffollamento e urgenze in officina.
+- Un consiglio utile va inviato una tantum e deve portare valore reale; la CTA commerciale deve essere coerente con macchina e consumo.
 
 ## Dati da compilare sempre
 
@@ -337,7 +436,9 @@ Per rendere affidabili score, agenda e manutenzioni, non lasciare vuoti questi c
 - macchina: matricola, tecnologia prodotto, categoria uso, regime;
 - scheda: stato estetico, difetto, accessori, preventivo/spesa autorizzata;
 - intervento: diagnosi, importo finale, stato aggiornato;
-- vendita: cliente, macchina, prodotto, quantita, prezzo, data e pagamento.
+- vendita: cliente, macchina, prodotto, quantita, prezzo, data e pagamento;
+- marketing: consenso marketing, telefono valido e prodotto/CTA coerente;
+- manutenzione: data prevista, stato proposta, eventuale prenotazione e scheda collegata.
 
 ## Note operative
 
@@ -346,3 +447,7 @@ Per rendere affidabili score, agenda e manutenzioni, non lasciare vuoti questi c
 - La ricevuta PDF e la pagina cliente sono generate a partire dalla scheda.
 - Le foto riparazione usano il bucket privato `riparazioni-foto` e vengono mostrate con link firmati temporanei.
 - Le pagine pubbliche cliente non devono contenere dati interni non necessari.
+- Le proposte manutenzione usano link pubblici con token e non richiedono login cliente.
+- Le offerte pubbliche usano `/offerte/[slug]` e mostrano solo campagne pubblicate o inviate.
+- Il worker WhatsApp su Railway legge la outbox quando il provider e configurato; senza provider l'app prepara testo/link e lascia l'invio manuale all'operatore.
+- L'admin puo collegare WhatsApp Web, vedere lo stato del provider e controllare la connessione da **Admin → WhatsApp**.

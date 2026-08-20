@@ -188,7 +188,7 @@ export function SaleForm({ clienti, macchine, prodotti, initialClienteId }: Sale
         <div>
           <label className={labelCls}>Macchina collegata</label>
           <select className={inputCls} value={macchinaId} onChange={(e) => setMacchinaId(e.target.value)} disabled={!clienteId}>
-            <option value="">Solo cliente</option>
+            <option value="">Vendita al cliente, senza macchina specifica</option>
             {macchineCliente.map((macchina) => (
               <option key={macchina.id} value={macchina.id}>{macchinaLabel(macchina)}</option>
             ))}

@@ -1,9 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BadgePercent,
   BarChart3,
-  Bell,
   BookOpen,
   CalendarDays,
   ClipboardList,
@@ -14,29 +12,21 @@ import {
   Settings,
   ShoppingBag,
   Target,
-  UserRound,
   Users,
-  Wrench,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
 export const dynamic = "force-dynamic";
 
-const lastUpdated = "23 giugno 2026";
+const lastUpdated = "15 luglio 2026";
 
 const menuSections = [
   {
     href: "/",
-    title: "Schede",
+    title: "Dashboard",
     icon: ClipboardList,
-    text: "Dashboard dell'officina: cerca riparazioni, apri dettagli, cambia stato e crea nuove schede.",
-  },
-  {
-    href: "/manuale",
-    title: "Manuale",
-    icon: BookOpen,
-    text: "Guida rapida dentro l'app: riepiloga menu, flusso consigliato, dati da compilare e regole operative.",
+    text: "Coda di lavoro quotidiana: riparazioni aperte, manutenzioni da proporre, ritiri da sollecitare, prenotazioni da confermare e opportunità commerciali. Ogni riga porta alla scheda del cliente.",
   },
   {
     href: "/nuova",
@@ -48,69 +38,37 @@ const menuSections = [
     href: "/clienti",
     title: "Clienti",
     icon: Users,
-    text: "Anagrafica, macchine associate, score, timeline, modifica cliente e storico commerciale.",
+    text: "Anagrafica, score cliente, previsione riacquisto, incassi, macchine e storico assegnazioni.",
   },
   {
     href: "/vendite",
     title: "Vendite",
     icon: ShoppingBag,
-    text: "Registra acquisti certi con prodotto, quantita, prezzo, data, pagamento, documento e macchina collegata.",
+    text: "Registra acquisti e calcola il riordino da consumo manuale, stima per utilizzatori/gruppi o media storica.",
   },
   {
     href: "/prodotti",
     title: "Prodotti",
     icon: PackageSearch,
-    text: "Catalogo con formato, caffe stimati, prezzo, margine e compatibilita con macchine.",
-  },
-  {
-    href: "/offerte",
-    title: "Offerte",
-    icon: BadgePercent,
-    text: "Sezione admin per volantini con foto, prezzi promozionali, link prodotto e invio WhatsApp batch o singolo predisposto.",
-    adminOnly: true,
+    text: "Catalogo con costo netto, margine e IVA: il prezzo finale viene calcolato automaticamente.",
   },
   {
     href: "/agenda",
     title: "Agenda",
     icon: CalendarDays,
-    text: "Azioni commerciali generate da rischio comodato, riordino, calo vendite, upgrade e assistenza.",
-  },
-  {
-    href: "/manutenzioni",
-    title: "Manutenzioni",
-    icon: Wrench,
-    text: "Programmazione preventiva basata su uso stimato, tempo, categoria macchina e segnali tecnici.",
-  },
-  {
-    href: "/opportunita",
-    title: "Opportunita",
-    icon: Target,
-    text: "Analisi di clienti e macchine con rischio o potenziale commerciale.",
+    text: "Vista giornaliera con calendario prenotazioni, manutenzioni da convertire, consigli utili con CTA e azioni commerciali.",
   },
   {
     href: "/dashboard-commerciale",
-    title: "Dashboard",
+    title: "Report",
     icon: BarChart3,
     text: "Vista direzionale su vendite, rischi, azioni, manutenzioni e clienti da recuperare.",
   },
   {
-    href: "/solleciti",
-    title: "Solleciti",
-    icon: Bell,
-    text: "Schede ferme o clienti da richiamare dopo preventivi, avvisi o riparazioni completate.",
-  },
-  {
-    href: "/configurazione",
-    title: "Configurazione",
+    href: "/admin",
+    title: "Admin",
     icon: Settings,
-    text: "Soglie, profili attivita, regole azioni e impostazioni score modificabili dall'app.",
-    adminOnly: true,
-  },
-  {
-    href: "/admin/operatori",
-    title: "Operatori",
-    icon: UserRound,
-    text: "Sezione admin per creare operatori, vedere accessi abilitati e usare il reset dati operativo.",
+    text: "Hub riservato con Offerte, Configurazione, Operatori e collegamento WhatsApp.",
     adminOnly: true,
   },
 ];
@@ -122,10 +80,11 @@ const workflow = [
   "Classifica cliente e macchina: categoria uso, regime possesso, profilo attivita e stima caffe/giorno.",
   "Segna stato estetico, accessori, difetto e foto quando ci sono danni o graffi.",
   "Dal dettaglio assistenza aggiorna stato, diagnosi, preventivo e importo finale.",
-  "Registra ogni vendita collegandola alla macchina quando possibile.",
+  "Registra ogni vendita sul cliente; collega la macchina solo quando la vendita la riguarda davvero.",
   "Crea offerte solo da admin e usa il batch solo per clienti con consenso marketing.",
-  "Controlla Agenda ogni giorno e salva esiti/follow-up.",
-  "Genera Manutenzioni almeno una volta a settimana.",
+  "Controlla Agenda ogni giorno: calendario, azioni, manutenzioni da convertire e consigli utili.",
+  "Aggiorna la coda manutenzioni dalla Dashboard almeno una volta a settimana.",
+  "Prepara il link cliente per prenotare la manutenzione ordinaria negli slot disponibili.",
   "Usa Dashboard per decidere dove intervenire commercialmente.",
   "Aggiorna Prodotti e Configurazione quando cambiano prezzi, soglie o regole.",
 ];
@@ -139,6 +98,10 @@ const rules = [
   "Macchina sottodimensionata: valutare upgrade.",
   "Macchina sovradimensionata: valutare riallocazione.",
   "Vendite registrate bene: score piu affidabile.",
+  "Vendita senza macchina: alimenta il cliente, non tutte le sue macchine.",
+  "Cambio cliente macchina: usa lo storico assegnazioni senza riscrivere vendite e riparazioni precedenti.",
+  "Manutenzione proposta prima della rottura: meno urgenze e meno sovraffollamento.",
+  "Consigli utili: inviarli una tantum e usare CTA coerenti con macchina e consumo.",
 ];
 
 const repairStates = [
@@ -199,7 +162,7 @@ export default async function ManualePage() {
           <Target className="h-6 w-6 text-arancio" />
           <h2 className="mt-3 font-display text-lg font-semibold text-coffee-50">Uso quotidiano</h2>
           <p className="mt-2 text-sm leading-6 text-coffee-200">
-            Agenda e Manutenzioni sono le due viste operative da controllare con continuita.
+            Agenda e Dashboard sono le due viste operative da controllare con continuita.
           </p>
         </Card>
       </section>

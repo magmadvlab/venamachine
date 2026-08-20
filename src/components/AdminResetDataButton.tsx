@@ -12,7 +12,9 @@ export function AdminResetDataButton() {
   const [isPending, startTransition] = useTransition();
 
   async function resetData() {
-    const typed = window.prompt("Scrivi RESET per eliminare schede, clienti, macchine, notifiche e foto.");
+    const typed = window.prompt(
+      "Scrivi RESET per eliminare definitivamente clienti, macchine, schede, prodotti, vendite, offerte, appuntamenti, notifiche e foto di test. Utenti e configurazioni restano invariati."
+    );
     if (typed !== "RESET") return;
 
     setError(null);

@@ -8,3 +8,4 @@ next-env.d.ts
 .claude/
 .local-postgres/
 supabase/.temp/
+.superpowers/

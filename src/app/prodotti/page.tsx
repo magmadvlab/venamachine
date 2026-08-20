@@ -2,7 +2,10 @@ import Link from "next/link";
 import { ArrowLeft, PackageSearch } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { ProductForm } from "@/components/products/ProductForm";
+import { ArchiveProductButton } from "@/components/products/ArchiveProductButton";
+import { HardDeleteProductButton } from "@/components/products/HardDeleteProductButton";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
+import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -22,22 +25,25 @@ export default async function ProdottiPage() {
     );
   }
 
+  const user = await getCurrentUser();
+  const admin = isAdminEmail(user?.email);
+
   const db = createServiceClient();
   const { data: prodotti } = await db
     .from("prodotti_caffe")
-    .select("id, nome, descrizione, categoria, formato, caffe_stimati_per_unita, sku, prezzo_standard, costo_standard, margine_standard, compatibilita_tipologie, compatibilita_categorie_uso, note_commerciali, attivo, created_at")
+    .select("id, nome, descrizione, categoria, formato, caffe_stimati_per_unita, sku, prezzo_standard, costo_standard, margine_standard, margine_percentuale, aliquota_iva, compatibilita_tipologie, compatibilita_categorie_uso, note_commerciali, attivo, created_at")
     .order("attivo", { ascending: false })
     .order("nome", { ascending: true });
 
   return (
     <main className="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
-      <header className="mb-4 flex items-center gap-3">
+      <header className="mb-4 flex flex-wrap items-center gap-3">
         <Link
           href="/"
           className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-coffee-200 bg-white px-3 text-sm font-semibold text-coffee-700 active:scale-95"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Schede</span>
+          <span>Dashboard</span>
         </Link>
         <div>
           <p className="text-sm font-semibold text-arancio-dark">Catalogo</p>
@@ -75,11 +81,20 @@ export default async function ProdottiPage() {
                 </div>
                 <div className="mb-4 grid grid-cols-2 gap-2 text-sm text-coffee-600 sm:grid-cols-4">
                   <span>{product.caffe_stimati_per_unita ?? 0} caffè/unità</span>
-                  <span>Prezzo {money(product.prezzo_standard)}</span>
-                  <span>Costo {money(product.costo_standard)}</span>
-                  <span>Margine {money(product.margine_standard)}</span>
+                  <span>Prezzo finale {money(product.prezzo_standard)}</span>
+                  <span>Costo netto {money(product.costo_standard)}</span>
+                  <span>Margine {product.margine_percentuale ?? 30}% · IVA {product.aliquota_iva ?? 22}%</span>
                 </div>
-                <ProductForm product={product} />
+                {admin && (
+                  <div className="mb-4 space-y-2">
+                    <ArchiveProductButton id={product.id} nome={product.nome} attivo={product.attivo} />
+                    {!product.attivo && <HardDeleteProductButton id={product.id} nome={product.nome} />}
+                  </div>
+                )}
+                <details className="rounded-xl border border-coffee-100 bg-coffee-50 p-3">
+                  <summary className="cursor-pointer text-sm font-semibold text-coffee-800">Modifica prodotto</summary>
+                  <div className="mt-4"><ProductForm product={product} /></div>
+                </details>
               </Card>
             ))
           )}

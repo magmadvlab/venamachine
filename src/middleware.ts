@@ -1,8 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-// Route pubbliche (cliente "solo riceve"): tracking, volantini offerte e login.
-const PUBLIC_PATHS = [/^\/login(\/|$)/, /^\/r\//, /^\/offerte\/[^/]+\/?$/];
+// Route pubbliche: login, tracking cliente, volantini, prenotazione manutenzione e slot agenda controllati da token.
+const PUBLIC_PATHS = [
+  /^\/login(\/|$)/,
+  /^\/r\//,
+  /^\/offerte\/[^/]+\/?$/,
+  /^\/manutenzione\/[^/]+\/?$/,
+  /^\/api\/agenda\/slots(\/|$)/,
+  /^\/api\/agenda\/prenotazioni(\/|$)/,
+];
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some((re) => re.test(pathname));

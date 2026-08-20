@@ -39,7 +39,7 @@ type CustomerOption = {
 };
 
 const inputCls = "w-full rounded-xl border border-coffee-200 bg-white px-3 py-2.5 text-sm text-coffee-900 outline-none focus:border-arancio focus:ring-2 focus:ring-arancio/20";
-const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-coffee-400";
+const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-coffee-200";
 
 export function OfferCampaignForm() {
   const router = useRouter();
@@ -83,12 +83,12 @@ export function OfferCampaignForm() {
         <span className={labelCls}>Valida fino al</span>
         <input className={inputCls} type="date" value={validaAl} onChange={(e) => setValidaAl(e.target.value)} />
       </label>
-      {error && <p className="text-xs font-semibold text-red-700">{error}</p>}
+      {error && <p className="text-xs font-semibold text-red-300">{error}</p>}
       <button
         type="button"
         onClick={submit}
         disabled={isPending}
-        className="inline-flex items-center gap-2 rounded-full bg-coffee-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+        className="inline-flex items-center gap-2 rounded-full bg-arancio px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
       >
         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Megaphone className="h-4 w-4" />}
         Crea campagna
@@ -127,7 +127,15 @@ export function CampaignStatusButton({ campaignId, stato }: { campaignId: string
   );
 }
 
-export function CampaignBatchButton({ campaignId }: { campaignId: string }) {
+export function CampaignBatchButton({
+  campaignId,
+  modalita,
+  label,
+}: {
+  campaignId: string;
+  modalita: "tutti" | "segnale_attivo";
+  label: string;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<{ destinatari: number; waUrl: string } | null>(null);
@@ -137,7 +145,11 @@ export function CampaignBatchButton({ campaignId }: { campaignId: string }) {
     setResult(null);
     setError(null);
     startTransition(async () => {
-      const res = await fetch(`/api/offerte/${campaignId}/invio-batch`, { method: "POST" });
+      const res = await fetch(`/api/offerte/${campaignId}/invio-batch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ modalita }),
+      });
       const out = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(out.error || "Invio batch non riuscito");
@@ -165,7 +177,7 @@ export function CampaignBatchButton({ campaignId }: { campaignId: string }) {
         className="inline-flex h-10 items-center gap-2 rounded-full bg-coffee-900 px-3 text-sm font-semibold text-white disabled:opacity-60"
       >
         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-        Prepara batch WhatsApp
+        {label}
       </button>
       {result && (
         <div className="space-y-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
@@ -185,7 +197,7 @@ export function CampaignBatchButton({ campaignId }: { campaignId: string }) {
           <p className="text-xs text-emerald-600">Seleziona la tua lista broadcast in WA e invia</p>
         </div>
       )}
-      {error && <p className="text-xs font-semibold text-red-700">{error}</p>}
+      {error && <p className="text-xs font-semibold text-red-300">{error}</p>}
     </div>
   );
 }
@@ -263,7 +275,7 @@ export function CampaignSingleSendForm({ campaignId, customers }: { campaignId: 
           Scrivi a {waLink.nome}
         </a>
       )}
-      {error && <p className="text-xs font-semibold text-red-700">{error}</p>}
+      {error && <p className="text-xs font-semibold text-red-300">{error}</p>}
     </div>
   );
 }

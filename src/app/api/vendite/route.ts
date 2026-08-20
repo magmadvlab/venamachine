@@ -71,6 +71,33 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Operatore non collegato all'utente. Contatta l'amministratore." }, { status: 403 });
   }
 
+  let assegnazioneMacchinaId: string | null = null;
+  const macchinaId = clean(body.macchina_id);
+  if (macchinaId) {
+    const { data: macchina, error: macchinaError } = await db
+      .from("macchine")
+      .select("id, cliente_id")
+      .eq("id", macchinaId)
+      .maybeSingle();
+    if (macchinaError) return dbError("Macchina", macchinaError);
+    if (!macchina) return NextResponse.json({ error: "Macchina non trovata." }, { status: 404 });
+    if (macchina.cliente_id !== body.cliente_id) {
+      return NextResponse.json({ error: "La macchina non è assegnata al cliente selezionato." }, { status: 400 });
+    }
+    const { data: assegnazione, error: assegnazioneError } = await db
+      .from("assegnazioni_macchina")
+      .select("id")
+      .eq("macchina_id", macchinaId)
+      .eq("cliente_id", body.cliente_id)
+      .is("data_fine", null)
+      .maybeSingle();
+    if (assegnazioneError) return dbError("Assegnazione macchina", assegnazioneError);
+    if (!assegnazione) {
+      return NextResponse.json({ error: "Assegnazione attiva della macchina non trovata." }, { status: 409 });
+    }
+    assegnazioneMacchinaId = assegnazione.id;
+  }
+
   let prodottoId = clean(body.prodotto_id);
   if (!prodottoId) {
     const prodottoInput = {
@@ -94,7 +121,8 @@ export async function POST(req: Request) {
     .from("ordini_caffe")
     .insert({
       cliente_id: body.cliente_id,
-      macchina_id: clean(body.macchina_id) ?? null,
+      macchina_id: macchinaId ?? null,
+      assegnazione_macchina_id: assegnazioneMacchinaId,
       data_ordine: clean(body.data_ordine) ?? new Date().toISOString().slice(0, 10),
       numero_documento: clean(body.numero_documento),
       note: clean(body.note),

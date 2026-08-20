@@ -2,10 +2,9 @@ import { NextResponse } from "next/server";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 import { getSessionOperatore } from "@/lib/operator-server";
 import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
+import { AZIONI_ACTIVE_STATES, getClientChampion, groupByClienteId, supersede } from "@/lib/commercial-priority";
 
 export const runtime = "nodejs";
-
-const ACTIVE_STATES = ["aperta", "pianificata", "rimandata"];
 
 const TYPE_BY_ACTION: Record<string, string> = {
   proteggi_comodato: "comodato_rischio",
@@ -217,57 +216,102 @@ export async function POST(req: Request) {
         .from("azioni_commerciali")
         .select("id, source_key, stato")
         .in("source_key", sourceKeys)
-        .in("stato", ACTIVE_STATES)
+        .in("stato", AZIONI_ACTIVE_STATES)
     : { data: [], error: null };
 
   if (existingError) return dbError("Lettura azioni esistenti", existingError);
 
   const existingByKey = new Map((existing ?? []).map((row: any) => [row.source_key, row]));
-  let createCount = 0;
-  let updateCount = 0;
 
-  for (const row of opportunita) {
+  const candidates = opportunita.map((row: any) => {
     const sourceKey = `analisi:${row.macchina_id}:${row.azione_consigliata}`;
     const rule = ruleFor(row, rules);
     const priority = Math.max(Number(row.priorita_commerciale ?? 50), Number(rule?.priorita_base ?? 0));
-    const payload = {
-      cliente_id: row.cliente_id,
-      macchina_id: row.macchina_id,
-      origine: "analisi_commerciale",
-      source_key: sourceKey,
-      tipo: TYPE_BY_ACTION[row.azione_consigliata] ?? "monitoraggio",
-      priorita: priority,
-      stato: "aperta",
-      motivo: row.motivo_override ?? buildMotivo(row),
-      azione_consigliata: ACTION_LABELS[row.azione_consigliata] ?? row.azione_consigliata,
-      data_scadenza: todayPlus(Number(rule?.giorni_scadenza ?? dueDays(priority))),
-      created_by_operatore_id: operatore.id,
+    return {
+      cliente_id: row.cliente_id as string,
+      sourceKey,
+      priority,
+      payload: {
+        cliente_id: row.cliente_id,
+        macchina_id: row.macchina_id,
+        origine: "analisi_commerciale",
+        source_key: sourceKey,
+        tipo: TYPE_BY_ACTION[row.azione_consigliata] ?? "monitoraggio",
+        priorita: priority,
+        stato: "aperta",
+        motivo: row.motivo_override ?? buildMotivo(row),
+        azione_consigliata: ACTION_LABELS[row.azione_consigliata] ?? row.azione_consigliata,
+        data_scadenza: todayPlus(Number(rule?.giorni_scadenza ?? dueDays(priority))),
+        created_by_operatore_id: operatore.id,
+      },
     };
+  });
 
-    const current = existingByKey.get(sourceKey);
+  const byClient = groupByClienteId(candidates);
+  let createCount = 0;
+  let updateCount = 0;
+  let suppressedCount = 0;
+
+  for (const [clienteId, group] of byClient) {
+    const best = group.reduce((a, b) => (b.priority > a.priority ? b : a));
+
+    let champion;
+    try {
+      champion = await getClientChampion(db, clienteId, best.sourceKey);
+    } catch (e: any) {
+      return dbError("Lettura campione cliente", { message: e.message });
+    }
+
+    if (champion && champion.priorita >= best.priority) {
+      suppressedCount += group.length;
+      continue;
+    }
+
+    const current = existingByKey.get(best.sourceKey);
+    let winnerId: string;
     if (current) {
       const { error: updateError } = await db
         .from("azioni_commerciali")
         .update({
-          tipo: payload.tipo,
-          priorita: payload.priorita,
-          motivo: payload.motivo,
-          azione_consigliata: payload.azione_consigliata,
-          data_scadenza: payload.data_scadenza,
+          tipo: best.payload.tipo,
+          priorita: best.payload.priorita,
+          motivo: best.payload.motivo,
+          azione_consigliata: best.payload.azione_consigliata,
+          data_scadenza: best.payload.data_scadenza,
         })
         .eq("id", current.id);
       if (updateError) return dbError("Aggiornamento azione", updateError);
       updateCount += 1;
+      winnerId = current.id;
     } else {
-      const { error: insertError } = await db.from("azioni_commerciali").insert(payload);
+      const { data: inserted, error: insertError } = await db
+        .from("azioni_commerciali")
+        .insert(best.payload)
+        .select("id")
+        .single();
       if (insertError) return dbError("Creazione azione", insertError);
       createCount += 1;
+      winnerId = inserted.id;
     }
+
+    try {
+      await supersede(db, clienteId, {
+        tipo: "azione",
+        label: best.payload.azione_consigliata,
+        priorita: best.priority,
+        excludeId: winnerId,
+      });
+    } catch (e: any) {
+      return dbError("Chiusura segnali superati", { message: e.message });
+    }
+
+    suppressedCount += group.length - 1;
   }
 
   return NextResponse.json({
     created: createCount,
     updated: updateCount,
+    soppressi: suppressedCount,
     total: opportunita.length,
   });
 }

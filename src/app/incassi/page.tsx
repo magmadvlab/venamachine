@@ -30,12 +30,12 @@ export default async function IncassiPage() {
   const [{ data: riparazioni }, { data: vendite }] = await Promise.all([
     db
       .from("riparazioni")
-      .select("id, numero_scheda, importo_finale, importo_preventivo, data_ingresso, updated_at, cliente:clienti(ragione_sociale, telefono, email)")
+      .select("id, numero_scheda, importo_finale, importo_preventivo, data_ingresso, updated_at, cliente:clienti(ragione_sociale, telefono, email, archiviato_at)")
       .eq("stato_pagamento", "sospeso")
       .order("updated_at", { ascending: true }),
     db
       .from("ordini_caffe")
-      .select("id, data_ordine, numero_documento, updated_at, righe:righe_ordine_caffe(prezzo_unitario, quantita), cliente:clienti(ragione_sociale, telefono, email)")
+      .select("id, data_ordine, numero_documento, updated_at, righe:righe_ordine_caffe(prezzo_unitario, quantita), cliente:clienti(ragione_sociale, telefono, email, archiviato_at)")
       .eq("stato_pagamento", "sospeso")
       .order("updated_at", { ascending: true }),
   ]);
@@ -49,6 +49,7 @@ export default async function IncassiPage() {
     clienteNome: string;
     clienteTelefono: string | null;
     clienteEmail: string | null;
+    clienteArchiviato: boolean;
     importo: number | null;
     data: string;
     giorni: number;
@@ -64,6 +65,7 @@ export default async function IncassiPage() {
         clienteNome: c?.ragione_sociale ?? "—",
         clienteTelefono: c?.telefono ?? null,
         clienteEmail: c?.email ?? null,
+        clienteArchiviato: Boolean(c?.archiviato_at),
         importo: r.importo_finale ?? r.importo_preventivo ?? null,
         data: r.data_ingresso,
         giorni: Math.floor((oggi.getTime() - new Date(r.updated_at ?? r.data_ingresso).getTime()) / 86400000),
@@ -80,6 +82,7 @@ export default async function IncassiPage() {
         clienteNome: c?.ragione_sociale ?? "—",
         clienteTelefono: c?.telefono ?? null,
         clienteEmail: c?.email ?? null,
+        clienteArchiviato: Boolean(c?.archiviato_at),
         importo: importo > 0 ? importo : null,
         data: v.data_ordine,
         giorni: Math.floor((oggi.getTime() - new Date(v.updated_at ?? v.data_ordine).getTime()) / 86400000),
@@ -91,13 +94,13 @@ export default async function IncassiPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
-      <header className="mb-4 flex items-center gap-3">
+      <header className="mb-4 flex flex-wrap items-center gap-3">
         <Link
           href="/"
           className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-coffee-200 bg-white px-3 text-sm font-semibold text-coffee-700 active:scale-95"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Schede</span>
+          <span>Dashboard</span>
         </Link>
         <div className="flex-1">
           <p className="text-sm font-semibold text-arancio-dark">Pagamenti</p>
@@ -146,7 +149,12 @@ export default async function IncassiPage() {
               <li key={`${item.tipo}-${item.id}`} className="py-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-coffee-900">{item.clienteNome}</p>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="font-semibold text-coffee-900">{item.clienteNome}</p>
+                      {item.clienteArchiviato && (
+                        <span className="rounded-full bg-stone-200 px-1.5 py-0.5 text-[10px] font-bold text-stone-700">Archiviato</span>
+                      )}
+                    </div>
                     <p className="mt-0.5 text-xs text-coffee-500">
                       {item.tipo === "riparazione" ? "Riparazione" : "Vendita"} · {item.riferimento} · {fmt(item.data)}
                     </p>

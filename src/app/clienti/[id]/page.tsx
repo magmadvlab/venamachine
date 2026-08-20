@@ -1,11 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, Coffee, Gauge, Pencil, Phone, Plus, ShoppingBag, Target, Wrench } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock, Coffee, Gauge, Pencil, Phone, Plus, ShoppingBag, Target, Wrench } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { CustomerEditForm } from "@/components/customers/CustomerEditForm";
 import { AddMachineForm } from "@/components/customers/AddMachineForm";
 import { CustomerNoteForm } from "@/components/customers/CustomerNoteForm";
+import { SendWhatsAppButton } from "@/components/SendWhatsAppButton";
+import { ProponiManutenzioneButton } from "@/components/customers/ProponiManutenzioneButton";
+import { ArchiveClientButton } from "@/components/customers/ArchiveClientButton";
+import { MaintenanceControls, MaintenanceProposalButton } from "@/components/maintenance/MaintenanceActions";
+import { ReminderButton } from "@/components/ReminderButton";
+import { SuggestionCard } from "@/components/commercial/SuggestionActions";
+import { buildMaintenanceProposalMessage } from "@/lib/maintenance-proposal";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
+import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -21,9 +29,38 @@ function money(value?: number | string | null) {
   return `€ ${Number(value ?? 0).toFixed(2)}`;
 }
 
+const AZIONE_LABELS: Record<string, string> = {
+  proteggi_comodato: "Proteggi comodato",
+  recupero_horeca: "Recupero Ho.Re.Ca.",
+  vendi_prodotti_post_assistenza: "Vendi post assistenza",
+  proponi_upgrade: "Proponi upgrade",
+  valuta_riallocazione: "Valuta riallocazione",
+  primo_ordine: "Primo ordine",
+  verifica_miscela: "Verifica miscela",
+  monitora: "Monitora",
+};
+
+const FIT_LABELS: Record<string, string> = {
+  coerente: "Coerente",
+  sovradimensionata: "Sovradimensionata",
+  sottodimensionata: "Da upgrade",
+  senza_dati_vendita: "Senza vendite",
+  categoria_da_definire: "Categoria da definire",
+};
+
+const STATO_MANUTENZIONE_LABELS: Record<string, string> = {
+  da_pianificare: "Da pianificare",
+  pianificata: "Pianificata",
+  fatta: "Fatta",
+  saltata: "Saltata",
+  annullata: "Annullata",
+};
+
 function eventIcon(tipo?: string | null) {
   if (tipo === "vendita") return <ShoppingBag className="h-4 w-4" />;
   if (tipo === "riparazione") return <Wrench className="h-4 w-4" />;
+  if (tipo === "manutenzione") return <Coffee className="h-4 w-4" />;
+  if (tipo === "prenotazione") return <CalendarDays className="h-4 w-4" />;
   if (tipo === "azione") return <Target className="h-4 w-4" />;
   if (tipo === "contatto") return <Phone className="h-4 w-4" />;
   return <CalendarDays className="h-4 w-4" />;
@@ -32,6 +69,8 @@ function eventIcon(tipo?: string | null) {
 function eventTone(tipo?: string | null) {
   if (tipo === "vendita") return "border-emerald-200 bg-emerald-50 text-emerald-800";
   if (tipo === "riparazione") return "border-amber-200 bg-amber-50 text-amber-900";
+  if (tipo === "manutenzione") return "border-arancio/30 bg-arancio/10 text-arancio-dark";
+  if (tipo === "prenotazione") return "border-blue-200 bg-blue-50 text-blue-800";
   if (tipo === "azione") return "border-blue-200 bg-blue-50 text-blue-800";
   if (tipo === "contatto") return "border-coffee-200 bg-white text-coffee-700";
   return "border-stone-200 bg-stone-100 text-stone-700";
@@ -42,10 +81,13 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
   if (missingEnv.length > 0) notFound();
 
   const db = createServiceClient();
+  const user = await getCurrentUser();
+  const admin = isAdminEmail(user?.email);
+
   const { data: clienteRow } = await db
     .from("clienti")
     .select(`id, ragione_sociale, tipo, piva_cf, telefono, email, indirizzo, canale_preferito,
-      profilo_attivita_id, caffe_giornalieri_attesi_override, note_fedelta, consenso_gdpr, consenso_marketing, created_at,
+      profilo_attivita_id, caffe_giornalieri_attesi_override, note_fedelta, consenso_gdpr, consenso_marketing, created_at, archiviato_at,
       profilo:profili_attivita(nome, codice, caffe_giornalieri_min, caffe_giornalieri_max)`)
     .eq("id", params.id)
     .maybeSingle();
@@ -62,20 +104,68 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
     { data: azioniAperte },
     { data: manutenzioni },
     { data: profili },
+    { data: scoreClienteRow },
+    { data: venditeCliente },
+    { data: riparazioniCliente },
+    { data: assegnazioniCliente },
+    { data: riacquistiProdotti },
+    { data: solleciti },
+    { data: suggerimenti },
   ] = await Promise.all([
     db.from("macchine").select("id, marca, modello, matricola, tipologia, categoria_utilizzo, regime_possesso, stato_ciclo_vita").eq("cliente_id", params.id).order("created_at", { ascending: false }),
     db.from("v_timeline_cliente").select("*").eq("cliente_id", params.id).order("data_evento", { ascending: false }).limit(120),
-    db.from("v_analisi_commerciale_macchine").select("macchina_id, priorita_commerciale, azione_consigliata, machine_fit, caffe_acquistati_365gg, caffe_target_365gg, valore_acquisti_365gg, costo_interventi_365gg").eq("cliente_id", params.id),
+    db.from("v_analisi_commerciale_macchine").select(`macchina_id, priorita_commerciale, azione_consigliata, machine_fit, marca, modello, matricola,
+      caffe_acquistati_365gg, caffe_target_365gg, valore_acquisti_365gg, costo_interventi_365gg`).eq("cliente_id", params.id),
     db.from("azioni_commerciali").select("id").eq("cliente_id", params.id).in("stato", ["aperta", "pianificata", "rimandata"]),
-    db.from("manutenzioni_programmate").select("id").eq("cliente_id", params.id).in("stato", ["da_pianificare", "pianificata"]),
+    db.from("v_manutenzioni_programmate_agenda").select("*").eq("cliente_id", params.id).in("stato", ["da_pianificare", "pianificata"]).order("priorita", { ascending: false }).order("data_prevista", { ascending: true }),
     db.from("profili_attivita").select("id, nome, codice, caffe_giornalieri_min, caffe_giornalieri_max").order("nome", { ascending: true }),
+    db.from("v_score_clienti").select("*").eq("cliente_id", params.id).maybeSingle(),
+    db.from("ordini_caffe").select("id, macchina_id, numero_documento, data_ordine, stato_pagamento, data_pagamento, metodo_pagamento, righe:righe_ordine_caffe(quantita, prezzo_unitario)").eq("cliente_id", params.id).order("data_ordine", { ascending: false }),
+    db.from("riparazioni").select("id, macchina_id, numero_scheda, data_ingresso, stato_pagamento, data_pagamento, metodo_pagamento, importo_finale, importo_preventivo").eq("cliente_id", params.id).order("data_ingresso", { ascending: false }),
+    db.from("assegnazioni_macchina").select("id, macchina_id, data_inizio, data_fine, motivo, macchina:macchine(marca, modello, matricola)").eq("cliente_id", params.id).order("data_inizio", { ascending: false }),
+    db.from("v_riacquisto_prodotti_clienti").select("prodotto_id, prodotto_nome, numero_acquisti, ultimo_acquisto, ultima_quantita, intervallo_medio_giorni, data_riacquisto_stimata, stato_riacquisto").eq("cliente_id", params.id).order("data_riacquisto_stimata", { ascending: true, nullsFirst: false }),
+    db.from("riparazioni").select("id, numero_scheda, data_avviso_cliente").eq("cliente_id", params.id).eq("stato", "cliente_avvisato").order("data_avviso_cliente", { ascending: true }),
+    db.from("v_suggerimenti_agenda").select("id, stato, priorita, titolo, messaggio, cta_label, cta_href, ragione_sociale, telefono, email, consenso_marketing, marca, modello, matricola, prodotto_nome, fonte_nome, fonte_url").eq("cliente_id", params.id).in("stato", ["da_preparare", "pronto", "inviato"]).order("priorita", { ascending: false }),
   ]);
 
-  const valoreVendite = (analisiRows ?? []).reduce((sum: number, row: any) => sum + Number(row.valore_acquisti_365gg ?? 0), 0);
-  const costoInterventi = (analisiRows ?? []).reduce((sum: number, row: any) => sum + Number(row.costo_interventi_365gg ?? 0), 0);
-  const caffeAcquistati = (analisiRows ?? []).reduce((sum: number, row: any) => sum + Number(row.caffe_acquistati_365gg ?? 0), 0);
-  const caffeTarget = (analisiRows ?? []).reduce((sum: number, row: any) => sum + Number(row.caffe_target_365gg ?? 0), 0);
-  const priorita = Math.max(0, ...(analisiRows ?? []).map((row: any) => Number(row.priorita_commerciale ?? 0)));
+  const manutenzioniConTesto = await Promise.all((manutenzioni ?? []).map(async (row: any) => {
+    if (row.canale_preferito !== "whatsapp" || !row.telefono || !row.token_pubblico || row.stato_proposta === "prenotata") {
+      return row;
+    }
+    const macchinaLabel = [row.marca, row.modello, row.matricola].filter(Boolean).join(" ");
+    const proposal = await buildMaintenanceProposalMessage({
+      db,
+      ragioneSociale: row.ragione_sociale,
+      macchinaLabel,
+      motivo: row.motivo,
+      tokenPubblico: row.token_pubblico,
+      durataStimataMinuti: row.durata_stimata_minuti,
+    });
+    return { ...row, whatsappTesto: proposal.message };
+  }));
+
+  const opportunitaRows = (analisiRows ?? []).filter((row: any) => row.azione_consigliata !== "monitora");
+  const scoreCliente: any = scoreClienteRow;
+  const valoreVendite = Number(scoreCliente?.valore_acquisti_365gg ?? 0);
+  const unAnnoFa = new Date();
+  unAnnoFa.setDate(unAnnoFa.getDate() - 365);
+  const costoInterventi = (riparazioniCliente ?? [])
+    .filter((row: any) => new Date(row.data_ingresso) >= unAnnoFa)
+    .reduce((sum: number, row: any) => sum + Number(row.importo_finale ?? row.importo_preventivo ?? 0), 0);
+  const caffeAcquistati = Number(scoreCliente?.caffe_acquistati_365gg ?? 0);
+  const targetCliente = Number(scoreCliente?.caffe_giornalieri_attesi ?? 0) * 365;
+  const caffeTarget = targetCliente || (analisiRows ?? []).reduce((sum: number, row: any) => sum + Number(row.caffe_target_365gg ?? 0), 0);
+  const prioritaDaScore = scoreCliente?.score_cliente == null ? 0 : 100 - Number(scoreCliente.score_cliente);
+  const priorita = Math.max(prioritaDaScore, ...(analisiRows ?? []).map((row: any) => Number(row.priorita_commerciale ?? 0)));
+  const sospesiVendite = (venditeCliente ?? []).filter((row: any) => row.stato_pagamento === "sospeso");
+  const sospesiRiparazioni = (riparazioniCliente ?? []).filter((row: any) => row.stato_pagamento === "sospeso");
+  const totaleSospesoVendite = sospesiVendite.reduce((sum: number, ordine: any) => sum + (ordine.righe ?? []).reduce(
+    (lineSum: number, row: any) => lineSum + Number(row.quantita ?? 0) * Number(row.prezzo_unitario ?? 0), 0,
+  ), 0);
+  const totaleSospesoRiparazioni = sospesiRiparazioni.reduce(
+    (sum: number, row: any) => sum + Number(row.importo_finale ?? row.importo_preventivo ?? 0), 0,
+  );
+  const totaleSospeso = totaleSospesoVendite + totaleSospesoRiparazioni;
 
   return (
     <main className="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
@@ -90,7 +180,12 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
           </Link>
           <div>
             <p className="text-sm font-semibold text-arancio-dark">Storico commerciale</p>
-            <h1 className="font-display text-xl font-bold text-coffee-50">{cliente.ragione_sociale}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="font-display text-xl font-bold text-coffee-50">{cliente.ragione_sociale}</h1>
+              {cliente.archiviato_at && (
+                <span className="rounded-full bg-stone-200 px-2 py-0.5 text-xs font-bold text-stone-700">Archiviato</span>
+              )}
+            </div>
             <p className="text-sm text-coffee-400">{[cliente.telefono, cliente.email, cliente.piva_cf].filter(Boolean).join(" · ") || "Recapiti mancanti"}</p>
           </div>
         </div>
@@ -105,26 +200,41 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
               Chiama
             </a>
           )}
-          <Link href="/vendite" className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
-            <ShoppingBag className="h-4 w-4" />
-            Vendita
-          </Link>
-          <Link href="/nuova" className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
+          {!cliente.archiviato_at && (
+            <Link href={`/vendite?cliente=${encodeURIComponent(cliente.id)}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
+              <ShoppingBag className="h-4 w-4" />
+              Vendita
+            </Link>
+          )}
+          <Link href={`/nuova?cliente=${encodeURIComponent(cliente.id)}`} className="inline-flex h-10 items-center gap-2 rounded-full border border-coffee-200 bg-white px-4 text-sm font-semibold text-coffee-700 active:scale-95">
             <Plus className="h-4 w-4" />
             Scheda
           </Link>
+          {admin && (
+            <ArchiveClientButton id={cliente.id} ragioneSociale={cliente.ragione_sociale} archiviato={Boolean(cliente.archiviato_at)} />
+          )}
         </div>
       </header>
 
-      <section className="mb-4 grid grid-cols-2 gap-2 lg:grid-cols-5">
+      <section className="mb-4 grid grid-cols-2 gap-2 lg:grid-cols-4 xl:grid-cols-7">
+        <Card className="p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Score cliente</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{scoreCliente?.score_cliente ?? "-"}</p>
+          <p className="text-xs text-coffee-400">{scoreCliente?.stato_riacquisto?.replaceAll("_", " ") ?? "da valutare"}</p>
+        </Card>
+        <Card className="p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Prossimo acquisto</p>
+          <p className="mt-1 font-display text-lg font-bold text-coffee-50">{formatDate(scoreCliente?.data_riacquisto_stimata)}</p>
+          <p className="text-xs text-coffee-400">Ultimo: {formatDate(scoreCliente?.ultimo_acquisto)}</p>
+        </Card>
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Priorità</p>
           <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{priorita || "-"}</p>
         </Card>
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Copertura anno</p>
-          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{caffeTarget ? `${Math.round((caffeAcquistati / caffeTarget) * 100)}%` : "-"}</p>
-          <p className="text-xs text-coffee-400">{caffeAcquistati}/{caffeTarget} caffè</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{caffeTarget ? `${Math.round((caffeAcquistati / caffeTarget) * 100)}%` : `${caffeAcquistati}`}</p>
+          <p className="text-xs text-coffee-400">{caffeTarget ? `${caffeAcquistati}/${caffeTarget}` : "caffè acquistati"}</p>
         </Card>
         <Card className="p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Vendite 365g</p>
@@ -135,9 +245,9 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
           <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{money(costoInterventi)}</p>
         </Card>
         <Card className="p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Azioni</p>
-          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{azioniAperte?.length ?? 0}</p>
-          <p className="text-xs text-coffee-400">{manutenzioni?.length ?? 0} manutenzioni attive</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-coffee-400">Da incassare</p>
+          <p className="mt-1 font-display text-2xl font-bold text-coffee-50">{money(totaleSospeso)}</p>
+          <p className="text-xs text-coffee-400">{sospesiVendite.length + sospesiRiparazioni.length} operazioni</p>
         </Card>
       </section>
 
@@ -175,9 +285,87 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
               </ul>
             )}
           </Card>
+
+          <Card className="p-4 sm:p-5">
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Vendite, riparazioni e incassi</h2>
+            {(venditeCliente ?? []).length + (riparazioniCliente ?? []).length === 0 ? (
+              <p className="text-sm text-coffee-400">Nessuna operazione registrata.</p>
+            ) : (
+              <ul className="divide-y divide-coffee-100">
+                {[
+                  ...(venditeCliente ?? []).map((row: any) => ({ ...row, tipo: "Vendita", data: row.data_ordine, riferimento: row.numero_documento ?? row.id.slice(0, 8) })),
+                  ...(riparazioniCliente ?? []).map((row: any) => ({ ...row, tipo: "Riparazione", data: row.data_ingresso, riferimento: row.numero_scheda })),
+                ].sort((a: any, b: any) => new Date(b.data).getTime() - new Date(a.data).getTime()).slice(0, 20).map((row: any) => (
+                  <li key={`${row.tipo}-${row.id}`} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+                    <div>
+                      <p className="font-semibold text-coffee-900">{row.tipo} · {row.riferimento}</p>
+                      <p className="text-xs text-coffee-500">{formatDate(row.data)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-coffee-800">{row.stato_pagamento === "pagato" ? "Incassato" : row.stato_pagamento === "sospeso" ? "Da incassare" : "Pagamento non indicato"}</p>
+                      {row.data_pagamento && <p className="text-xs text-coffee-500">{formatDate(row.data_pagamento)}{row.metodo_pagamento ? ` · ${row.metodo_pagamento}` : ""}</p>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card className="p-4 sm:p-5">
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Previsione riacquisto prodotti</h2>
+            {(riacquistiProdotti ?? []).length === 0 ? (
+              <p className="text-sm text-coffee-400">Servono vendite prodotto per calcolare le prossime date.</p>
+            ) : (
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {(riacquistiProdotti ?? []).map((row: any) => (
+                  <li key={row.prodotto_id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold text-coffee-900">{row.prodotto_nome}</p>
+                      <span className="rounded-full border border-coffee-200 bg-white px-2 py-0.5 text-xs font-bold text-coffee-700">
+                        {row.stato_riacquisto.replaceAll("_", " ")}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-coffee-700">Prossimo: <strong>{formatDate(row.data_riacquisto_stimata)}</strong></p>
+                    <p className="text-xs text-coffee-500">Ultimo {formatDate(row.ultimo_acquisto)} · q.tà {Number(row.ultima_quantita ?? 0).toLocaleString("it-IT")}</p>
+                    <p className="text-xs text-coffee-500">Cadenza: {row.intervallo_medio_giorni ? `${row.intervallo_medio_giorni} giorni` : "stima da consumo"}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card className="p-4 sm:p-5">
+            <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Storico assegnazioni macchine</h2>
+            {(assegnazioniCliente ?? []).length === 0 ? (
+              <p className="text-sm text-coffee-400">Nessuna assegnazione registrata.</p>
+            ) : (
+              <ul className="space-y-2">
+                {(assegnazioniCliente ?? []).map((assegnazione: any) => {
+                  const macchina = one(assegnazione.macchina);
+                  return (
+                    <li key={assegnazione.id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm">
+                      <p className="font-semibold text-coffee-900">{[macchina?.marca, macchina?.modello, macchina?.matricola].filter(Boolean).join(" · ") || "Macchina"}</p>
+                      <p className="text-coffee-600">{formatDate(assegnazione.data_inizio)} → {assegnazione.data_fine ? formatDate(assegnazione.data_fine) : "attuale"}</p>
+                      {assegnazione.motivo && <p className="mt-1 text-xs text-coffee-500">{assegnazione.motivo}</p>}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
         </section>
 
         <aside className="space-y-4">
+          {cliente.canale_preferito === "whatsapp" && cliente.telefono && !cliente.archiviato_at && (
+            <Card className="p-4 sm:p-5">
+              <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Contatto WhatsApp</h2>
+              <SendWhatsAppButton
+                sendUrl={`/api/clienti/${cliente.id}/whatsapp`}
+                defaultTesto={`Ciao ${cliente.ragione_sociale ?? ""}, `}
+              />
+            </Card>
+          )}
+
           <Card id="modifica" className="p-4 sm:p-5">
             <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
               <Pencil className="h-5 w-5 text-arancio" />
@@ -224,6 +412,135 @@ export default async function ClienteDetailPage({ params }: { params: { id: stri
             )}
             <AddMachineForm clienteId={cliente.id} />
           </Card>
+
+          {(macchine ?? []).length > 0 && !cliente.archiviato_at && (
+            <Card className="p-4 sm:p-5">
+              <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
+                <Wrench className="h-5 w-5 text-arancio" />
+                Proponi manutenzione
+              </h2>
+              <ProponiManutenzioneButton clienteId={cliente.id} macchine={(macchine ?? []) as any} />
+            </Card>
+          )}
+
+          {manutenzioniConTesto.length > 0 && (
+            <Card className="p-4 sm:p-5">
+              <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
+                <Wrench className="h-5 w-5 text-arancio" />
+                Manutenzioni programmate
+              </h2>
+              <ul className="space-y-4">
+                {manutenzioniConTesto.map((row: any) => (
+                  <li key={row.id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-coffee-900">
+                          {[row.marca, row.modello, row.matricola].filter(Boolean).join(" ") || "Macchina"}
+                        </p>
+                        <p className="text-xs text-coffee-500">
+                          {formatDate(row.data_prevista)} · {STATO_MANUTENZIONE_LABELS[row.stato] ?? row.stato}
+                        </p>
+                      </div>
+                      <span className="rounded-full border border-coffee-200 bg-white px-2 py-0.5 text-xs font-bold text-coffee-700">
+                        Priorità {row.priorita ?? "-"}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-coffee-600">{row.motivo}</p>
+                    <MaintenanceControls
+                      item={{ id: row.id, stato: row.stato, data_prevista: row.data_prevista, note: row.note }}
+                    />
+                    <MaintenanceProposalButton
+                      item={{
+                        id: row.id,
+                        token_pubblico: row.token_pubblico,
+                        stato_proposta: row.stato_proposta,
+                        canale_preferito: row.canale_preferito,
+                        telefono: row.telefono,
+                        whatsappTesto: row.whatsappTesto,
+                      }}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {(solleciti ?? []).length > 0 && !cliente.archiviato_at && (
+            <Card className="p-4 sm:p-5">
+              <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
+                <Clock className="h-5 w-5 text-arancio" />
+                Sollecito ritiro
+              </h2>
+              <ul className="space-y-3">
+                {(solleciti ?? []).map((r: any) => {
+                  const giorni = r.data_avviso_cliente
+                    ? Math.floor((Date.now() - new Date(r.data_avviso_cliente).getTime()) / 86400000)
+                    : null;
+                  return (
+                    <li key={r.id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-sm font-bold text-arancio-dark">{r.numero_scheda}</span>
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
+                          {giorni ?? "—"} gg in attesa
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        <ReminderButton id={r.id} />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </Card>
+          )}
+
+          {(opportunitaRows.length > 0 || (suggerimenti ?? []).length > 0) && (
+            <Card className="p-4 sm:p-5">
+              <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-coffee-50">
+                <Target className="h-5 w-5 text-arancio" />
+                Opportunità e consigli
+              </h2>
+              {opportunitaRows.length > 0 && (
+                <ul className="space-y-3">
+                  {opportunitaRows.map((row: any) => (
+                    <li key={row.macchina_id} className="rounded-xl border border-coffee-100 bg-coffee-50 p-3 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-coffee-900">
+                          {[row.marca, row.modello].filter(Boolean).join(" ") || "Macchina"}
+                        </p>
+                        <span className="rounded-full border border-coffee-200 bg-white px-2 py-0.5 text-xs font-bold text-coffee-700">
+                          P{row.priorita_commerciale ?? "—"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-coffee-500">{row.matricola}</p>
+                      <p className="mt-2 font-semibold text-arancio-dark">
+                        {AZIONE_LABELS[row.azione_consigliata] ?? row.azione_consigliata}
+                      </p>
+                      {row.machine_fit && (
+                        <span className="mt-2 inline-flex items-center rounded-full bg-white px-2 py-0.5 text-xs font-bold text-coffee-700">
+                          {FIT_LABELS[row.machine_fit] ?? row.machine_fit}
+                        </span>
+                      )}
+                      <Link
+                        href={`/macchine/${row.macchina_id}`}
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-arancio-dark underline underline-offset-2"
+                      >
+                        <Gauge className="h-3.5 w-3.5" />
+                        Scheda macchina
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {(suggerimenti ?? []).length > 0 && (
+                <ul className="mt-3 space-y-3">
+                  {(suggerimenti ?? []).map((row: any) => (
+                    <SuggestionCard key={row.id} suggestion={row as any} />
+                  ))}
+                </ul>
+              )}
+            </Card>
+          )}
 
           <Card className="p-4 sm:p-5">
             <h2 className="mb-3 font-display text-lg font-semibold text-coffee-50">Aggiungi nota</h2>
