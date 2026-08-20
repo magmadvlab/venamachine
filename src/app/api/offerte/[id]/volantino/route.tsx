@@ -111,7 +111,7 @@ export async function GET(
                 letterSpacing: "0.08em",
               }}
             >
-              VENA COFFEE MACHINE
+              COFFEE EXPRESS OFFICINA
             </span>
             <span
               style={{ color: "#fff", fontSize: 24, fontWeight: 700, marginTop: 4 }}

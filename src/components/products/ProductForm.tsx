@@ -154,7 +154,7 @@ export function ProductForm({ product }: { product?: Product }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_140px]">
         <label>
           <span className={labelCls}>Nome</span>
-          <input className={inputCls} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Cartone miscela Vena grani" />
+          <input className={inputCls} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Cartone miscela Coffee Express grani" />
         </label>
         <label>
           <span className={labelCls}>SKU</span>

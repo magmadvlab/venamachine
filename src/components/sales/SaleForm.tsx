@@ -219,7 +219,7 @@ export function SaleForm({ clienti, macchine, prodotti, initialClienteId }: Sale
         <input
           className={inputCls}
           value={nomeProdotto}
-          placeholder="Es. Cartone miscela Vena grani 6 kg"
+          placeholder="Es. Cartone miscela Coffee Express grani 6 kg"
           onChange={(e) => {
             setProdottoId("");
             setNomeProdotto(e.target.value);

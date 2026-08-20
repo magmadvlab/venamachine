@@ -45,7 +45,7 @@ export default async function OffertaPublicPage({ params }: { params: { slug: st
               <Coffee className="h-6 w-6" />
             </span>
             <div>
-              <p className="text-sm font-semibold text-arancio">Vena Coffee Machine</p>
+              <p className="text-sm font-semibold text-arancio">Coffee Express Officina</p>
               <h1 className="font-display text-3xl font-bold">{campagna.titolo}</h1>
             </div>
           </div>
@@ -105,7 +105,7 @@ export default async function OffertaPublicPage({ params }: { params: { slug: st
         )}
 
         <footer className="mt-8 text-center text-xs text-coffee-400">
-          Prezzi e disponibilità possono variare. Contatta Vena Coffee Machine per conferma ordine.
+          Prezzi e disponibilità possono variare. Contatta Coffee Express Officina per conferma ordine.
           <div className="mt-2">
             <Link href="/login" className="font-semibold text-coffee-300 underline underline-offset-2">Area operatori</Link>
           </div>

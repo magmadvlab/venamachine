@@ -107,7 +107,7 @@ export async function notificaRicevuta(opts: NotificaBase & {
       tipo: "ricevuta",
       destinatario: telefono,
       testo: [
-        "Vena Coffee Machine",
+        "Coffee Express Officina",
         `Abbiamo preso in carico la tua macchina. Scheda ${opts.numeroScheda}.`,
         `Segui lo stato qui: ${opts.trackingUrl}`,
       ].join("\n"),
@@ -173,7 +173,7 @@ export async function notificaAggiornamentoStato(opts: NotificaBase & {
       tipo: "aggiornamento_stato",
       destinatario: telefono,
       testo: [
-        "Vena Coffee Machine",
+        "Coffee Express Officina",
         `Aggiornamento scheda ${opts.numeroScheda}: ${stadio}.`,
         opts.macchina ? `Macchina: ${opts.macchina}` : null,
         `Dettagli: ${trackingUrl}`,
@@ -239,7 +239,7 @@ export async function notificaSollecitoRitiro(opts: NotificaBase & {
       tipo: "sollecito",
       destinatario: telefono,
       testo: [
-        "Vena Coffee Machine",
+        "Coffee Express Officina",
         `Promemoria scheda ${opts.numeroScheda}: la macchina risulta pronta per il ritiro.`,
         opts.macchina ? `Macchina: ${opts.macchina}` : null,
         `Dettagli: ${trackingUrl}`,
@@ -334,7 +334,7 @@ export async function notificaPrenotazione(opts: {
       tipo: `prenotazione_${opts.tipo}`,
       destinatario: telefono,
       testo: [
-        "Vena Coffee Machine",
+        "Coffee Express Officina",
         `Prenotazione ${etichetta}: ${inizioFormattato}`,
         opts.titolo,
         `Dettagli: ${trackingUrl}`,

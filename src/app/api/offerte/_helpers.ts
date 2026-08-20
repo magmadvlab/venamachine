@@ -16,7 +16,7 @@ export function dbError(step: string, error: DbErrorShape) {
 
 export function offerMessage(opts: { titolo: string; offertaUrl: string; validaAl?: string | null }) {
   return [
-    "Ciao! Vena Coffee Machine ha nuove offerte per te.",
+    "Ciao! Coffee Express Officina ha nuove offerte per te.",
     `Volantino: ${opts.titolo}`,
     opts.validaAl ? `Valide fino al ${new Date(opts.validaAl).toLocaleDateString("it-IT")}.` : null,
     `Vedi tutte le offerte: ${opts.offertaUrl}`,

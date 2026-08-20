@@ -93,7 +93,7 @@ export function PublicMaintenanceBooking({ token, durationMinutes }: PublicMaint
         setError(out.error || "Prenotazione non riuscita.");
         return;
       }
-      setSuccess("Richiesta inviata. Vena Coffee Machine confermera l'appuntamento.");
+      setSuccess("Richiesta inviata. Coffee Express Officina confermera l'appuntamento.");
     });
   }
 

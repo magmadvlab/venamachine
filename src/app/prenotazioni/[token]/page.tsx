@@ -65,7 +65,7 @@ export default async function PublicPrenotazionePage({ params }: { params: { tok
               <Coffee className="h-5 w-5" />
             </span>
             <div>
-              <p className="font-display text-xl font-bold">Vena Coffee Machine</p>
+              <p className="font-display text-xl font-bold">Coffee Express Officina</p>
               <p className="text-xs font-semibold text-white/60">Prenotazione</p>
             </div>
           </div>
