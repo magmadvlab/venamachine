@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { Coffee, ExternalLink } from "lucide-react";
 import { createServiceClient, missingSupabaseEnv } from "@/lib/supabase/server";
 
@@ -41,8 +42,8 @@ export default async function OffertaPublicPage({ params }: { params: { slug: st
       <section className="mx-auto max-w-5xl">
         <header className="mb-6 rounded-2xl border border-white/10 bg-white/10 p-5 shadow-xl">
           <div className="mb-4 flex items-center gap-3">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-arancio text-white shadow-md shadow-arancio/30">
-              <Coffee className="h-6 w-6" />
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-md shadow-black/20">
+              <Image src="/icon-192.png" alt="" width={40} height={40} className="rounded-full" />
             </span>
             <div>
               <p className="text-sm font-semibold text-arancio">Coffee Express Officina</p>

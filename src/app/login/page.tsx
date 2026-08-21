@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Coffee } from "lucide-react";
+import Image from "next/image";
 import { LoginForm } from "@/components/LoginForm";
 
 export const dynamic = "force-dynamic";
@@ -14,8 +14,8 @@ export default function LoginPage() {
           className="flex flex-1 flex-col items-center justify-center gap-5 px-8 py-14 sm:flex-none sm:py-12"
           style={{ background: "linear-gradient(180deg, #faf7f4 0%, #f0e4d4 100%)" }}
         >
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-arancio shadow-lg shadow-arancio/40">
-            <Coffee className="h-10 w-10 text-white" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-lg shadow-black/10">
+            <Image src="/icon-192.png" alt="" width={56} height={56} className="rounded-full" />
           </div>
           <div className="text-center">
             <p className="font-display text-2xl font-bold text-coffee-900">Coffee Express Officina</p>
