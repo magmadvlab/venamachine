@@ -37,5 +37,24 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (error) {
     return NextResponse.json({ error: error.message, details: error.details, hint: error.hint }, { status: 400 });
   }
+
+  const { error: statoError } = await db
+    .from("macchine")
+    .update({ stato_ciclo_vita: "assegnata" })
+    .eq("id", params.id)
+    .eq("stato_ciclo_vita", "riallocabile");
+  if (statoError) {
+    console.error("Aggiornamento stato_ciclo_vita dopo trasferimento:", statoError.message);
+  }
+
+  const { error: manutenzioniError } = await db
+    .from("manutenzioni_programmate")
+    .update({ stato: "annullata" })
+    .eq("macchina_id", params.id)
+    .in("stato", ["da_pianificare", "pianificata"]);
+  if (manutenzioniError) {
+    console.error("Annullamento manutenzioni dopo trasferimento:", manutenzioniError.message);
+  }
+
   return NextResponse.json({ assegnazione_id: data });
 }
