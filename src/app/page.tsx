@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  ArrowRightLeft,
   CalendarClock,
   Clock,
   ClipboardList,
@@ -122,6 +123,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
     { data: prenotazioniDaConfermare },
     { data: azioniCommerciali },
     { data: suggerimenti },
+    { data: macchineRiallocabili },
   ] = await Promise.all([
     db
       .from("riparazioni")
@@ -162,6 +164,12 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
       .in("stato", ["da_preparare", "pronto", "inviato"])
       .order("priorita", { ascending: false })
       .limit(15),
+    db
+      .from("macchine")
+      .select("id, marca, modello, matricola, cliente:clienti(ragione_sociale)")
+      .eq("stato_ciclo_vita", "riallocabile")
+      .order("created_at", { ascending: false })
+      .limit(50),
   ]);
 
   const daRiparareRows: DashboardSectionRow[] = (riparazioniAperte ?? [])
@@ -232,6 +240,14 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
   ];
   opportunitaRowsRaw.sort((a, b) => b.priorita - a.priorita);
   const opportunitaRows: DashboardSectionRow[] = opportunitaRowsRaw.map(({ priorita, ...row }) => row);
+
+  const macchineRiallocabiliRows: DashboardSectionRow[] = (macchineRiallocabili ?? []).map((m: any) => ({
+    id: m.id,
+    href: `/macchine/${m.id}`,
+    title: [m.marca, m.modello].filter(Boolean).join(" ") || "Macchina",
+    subtitle: `${m.matricola ? `Matricola ${m.matricola} · ` : ""}Ultimo cliente: ${m.cliente?.ragione_sociale ?? "—"}`,
+    badge: { label: "Riallocabile", tone: "warning" },
+  }));
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-28 pt-6">
@@ -324,6 +340,12 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
             title="Opportunità commerciali da agire"
             rows={opportunitaRows}
             emptyLabel="Nessuna opportunità attiva."
+          />
+          <DashboardSection
+            icon={<ArrowRightLeft className="h-5 w-5 text-arancio" />}
+            title="Macchine riallocabili"
+            rows={macchineRiallocabiliRows}
+            emptyLabel="Nessuna macchina da riallocare."
           />
         </div>
       )}
