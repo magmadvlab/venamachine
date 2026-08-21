@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { CalendarDays, Coffee, Wrench } from "lucide-react";
+import Image from "next/image";
+import { CalendarDays, Wrench } from "lucide-react";
 import { PublicMaintenanceBooking } from "@/components/agenda/PublicMaintenanceBooking";
 import { createServiceClient, hasServiceConfig } from "@/lib/supabase/server";
 
@@ -44,8 +45,8 @@ export default async function PublicMaintenancePage({ params }: { params: { toke
       <div className="mx-auto max-w-xl">
         <header className="mb-5 rounded-2xl bg-coffee-900 p-5 text-white shadow-lg shadow-coffee-900/10">
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-arancio">
-              <Coffee className="h-5 w-5" />
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white">
+              <Image src="/icon-192.png" alt="" width={32} height={32} className="rounded-full" />
             </span>
             <div>
               <p className="font-display text-xl font-bold">Coffee Express Officina</p>
