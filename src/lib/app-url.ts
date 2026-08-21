@@ -12,5 +12,5 @@ export function getPublicAppUrl() {
     return `https://${process.env.VERCEL_URL}`.replace(/\/+$/, "");
   }
 
-  return "https://venamachine-production.up.railway.app";
+  return "https://coffeeofficina.up.railway.app";
 }
