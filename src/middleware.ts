@@ -64,6 +64,19 @@ export async function middleware(request: NextRequest) {
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
+
+    // Password provvisoria da cambiare: blocca tutto tranne la pagina di cambio password e il logout.
+    if (
+      user?.user_metadata?.must_change_password &&
+      !pathname.startsWith("/impostazioni/password") &&
+      pathname !== "/login" &&
+      !pathname.startsWith("/api/")
+    ) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/impostazioni/password";
+      url.searchParams.set("forced", "1");
+      return NextResponse.redirect(url);
+    }
   } catch {
     return response;
   }

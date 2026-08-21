@@ -11,6 +11,7 @@ import {
   BookOpen,
   CalendarDays,
   Home,
+  KeyRound,
   Menu,
   PackageSearch,
   Plus,
@@ -219,7 +220,14 @@ export function AppChrome({ children, admin = false, incassiCount = 0 }: { child
           ))}
         </nav>
 
-        <div className="pt-4">
+        <div className="flex flex-col gap-2 pt-4">
+          <Link
+            href="/impostazioni/password"
+            className="inline-flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-coffee-50/55 transition hover:bg-white/10 hover:text-coffee-50"
+          >
+            <KeyRound className="h-4 w-4 shrink-0" />
+            <span>Cambia password</span>
+          </Link>
           <LogoutButton />
         </div>
       </aside>
