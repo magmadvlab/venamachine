@@ -19,14 +19,14 @@ import { getCurrentUser, isAdminEmail } from "@/lib/supabase/auth-server";
 
 export const dynamic = "force-dynamic";
 
-const lastUpdated = "15 luglio 2026";
+const lastUpdated = "21 agosto 2026";
 
 const menuSections = [
   {
     href: "/",
     title: "Dashboard",
     icon: ClipboardList,
-    text: "Coda di lavoro quotidiana: riparazioni aperte, manutenzioni da proporre, ritiri da sollecitare, prenotazioni da confermare e opportunità commerciali. Ogni riga porta alla scheda del cliente.",
+    text: "Coda di lavoro quotidiana: riparazioni aperte, manutenzioni da proporre, ritiri da sollecitare, prenotazioni da confermare, opportunità commerciali e macchine riallocabili da riassegnare a un nuovo cliente. Ogni riga porta alla scheda del cliente o della macchina.",
   },
   {
     href: "/nuova",
@@ -38,7 +38,7 @@ const menuSections = [
     href: "/clienti",
     title: "Clienti",
     icon: Users,
-    text: "Anagrafica, score cliente, previsione riacquisto, incassi, macchine e storico assegnazioni.",
+    text: "Anagrafica, score cliente, previsione riacquisto, incassi, macchine e storico assegnazioni. Da qui si aggiunge direttamente una macchina al cliente, senza passare da una scheda riparazione, e si trasferisce una macchina a un nuovo cliente.",
   },
   {
     href: "/vendite",
@@ -96,7 +96,7 @@ const rules = [
   "Rientro entro 90 giorni: controllare ricontrollo o garanzia.",
   "Difetto simile gia segnalato: leggere lo storico tecnico.",
   "Macchina sottodimensionata: valutare upgrade.",
-  "Macchina sovradimensionata: valutare riallocazione.",
+  "Macchina sovradimensionata: valutare riallocazione a un nuovo cliente dalla coda 'Macchine riallocabili' in Dashboard.",
   "Vendite registrate bene: score piu affidabile.",
   "Vendita senza macchina: alimenta il cliente, non tutte le sue macchine.",
   "Cambio cliente macchina: usa lo storico assegnazioni senza riscrivere vendite e riparazioni precedenti.",
